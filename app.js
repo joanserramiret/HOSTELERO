@@ -594,8 +594,8 @@ function onClick(e){
       co2.pagos.push({metodo:co2.metodo,importe:round2(imp)}); co2.ent=''; modalCobro(); break; }
     case 'delpago': { state.cobro.pagos.splice(+el.dataset.i,1); modalCobro(); break; }
     case 'finalizar': { var co3=state.cobro; var pr=parseFloat((document.getElementById('propina')||{}).value)||0;
-      var ok=finalizarTicket(state.ticketActivo,{pagos:co3.pagos,propina:pr});
-      if(ok){ closeModal(); state.ticketActivo=null; toast('✅ Ticket cobrado'+(pr>0?' · propina '+eur(pr):''),'ok'); render(); } break; }
+      var _tid=state.ticketActivo; var ok=finalizarTicket(_tid,{pagos:co3.pagos,propina:pr});
+      if(ok){ var _tk=getTicket(_tid); closeModal(); state.ticketActivo=null; toast('✅ Ticket cobrado'+(pr>0?' · propina '+eur(pr):''),'ok'); try{imprimirTicketCobro(_tk);}catch(e){} render(); } break; }
     case 'kprep': setEstadoLinea(el.dataset.tid,el.dataset.kid,'preparando'); render(); break;
     case 'klisto': { setEstadoLinea(el.dataset.tid,el.dataset.kid,'listo'); var tt=getTicket(el.dataset.tid); if(tt&&ticketTodoListo(tt)) toast('🔔 '+(tt.mesaNombre||('#'+tt.numero))+': comanda lista'); render(); break; }
     case 'avisar': { avisarCamarero(el.dataset.tid); var t4=getTicket(el.dataset.tid); toast('🔔 Aviso enviado: '+(t4.mesaNombre||('#'+t4.numero))+' lista para recoger','ok'); render(); break; }
@@ -727,4 +727,35 @@ function modalMesaEditor(id){
 function modal123(){
   var ops=ORDENES.map(function(o){return '<button class="orden-opt'+(state.ordenActivo===o.n?' active':'')+'" data-act="setorden" data-o="'+o.n+'"><span class="oc" style="background:'+o.c+'"></span>'+o.n+'</button>';}).join('');
   openModal('<div class="modal sm" data-stop><h2>Orden de los platos (123)</h2><div class="mbody"><p class="muted" style="margin:0 0 12px">Lo que añadas entrará en cocina con este pase.</p><div class="orden-list">'+ops+'</div><button class="btn ghost block" data-act="ordendef" style="margin-top:12px">↩︎ Volver al orden predefinido de cada plato</button></div><div class="foot"><button class="btn ghost" data-act="closeModal">Cerrar</button></div></div>');
+}
+
+/* ----- Impresión de ticket de cobro (navegador, impresora de caja) ----- */
+function imprimirHTML(html){
+  if(typeof document==='undefined')return;
+  var f=document.createElement('iframe');
+  f.style.position='fixed'; f.style.right='0'; f.style.bottom='0'; f.style.width='0'; f.style.height='0'; f.style.border='0';
+  document.body.appendChild(f);
+  var doc=f.contentWindow.document; doc.open(); doc.write(html); doc.close();
+  setTimeout(function(){ try{ f.contentWindow.focus(); f.contentWindow.print(); }catch(e){} setTimeout(function(){ try{document.body.removeChild(f);}catch(e){} },1500); },350);
+}
+function imprimirTicketCobro(t){
+  if(!t)return;
+  var total=totalLineas(t.lineas), iva=desgloseIVA(total);
+  var rows=t.lineas.map(function(l){ return '<tr><td>'+l.cantidad+'</td><td>'+esc(l.nombre)+'</td><td class="r">'+eur(l.precio*l.cantidad)+'</td></tr>'+((l.mods&&l.mods.length)?'<tr><td></td><td colspan="2" class="sm">'+l.mods.map(function(m){return esc(m.n);}).join(', ')+'</td></tr>':'')+((l.subs&&l.subs.length)?'<tr><td></td><td colspan="2" class="sm">'+l.subs.map(esc).join(' · ')+'</td></tr>':''); }).join('');
+  var pagos='';
+  if(t.cobradoEfectivo) pagos+='<tr><td>Efectivo</td><td class="r">'+eur(t.cobradoEfectivo)+'</td></tr>';
+  if(t.cobradoTarjeta) pagos+='<tr><td>Tarjeta</td><td class="r">'+eur(t.cobradoTarjeta)+'</td></tr>';
+  var html='<html><head><meta charset="utf-8"><style>*{font-family:\'Courier New\',monospace;font-size:12px;color:#000}@page{margin:3mm}body{width:72mm;margin:0}h2{text-align:center;margin:4px 0;font-size:15px}.c{text-align:center}.r{text-align:right}.sm{font-size:10px;color:#333}table{width:100%;border-collapse:collapse}td{padding:1px 0;vertical-align:top}hr{border:none;border-top:1px dashed #000;margin:5px 0}.tot{font-size:15px}</style></head><body>'
+    +'<h2>'+esc(DB.restaurante||'HOSTELERO')+'</h2>'
+    +'<div class="c">Ticket #'+t.numero+(t.mesaNombre?(' · '+esc(t.mesaNombre)):'')+'</div>'
+    +'<div class="c">'+new Date(t.closedAt||Date.now()).toLocaleString('es-ES')+'</div>'
+    +(t.comensales?'<div class="c">'+t.comensales+' comensales</div>':'')+'<hr>'
+    +'<table>'+rows+'</table><hr>'
+    +'<table><tr><td>Base imponible</td><td class="r">'+eur(iva.base)+'</td></tr>'
+    +'<tr><td>IVA 10%</td><td class="r">'+eur(iva.cuota)+'</td></tr>'
+    +'<tr class="tot"><td><b>TOTAL</b></td><td class="r"><b>'+eur(total)+'</b></td></tr>'
+    +pagos+(t.propina?'<tr><td>Propina</td><td class="r">'+eur(t.propina)+'</td></tr>':'')+'</table><hr>'
+    +'<div class="c">¡Gracias por su visita!</div>'
+    +'</body></html>';
+  imprimirHTML(html);
 }

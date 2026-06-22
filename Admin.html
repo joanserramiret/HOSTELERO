@@ -110,12 +110,12 @@ function render(){
   if(!sesion)return showLogin();
   if(!M) M=clone(Sync.master());
   var modo=Sync.modo();
-  var navs=[['carta','🍽️ Carta'],['mesas','🪑 Mesas y salas'],['empleados','👤 Empleados'],['fichaje','🕒 Fichajes']];
+  var navs=[['carta','🍽️ Carta'],['mesas','🪑 Mesas y salas'],['empleados','👤 Empleados'],['impresoras','🖨️ Impresoras'],['fichaje','🕒 Fichajes']];
   var nav=navs.map(function(n){return '<button class="'+(tab===n[0]?'active':'')+'" data-tab="'+n[0]+'">'+n[1]+'</button>';}).join('');
-  var body= tab==='carta'?viewCarta() : tab==='mesas'?viewMesas() : tab==='empleados'?viewEmpleados() : viewFichaje();
+  var body= tab==='carta'?viewCarta() : tab==='mesas'?viewMesas() : tab==='empleados'?viewEmpleados() : tab==='impresoras'?viewImpresoras() : viewFichaje();
   app.innerHTML='<div class="app"><aside class="side"><div class="brand">HOSTELERO<small>ADMINISTRACIÓN</small></div>'
     +'<div class="nav">'+nav+'</div><div class="sp"></div><div class="me">'+esc(sesion.nombre)+' · '+esc(Auth.rolInfo(sesion.rol).nombre)+'</div><button class="out" data-act="logout">Cerrar sesión</button></aside>'
-    +'<div class="main"><div class="top"><h1>'+({carta:'Carta',mesas:'Mesas y salas',empleados:'Empleados',fichaje:'Registro de jornada'}[tab])+'</h1>'
+    +'<div class="main"><div class="top"><h1>'+({carta:'Carta',mesas:'Mesas y salas',empleados:'Empleados',impresoras:'Impresoras',fichaje:'Registro de jornada'}[tab])+'</h1>'
     +'<span class="modo"><span class="dot" style="background:'+(modo==='servidor'?'#16a34a':'#d97706')+'"></span>'+(modo==='servidor'?'En red (servidor)':'Local')+'</span></div>'
     +'<div class="content">'+body+'</div></div></div>';
 }
@@ -218,6 +218,44 @@ function modalEmp(u){
     +'<button class="btn ghost" data-act="cerrar">Cancelar</button><button class="btn" data-act="saveemp" data-id="'+(u?u.id:'')+'">Guardar</button></div>');
 }
 
+/* ---- IMPRESORAS ---- */
+function viewImpresoras(){
+  var imps=M.impresoras||[];
+  var html='<div class="bar"><h2>Impresoras</h2><div class="r"><button class="btn" data-act="nuevaimp">+ Impresora</button></div></div>'
+    +'<div class="card"><table><thead><tr><th>Nombre</th><th>IP : Puerto</th><th>Zona</th><th></th></tr></thead><tbody>';
+  if(!imps.length) html+='<tr><td colspan="4" style="color:var(--soft)">Sin impresoras. Añade la de cocina/barra/caja con su IP de red.</td></tr>';
+  imps.forEach(function(p){
+    html+='<tr><td><b>'+esc(p.nombre||'')+'</b></td><td>'+esc(p.ip||'')+' : '+(p.puerto||9100)+'</td><td><span class="badge" style="background:#eef2ff;color:#4338ca">'+esc(p.zona||'cocina')+'</span></td>'
+      +'<td style="text-align:right"><button class="btn ghost sm" data-testi="'+p.id+'">Prueba</button> <button class="btn ghost sm" data-editi="'+p.id+'">Editar</button></td></tr>';
+  });
+  html+='</tbody></table></div><p style="color:var(--soft);font-size:13px;margin-top:12px">Impresoras térmicas de red (ESC/POS, puerto 9100). Las comandas se imprimen solas en cocina/barra al enviarlas; el ticket de cobro se imprime desde el TPV.</p>';
+  return html;
+}
+function modalImp(p){
+  modalOpen=true;
+  var zonas=[['cocina','Cocina'],['barra','Barra'],['caja','Caja']];
+  var zopt=zonas.map(function(z){return '<option value="'+z[0]+'"'+((p?(p.zona||'cocina'):'cocina')===z[0]?' selected':'')+'>'+z[1]+'</option>';}).join('');
+  ov('<h3>'+(p?'Editar impresora':'Nueva impresora')+'</h3><div class="mb">'
+    +'<div class="field"><label>Nombre</label><input id="i_n" value="'+esc(p?p.nombre:'')+'" placeholder="Cocina"></div>'
+    +'<div class="row"><div class="field"><label>IP de red</label><input id="i_ip" value="'+esc(p?p.ip:'')+'" placeholder="192.168.1.50"></div>'
+    +'<div class="field" style="max-width:110px"><label>Puerto</label><input id="i_pt" type="number" value="'+(p?(p.puerto||9100):9100)+'"></div></div>'
+    +'<div class="field"><label>Zona</label><select id="i_z">'+zopt+'</select></div>'
+    +'</div><div class="foot">'+(p?'<button class="btn red" data-deli="'+p.id+'" style="margin-right:auto">Eliminar</button>':'')
+    +'<button class="btn ghost" data-act="cerrar">Cancelar</button><button class="btn" data-act="saveimp" data-id="'+(p?p.id:'')+'">Guardar</button></div>');
+}
+function guardarImp(id){
+  var n=val('i_n').trim(); if(!n)return toast('Pon el nombre');
+  if(!M.impresoras)M.impresoras=[];
+  var data={id:id||('imp'+uid()),nombre:n,ip:val('i_ip').trim(),puerto:parseInt(val('i_pt'))||9100,zona:val('i_z')};
+  if(id) M.impresoras=M.impresoras.map(function(p){return p.id===id?data:p;}); else M.impresoras.push(data);
+  saveMaster();cerrar();render();toast('Impresora guardada',true);
+}
+function testPrint(id){
+  var p=(M.impresoras||[]).filter(function(x){return x.id===id;})[0]; if(!p)return;
+  if(Sync.modo()!=='servidor')return toast('Necesita el servidor en marcha');
+  try{ fetch('/api/print-test',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ip:p.ip,puerto:p.puerto})}); toast('Prueba enviada a '+p.nombre,true); }catch(e){ toast('Error al enviar'); }
+}
+
 /* ---- FICHAJE ---- */
 function viewFichaje(){
   var hoy=new Date().toISOString().slice(0,10);
@@ -251,6 +289,9 @@ document.addEventListener('click',function(e){
   var dp=e.target.closest('[data-delp]'); if(dp){M.productos=M.productos.filter(function(p){return p.id!==dp.dataset.delp;});saveMaster();cerrar();render();toast('Producto eliminado');return;}
   var dm=e.target.closest('[data-delm]'); if(dm){M.mesas=M.mesas.filter(function(m){return m.id!==dm.dataset.delm;});saveMaster();cerrar();render();toast('Mesa eliminada');return;}
   var de=e.target.closest('[data-dele]'); if(de){M.usuarios=(M.usuarios||[]).map(function(u){if(u.id===de.dataset.dele)u.activo=false;return u;});saveMaster();cerrar();render();toast('Empleado dado de baja');return;}
+  var idi=e.target.closest('[data-editi]'); if(idi){modalImp((M.impresoras||[]).filter(function(p){return p.id===idi.dataset.editi;})[0]);return;}
+  var ti=e.target.closest('[data-testi]'); if(ti){testPrint(ti.dataset.testi);return;}
+  var di=e.target.closest('[data-deli]'); if(di){M.impresoras=(M.impresoras||[]).filter(function(p){return p.id!==di.dataset.deli;});saveMaster();cerrar();render();toast('Impresora eliminada');return;}
   if(!a)return;
   switch(a.dataset.act){
     case 'logout': Auth.logout(); sesion=null; showLogin(); break;
@@ -259,6 +300,8 @@ document.addEventListener('click',function(e){
     case 'nuevacat': modalCat(); break;
     case 'nuevamesa': modalMesa(null); break;
     case 'nuevoemp': modalEmp(null); break;
+    case 'nuevaimp': modalImp(null); break;
+    case 'saveimp': guardarImp(a.dataset.id); break;
     case 'saveprod': guardarProd(a.dataset.id); break;
     case 'savecat': guardarCat(); break;
     case 'savemesa': guardarMesa(a.dataset.id); break;

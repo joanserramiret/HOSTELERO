@@ -5,7 +5,7 @@
    Arranque:  node server.cjs    (puertos configurables en PUERTOS)
 */
 'use strict';
-var http = require('http'), fs = require('fs'), path = require('path');
+var http = require('http'), fs = require('fs'), path = require('path'), net = require('net');
 var DIR = __dirname;
 var DATAFILE = path.join(DIR, 'servicio.json');
 
@@ -21,11 +21,11 @@ function uid() { return Date.now().toString(36) + Math.random().toString(36).sli
 
 function masterSeed() {
   var cats = [
-    { id: 'c1', nombre: 'Bebidas',     color: '#0ea5e9', ic: '🥤', orden: 1, pase: 'Bebidas' },
-    { id: 'c2', nombre: 'Cervezas',    color: '#d97706', ic: '🍺', orden: 2, pase: 'Bebidas' },
-    { id: 'c3', nombre: 'Entrantes',   color: '#16a34a', ic: '🥗', orden: 3, pase: 'Entrantes' },
-    { id: 'c4', nombre: 'Principales', color: '#7c3aed', ic: '🥩', orden: 4, pase: 'Segundos' },
-    { id: 'c5', nombre: 'Postres',     color: '#db2777', ic: '🍰', orden: 5, pase: 'Postres' }
+    { id: 'c1', nombre: 'Bebidas',     color: '#0ea5e9', ic: '🥤', orden: 1, pase: 'Bebidas', zona: 'barra' },
+    { id: 'c2', nombre: 'Cervezas',    color: '#d97706', ic: '🍺', orden: 2, pase: 'Bebidas', zona: 'barra' },
+    { id: 'c3', nombre: 'Entrantes',   color: '#16a34a', ic: '🥗', orden: 3, pase: 'Entrantes', zona: 'cocina' },
+    { id: 'c4', nombre: 'Principales', color: '#7c3aed', ic: '🥩', orden: 4, pase: 'Segundos', zona: 'cocina' },
+    { id: 'c5', nombre: 'Postres',     color: '#db2777', ic: '🍰', orden: 5, pase: 'Postres', zona: 'cocina' }
   ];
   function p(id, n, cat, precio, ic, pase) { return { id: id, nombre: n, categoriaId: cat, precio: precio, ic: ic, pasePorDefecto: pase, activo: true, stock: 100 }; }
   var prods = [
@@ -66,7 +66,7 @@ function masterSeed() {
     { id: 'u4', nombre: 'Luis',      rol: 'camarero',  pin: '4444', color: '#15803d', activo: true },
     { id: 'u5', nombre: 'Cocina',    rol: 'cocina',    pin: '9999', color: '#d97706', activo: true }
   ];
-  return { version: 2, categorias: cats, productos: prods, salas: salas, mesas: mesas, usuarios: usuarios };
+  return { version: 3, categorias: cats, productos: prods, salas: salas, mesas: mesas, usuarios: usuarios, impresoras: [] };
 }
 
 function cargar() {
@@ -74,6 +74,7 @@ function cargar() {
   if (!s.comandas) s.comandas = [];
   if (!s.master || !s.master.productos || !s.master.productos.length || s.master.version !== masterSeed().version) s.master = masterSeed();
   if (!s.master.usuarios || !s.master.usuarios.length) s.master.usuarios = masterSeed().usuarios;
+  if (!s.master.impresoras) s.master.impresoras = [];
   if (!s.fichajes) s.fichajes = [];
   if (typeof s.v !== 'number') s.v = 0;
   return s;
@@ -86,18 +87,54 @@ function guardar() { try { fs.writeFileSync(DATAFILE, JSON.stringify(state)); } 
 function difundir() { var msg = 'data: ' + JSON.stringify(state) + '\n\n'; clientes.slice().forEach(function (c) { try { c.write(msg); } catch (e) {} }); }
 function getC(id) { return state.comandas.filter(function (c) { return c.id === id; })[0]; }
 
+function p2(n){ return n < 10 ? '0' + n : '' + n; }
+function rep(ch, n){ var o=''; for(var i=0;i<n;i++) o+=ch; return o; }
+function escposComanda(c, ancho){
+  ancho = ancho || 42;
+  var ESC='\x1b', GS='\x1d', o = ESC+'@';
+  o += ESC+'a'+'\x01' + GS+'!'+'\x11' + (c.mesa||'Comanda') + '\n' + GS+'!'+'\x00' + ESC+'a'+'\x00';
+  var d = new Date(c.createdAt||Date.now());
+  o += (c.camarero||'') + '   ' + p2(d.getHours())+':'+p2(d.getMinutes()) + '\n' + rep('-',ancho) + '\n';
+  (c.lineas||[]).forEach(function(l){
+    o += ESC+'!'+'\x08' + (l.cantidad||1) + ' x ' + (l.nombre||'') + '\n' + ESC+'!'+'\x00';
+    if(l.orden) o += '    ['+l.orden+']\n';
+    if(l.mods) l.mods.forEach(function(m){ o += '    - '+(m.n||m)+'\n'; });
+    if(l.subs) l.subs.forEach(function(x){ o += '    . '+x+'\n'; });
+  });
+  o += rep('-',ancho) + '\n\n\n' + GS+'V'+'\x42'+'\x00';
+  return Buffer.from(o, 'latin1');
+}
+function imprimirEn(ip, puerto, buf){
+  try{
+    var sock = new net.Socket(); sock.setTimeout(4000);
+    sock.connect(puerto||9100, ip, function(){ sock.write(buf, function(){ sock.end(); }); });
+    sock.on('timeout', function(){ sock.destroy(); });
+    sock.on('error', function(){});
+  }catch(e){}
+}
+function imprimirComanda(c){
+  var imps = (state.master && state.master.impresoras) || [];
+  imps.filter(function(p){ return p.activa !== false && p.zona !== 'caja'; }).forEach(function(p){
+    var lineas = c.lineas || [];
+    if(p.zona && lineas.some(function(l){return l.zona;})) lineas = lineas.filter(function(l){ return (l.zona||'cocina')===p.zona; });
+    if(!lineas.length) return;
+    imprimirEn(p.ip, p.puerto, escposComanda({mesa:c.mesa,camarero:c.camarero,createdAt:c.createdAt,lineas:lineas}, p.ancho||42));
+  });
+}
 function aplicar(accion, d) {
   if (accion === '/api/comanda') {
     d.id = uid(); d.createdAt = Date.now(); d.estado = 'pendiente'; d.avisado = false;
     (d.lineas || []).forEach(function (l) { l.kid = l.kid || uid(); l.estado = l.estado || 'pendiente'; });
     state.comandas.push(d);
+    try { imprimirComanda(d); } catch (e) {}
   } else if (accion === '/api/linea') {
     var c = getC(d.id); if (c) { var l = (c.lineas || []).filter(function (x) { return x.kid === d.kid; })[0]; if (l) l.estado = d.estado; }
   } else if (accion === '/api/avisar') { var c2 = getC(d.id); if (c2) { c2.avisado = true; c2.avisadoAt = Date.now(); }
   } else if (accion === '/api/recoger') { var c3 = getC(d.id); if (c3) { c3.estado = 'recogida'; c3.avisado = false; }
   } else if (accion === '/api/reset') { state.comandas = [];
   } else if (accion === '/api/master') { if (d.master) state.master = d.master;
-  } else if (accion === '/api/fichaje') { if (d.registro) { d.registro.id = d.registro.id || uid(); state.fichajes.push(d.registro); } }
+  } else if (accion === '/api/fichaje') { if (d.registro) { d.registro.id = d.registro.id || uid(); state.fichajes.push(d.registro); }
+  } else if (accion === '/api/print-test') { try { imprimirEn(d.ip, d.puerto, escposComanda({ mesa: 'PRUEBA', camarero: 'HOSTELERO', lineas: [{ cantidad: 1, nombre: 'Impresora OK' }] }, d.ancho || 42)); } catch (e) {} }
   state.v = (state.v || 0) + 1;
 }
 
