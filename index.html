@@ -1,14 +1,213 @@
 <!doctype html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="theme-color" content="#0f172a" />
-    <link rel="manifest" href="./manifest.webmanifest" />
-    <title>HOSTELERO TPV</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>HOSTELERO · Acceso</title>
+<style>
+:root{--bg:#0b0f17;--bg2:#121826;--card:#161d2b;--card2:#1d2636;--line:#2a3446;
+--text:#eef2f8;--soft:#8c97ab;--primary:#5b6cff;--primaryd:#4453e6;--green:#19b562;--amber:#e0a020;--red:#e0436a;
+--radius:18px;--shadow:0 20px 60px rgba(0,0,0,.45)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;
+background:radial-gradient(1200px 600px at 50% -10%,#1a2438,#0b0f17 60%);color:var(--text);
+overflow:hidden;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;border:none;transition:transform .08s,background .15s,box-shadow .15s,opacity .15s}
+button:active{transform:scale(.97)}
+input{font-family:inherit;font-size:16px;outline:none}
+#app{height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;overflow:auto}
+.wrap{width:100%;max-width:920px}
+.brand{text-align:center;margin-bottom:26px}
+.brand .logo{font-size:40px}
+.brand h1{margin:6px 0 2px;font-size:26px;font-weight:800;letter-spacing:3px}
+.brand .tag{color:var(--soft);font-size:12px;font-weight:700;letter-spacing:4px;text-transform:uppercase}
+.panel{background:linear-gradient(180deg,#161d2b,#121826);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:28px}
+.h2{font-size:15px;font-weight:700;color:var(--soft);text-align:center;margin-bottom:20px;letter-spacing:.4px}
+.users{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+.user{background:var(--card2);border:1px solid var(--line);border-radius:16px;padding:18px 12px;display:flex;flex-direction:column;align-items:center;gap:10px;color:var(--text)}
+.user:hover{border-color:var(--primary);box-shadow:0 10px 26px rgba(91,108,255,.2)}
+.avatar{width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:#fff}
+.user .un{font-weight:800;font-size:15px}
+.rolbadge{font-size:11px;font-weight:800;padding:3px 10px;border-radius:999px}
+.pinwrap{max-width:360px;margin:0 auto;text-align:center}
+.pinhead{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:18px}
+.dots{display:flex;gap:14px;justify-content:center;margin:6px 0 18px;height:18px}
+.dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--line);background:transparent}
+.dot.on{background:var(--primary);border-color:var(--primary)}
+.shake{animation:shake .35s}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-9px)}40%{transform:translateX(9px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.keypad button{padding:20px;font-size:24px;font-weight:800;background:var(--card2);border:1px solid var(--line);border-radius:14px;color:var(--text)}
+.keypad button:hover{background:#222c40}
+.keypad .alt{font-size:15px;color:var(--soft)}
+.link{background:none;color:var(--soft);font-weight:700;font-size:14px;margin-top:16px;padding:8px}
+.link:hover{color:var(--text)}
+.persona{max-width:440px;margin:0 auto}
+.pcard{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.estado{display:flex;align-items:center;gap:10px;justify-content:space-between;background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:14px;font-weight:800}
+.estado .pill{font-size:12px;padding:4px 12px;border-radius:999px;font-weight:800}
+.fich-btns{display:grid;gap:10px;margin-bottom:8px}
+.fich-btns.two{grid-template-columns:1fr 1fr}
+.btn{padding:15px 18px;border-radius:14px;font-weight:800;font-size:15px;color:#fff;background:var(--card2);border:1px solid var(--line)}
+.btn.green{background:var(--green);border-color:transparent}
+.btn.red{background:var(--red);border-color:transparent}
+.btn.amber{background:var(--amber);border-color:transparent;color:#1a1205}
+.btn.primary{background:var(--primary);border-color:transparent}
+.btn.primary:hover{background:var(--primaryd)}
+.btn.block{width:100%}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--text)}
+.regs{margin-top:14px;border-top:1px solid var(--line);padding-top:12px;max-height:130px;overflow:auto}
+.reg{display:flex;justify-content:space-between;font-size:13px;color:var(--soft);padding:5px 2px}
+.reg b{color:var(--text)}
+.total{text-align:center;color:var(--soft);font-size:13px;margin-top:6px}
+.topbar{display:flex;align-items:center;gap:14px;margin-bottom:22px}
+.topbar .me{display:flex;align-items:center;gap:12px}
+.topbar .me .un{font-weight:800}.topbar .me .rl{font-size:12px;color:var(--soft);font-weight:700}
+.apps{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px}
+.appcard{position:relative;background:var(--card2);border:1px solid var(--line);border-radius:18px;padding:22px 18px;display:flex;flex-direction:column;gap:8px;color:var(--text);text-align:left;min-height:150px}
+.appcard:hover{border-color:var(--primary);box-shadow:0 12px 30px rgba(91,108,255,.18);transform:translateY(-2px)}
+.appcard .ai{font-size:34px}
+.appcard .an{font-weight:800;font-size:16px}
+.appcard .ad{font-size:12px;color:var(--soft);font-weight:600}
+.appcard.locked{opacity:.5;cursor:not-allowed}
+.appcard .lock{position:absolute;top:14px;right:14px;font-size:16px}
+.tagpill{position:absolute;top:14px;right:14px;font-size:10px;font-weight:800;padding:3px 8px;border-radius:999px;background:#2a3446;color:var(--amber)}
+.tagpill.ok{color:var(--green)}
+.overlay{position:fixed;inset:0;background:rgba(5,8,14,.7);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px}
+.modal{background:var(--card);border:1px solid var(--line);border-radius:18px;max-width:380px;width:100%;padding:24px;box-shadow:var(--shadow)}
+.modal h3{margin:0 0 16px;font-size:18px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;color:var(--soft);font-weight:700;margin-bottom:6px}
+.field input{width:100%;padding:12px 14px;background:var(--bg2);border:1px solid var(--line);border-radius:11px;color:var(--text)}
+.modal .foot{display:flex;gap:10px;justify-content:flex-end;margin-top:6px}
+#toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);z-index:80;display:flex;flex-direction:column;gap:8px;align-items:center}
+.toast{background:#0e1422;border:1px solid var(--line);color:#fff;padding:12px 20px;border-radius:12px;font-weight:700;font-size:14px;box-shadow:var(--shadow);animation:tin .25s}
+@keyframes tin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.foot-note{text-align:center;color:#46506a;font-size:11px;margin-top:18px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast"></div>
+<script src="engine.js"></script>
+<script>
+var Auth = window.HOSTELERO_AUTH, Fichaje = window.HOSTELERO_FICHAJE;
+var app = document.getElementById('app');
+var sel = null, pin = '';
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function toast(m){var r=document.getElementById('toast');var d=document.createElement('div');d.className='toast';d.textContent=m;r.appendChild(d);setTimeout(function(){d.remove();},2600);}
+function rol(r){return Auth.rolInfo(r);}
+function ini(n){return (n||'?').trim().charAt(0).toUpperCase();}
+function brand(){return '<div class="brand"><div class="logo">🍽️</div><h1>HOSTELERO</h1><div class="tag">Punto de venta</div></div>';}
+function hoyISO(){return new Date().toISOString().slice(0,10);}
+
+function showSelect(){
+  pin='';sel=null;
+  var us=Auth.usuarios().map(function(u){var ri=rol(u.rol);
+    return '<button class="user" data-id="'+u.id+'"><span class="avatar" style="background:'+(u.color||ri.color)+'">'+ini(u.nombre)+'</span>'
+      +'<span class="un">'+esc(u.nombre)+'</span><span class="rolbadge" style="background:'+ri.color+'22;color:'+ri.color+'">'+esc(ri.nombre)+'</span></button>';
+  }).join('');
+  app.innerHTML='<div class="wrap">'+brand()+'<div class="panel"><div class="h2">Selecciona tu usuario</div><div class="users">'+us+'</div></div>'
+    +'<div class="foot-note">PIN demo · Admin 1111 · Encargado 2222 · Marta 3333 · Luis 4444 · Cocina 9999</div></div>';
+}
+function showPin(u){
+  sel=u;pin='';var ri=rol(u.rol);
+  var keys=['1','2','3','4','5','6','7','8','9','back','0','ok'];
+  var kp=keys.map(function(k){
+    if(k==='back')return '<button class="alt" data-k="back">⌫</button>';
+    if(k==='ok')return '<button class="alt" data-k="ok">OK</button>';
+    return '<button data-k="'+k+'">'+k+'</button>';
+  }).join('');
+  app.innerHTML='<div class="wrap"><div class="panel"><div class="pinwrap" id="pinwrap">'
+    +'<div class="pinhead"><span class="avatar" style="background:'+(u.color||ri.color)+'">'+ini(u.nombre)+'</span>'
+    +'<div style="font-weight:800;font-size:18px">Hola, '+esc(u.nombre)+'</div><div style="color:var(--soft);font-size:13px">Introduce tu PIN</div></div>'
+    +'<div class="dots" id="dots"></div><div class="keypad">'+kp+'</div>'
+    +'<button class="link" data-k="atras">← Cambiar de usuario</button></div></div></div>';
+  paintDots();
+}
+function paintDots(){var d=document.getElementById('dots');if(!d)return;var s='';for(var i=0;i<4;i++)s+='<span class="dot'+(i<pin.length?' on':'')+'"></span>';d.innerHTML=s;}
+function pinKey(k){
+  if(k==='atras')return showSelect();
+  if(k==='back'){pin=pin.slice(0,-1);return paintDots();}
+  if(k==='ok')return tryPin();
+  if(pin.length<4){pin+=k;paintDots();if(pin.length===4)setTimeout(tryPin,120);}
+}
+function tryPin(){
+  var u=Auth.loginPin(sel.id,pin);
+  if(u){showPersona(u);}
+  else{var w=document.getElementById('pinwrap');if(w){w.classList.add('shake');setTimeout(function(){w.classList.remove('shake');},400);}pin='';paintDots();toast('PIN incorrecto');}
+}
+function showPersona(u){
+  var est=Fichaje.estado(u.id),ri=rol(u.rol);
+  var estMap={fuera:['Fuera de turno','#e0436a22','#e0436a'],dentro:['En turno','#19b56222','#19b562'],pausa:['En pausa','#e0a02022','#e0a020']};
+  var em=estMap[est],btns='';
+  if(est==='fuera') btns='<div class="fich-btns"><button class="btn green block" data-f="entrada">🟢 Fichar entrada</button></div>';
+  else if(est==='dentro') btns='<div class="fich-btns two"><button class="btn amber" data-f="pausa_inicio">⏸️ Iniciar pausa</button><button class="btn red" data-f="salida">🔴 Fichar salida</button></div>';
+  else btns='<div class="fich-btns"><button class="btn green block" data-f="pausa_fin">▶️ Reanudar (fin de pausa)</button></div>';
+  var regs=Fichaje.registrosDe(u.id,hoyISO());
+  var rl=regs.length?regs.map(function(r){var t=Fichaje.TIPOS[r.tipo]||{etiqueta:r.tipo,icon:''};return '<div class="reg"><span>'+t.icon+' '+esc(t.etiqueta)+'</span><b>'+esc(r.hora)+'</b></div>';}).join(''):'<div class="reg">Aún no has fichado hoy</div>';
+  var mins=Fichaje.minutosDia(u.id,hoyISO()),hT=Math.floor(mins/60),mT=mins%60;
+  app.innerHTML='<div class="wrap"><div class="panel"><div class="persona">'
+    +'<div class="pcard"><span class="avatar" style="background:'+(u.color||ri.color)+'">'+ini(u.nombre)+'</span>'
+    +'<div><div style="font-weight:800;font-size:18px">'+esc(u.nombre)+'</div><div style="color:var(--soft);font-size:13px">'+esc(ri.nombre)+'</div></div></div>'
+    +'<div class="estado"><span>Estado de jornada</span><span class="pill" style="background:'+em[1]+';color:'+em[2]+'">'+em[0]+'</span></div>'
+    +btns
+    +'<div class="total">Trabajado hoy: <b style="color:var(--text)">'+hT+'h '+mT+'min</b></div>'
+    +'<div class="regs">'+rl+'</div>'
+    +'<button class="btn primary block" style="margin-top:16px" data-go="launcher">Entrar al sistema →</button>'
+    +'<button class="link" data-go="logout">Cerrar sesión</button>'
+    +'</div></div></div>';
+}
+function showLauncher(){
+  var s=Auth.sesion();if(!s)return showSelect();
+  var ri=rol(s.rol),apps=Auth.APPS;
+  var tiles=Object.keys(apps).map(function(key){
+    var a=apps[key],permitido=Auth.puedeAbrir(s.rol,key);
+    var cls='appcard'+(permitido?'':' locked');
+    var tag=!permitido?'<span class="lock">🔒</span>':(a.listo?'<span class="tagpill ok">Listo</span>':'<span class="tagpill">Próximamente</span>');
+    return '<button class="'+cls+'" data-app="'+key+'">'+tag+'<span class="ai">'+a.icon+'</span><span class="an">'+esc(a.nombre)+'</span><span class="ad">'+esc(a.desc)+'</span></button>';
+  }).join('');
+  app.innerHTML='<div class="wrap"><div class="topbar"><div class="me"><span class="avatar" style="width:42px;height:42px;font-size:18px;background:'+(s.color||ri.color)+'">'+ini(s.nombre)+'</span>'
+    +'<div><div class="un">'+esc(s.nombre)+'</div><div class="rl">'+esc(ri.nombre)+'</div></div></div>'
+    +'<div style="margin-left:auto;display:flex;gap:10px"><button class="btn ghost" data-go="persona">🕒 Fichaje</button><button class="btn ghost" data-go="logout">Cerrar sesión</button></div></div>'
+    +'<div class="panel"><div class="h2" style="text-align:left;margin-bottom:16px">Aplicaciones disponibles para tu rol</div><div class="apps">'+tiles+'</div></div></div>';
+}
+function abrirApp(key){
+  var s=Auth.sesion(),a=Auth.APPS[key];
+  if(!Auth.puedeAbrir(s.rol,key))return toast('Tu rol no tiene acceso a esta aplicación');
+  if(a.requierePassword)return modalPassword(key);
+  if(!a.listo)return toast(a.nombre+': llega en la próxima fase');
+  window.location.href=a.file;
+}
+function modalPassword(key){
+  var ov=document.createElement('div');ov.className='overlay';
+  ov.innerHTML='<div class="modal"><h3>⚙️ Acceso a Administración</h3>'
+    +'<div class="field"><label>Usuario</label><input id="au" autocomplete="off"></div>'
+    +'<div class="field"><label>Contraseña</label><input id="ap" type="password" autocomplete="off"></div>'
+    +'<div class="foot"><button class="btn ghost" data-x="cancel">Cancelar</button><button class="btn primary" data-x="ok">Entrar</button></div></div>';
+  document.body.appendChild(ov);
+  ov.addEventListener('click',function(e){
+    var x=e.target.closest('[data-x]');if(!x){if(e.target===ov)ov.remove();return;}
+    if(x.dataset.x==='cancel')return ov.remove();
+    var u=document.getElementById('au').value.trim(),p=document.getElementById('ap').value;
+    var ok=Auth.loginAdmin(u,p);
+    if(ok){ov.remove();var a=Auth.APPS[key];if(!a.listo){toast('Administración: llega en la próxima fase');}else{window.location.href=a.file;}}
+    else toast('Usuario o contraseña incorrectos');
+  });
+}
+document.addEventListener('click',function(e){
+  var u=e.target.closest('.user');if(u){var us=Auth.usuarios().filter(function(x){return x.id===u.dataset.id;})[0];if(us)showPin(us);return;}
+  var k=e.target.closest('[data-k]');if(k){pinKey(k.dataset.k);return;}
+  var f=e.target.closest('[data-f]');if(f){var s=Auth.sesion();var su=Auth.usuarios().filter(function(x){return x.id===s.id;})[0];Fichaje.fichar(su,f.dataset.f);var t=Fichaje.TIPOS[f.dataset.f];toast(t.icon+' '+t.etiqueta+' registrada');showPersona(su);return;}
+  var g=e.target.closest('[data-go]');if(g){var go=g.dataset.go;
+    if(go==='launcher')showLauncher();
+    else if(go==='logout'){Auth.logout();showSelect();}
+    else if(go==='persona'){var s2=Auth.sesion();var su2=Auth.usuarios().filter(function(x){return x.id===s2.id;})[0];showPersona(su2);}
+    return;}
+  var ap=e.target.closest('[data-app]');if(ap){abrirApp(ap.dataset.app);return;}
+});
+if(Auth.sesion()) showLauncher(); else showSelect();
+</script>
+</body>
 </html>

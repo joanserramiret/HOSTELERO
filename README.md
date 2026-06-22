@@ -33,8 +33,8 @@ Flujo de prueba:
 
 | Módulo | Estado | Qué hace |
 |---|---|---|
-| **Sala / Mesas** | ✅ | 4 salas, estados de mesa, comensales, tiempo de ocupación, total en vivo, aviso de cocina |
-| **Venta / Cobro** | ✅ | Carta con iconos, comanda, cantidades, IVA, **dividir cuenta + pago mixto + propina** |
+| **Sala / Mesas** | ✅ | 4 salas, **plano editable arrastrando mesas**, estados, comensales, tiempo y total en vivo, aviso de cocina |
+| **Venta / Cobro** | ✅ | Carta con iconos, **modificadores (con/sin, suplementos y extras múltiples)**, **menús/combinados**, IVA, **dividir cuenta + pago mixto + propina** |
 | **Cocina (KDS)** | ✅ | Envío de comandas, estados por plato (pendiente→preparando→listo), **avisador** de recogida |
 | **Productos / Stock** | ✅ | Alta/edición/baja, categorías, control de stock, aviso de stock bajo |
 | **Caja** | ✅ | Apertura, efectivo/tarjeta/propinas, arqueo y cierre con descuadre |
