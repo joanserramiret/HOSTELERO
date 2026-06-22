@@ -331,6 +331,25 @@ function load(){
 }
 function save(){ try{ if(typeof localStorage!=='undefined') localStorage.setItem(KEY,JSON.stringify(DB)); }catch(e){} }
 function resetDemo(){ DB=seed(); save(); }
+/* Unificación: el TPV lee la carta/mesas del MAESTRO del servidor si está disponible */
+function aplicarMaster(){
+  if(typeof window==='undefined'||!window.HOSTELERO_SYNC)return false;
+  var m=window.HOSTELERO_SYNC.master();
+  if(!m||!m.productos||!m.productos.length)return false;
+  DB.categorias=(m.categorias||[]).map(function(c,i){return {id:c.id,nombre:c.nombre,color:c.color||'#64748b',ic:c.ic||'🍽️',orden:(c.orden==null?i+1:c.orden)};});
+  DB.productos=(m.productos||[]).map(function(p){
+    var prod={id:p.id,nombre:p.nombre,categoriaId:p.categoriaId,precio:p.precio||0,ic:p.ic||'🍽️',stock:(p.stock==null?100:p.stock),controlStock:(p.controlStock!==false)&&!p.esMenu,activo:p.activo!==false,pasePorDefecto:p.pasePorDefecto||'Primeros'};
+    if(p.mods)prod.mods=p.mods;
+    if(p.esMenu){prod.esMenu=true;prod.pasos=p.pasos||[];prod.controlStock=false;}
+    return prod;
+  });
+  if(m.mesas&&m.mesas.length){
+    var prev={};(DB.mesas||[]).forEach(function(x){prev[x.id]=x;});
+    DB.salas=(m.salas||[]).map(function(s,i){return {id:s.id,nombre:s.nombre,orden:i+1};});
+    DB.mesas=m.mesas.map(function(mm,i){var pv=prev[mm.id]||{};return {id:mm.id,salaId:mm.salaId,nombre:mm.nombre,plazas:mm.plazas||4,forma:mm.forma||'cuadrada',estado:pv.estado||'libre',ticketId:pv.ticketId||null,x:(pv.x==null?((i%4)*156+24):pv.x),y:(pv.y==null?(Math.floor(i/4)*140+24):pv.y)};});
+  }
+  save();return true;
+}
 
 /* ---------- Operaciones base ---------- */
 var PASES=[
@@ -846,7 +865,7 @@ function onChange(e){
 
 if(typeof window!=='undefined'){ window.addEventListener('error',function(ev){ var er=document.getElementById('main'); if(er&&!er.innerHTML){ er.innerHTML='<div style="padding:40px;color:#e11d48">Error: '+esc(ev.message)+'</div>'; } }); }
 if(typeof document!=='undefined'){
-  function boot(){ load(); document.addEventListener('click',onClick); document.addEventListener('change',onChange);
+  function boot(){ load(); if(typeof window!=='undefined'&&window.HOSTELERO_SYNC){ aplicarMaster(); window.HOSTELERO_SYNC.onChange(function(){ if(aplicarMaster()&&!state.ticketActivo&&!state.editPlano) render(); }); } document.addEventListener('click',onClick); document.addEventListener('change',onChange);
     document.addEventListener('pointerdown',onPointerDown); document.addEventListener('pointermove',onPointerMove); document.addEventListener('pointerup',onPointerUp);
     render(); setInterval(function(){ if((state.view==='sala'||state.view==='cocina')&&!state.ticketActivo&&!state.editPlano&&!drag) render(); },20000); }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();

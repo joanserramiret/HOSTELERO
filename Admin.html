@@ -271,7 +271,7 @@ function guardarProd(id){
   var n=val('f_n').trim(); if(!n)return toast('Pon el nombre');
   var data={id:id||('p'+uid()),nombre:n,ic:val('f_ic')||'🍽️',categoriaId:val('f_c'),precio:parseFloat(val('f_pr'))||0,
     pasePorDefecto:val('f_pase'),stock:parseFloat(val('f_st'))||0,activo:chk('f_a')};
-  if(id) M.productos=M.productos.map(function(p){return p.id===id?data:p;}); else M.productos.push(data);
+  if(id) M.productos=M.productos.map(function(p){return p.id===id?Object.assign({},p,data):p;}); else M.productos.push(data);
   saveMaster();cerrar();render();toast('Producto guardado',true);
 }
 function guardarCat(){
