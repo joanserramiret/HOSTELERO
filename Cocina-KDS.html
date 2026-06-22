@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HOSTELERO · Cocina KDS</title>
+<style>
+:root{--bg:#0a0e16;--card:#141b28;--card2:#1c2536;--line:#2a3446;--text:#eef2f8;--soft:#8c97ab;
+--primary:#5b6cff;--green:#19b562;--amber:#e0a020;--red:#e0436a;--shadow:0 18px 50px rgba(0,0,0,.5)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);overflow:hidden;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;border:none;transition:transform .08s,background .15s}
+button:active{transform:scale(.97)}
+.app{height:100vh;display:flex;flex-direction:column}
+.top{height:62px;display:flex;align-items:center;gap:14px;padding:0 20px;background:#0f1622;border-bottom:1px solid var(--line);flex-shrink:0}
+.top h1{font-size:20px;font-weight:800;margin:0;letter-spacing:.5px}
+.top .sub{color:var(--soft);font-size:12px;font-weight:700}
+.dotmodo{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:5px}
+.right{margin-left:auto;display:flex;gap:10px;align-items:center}
+.btn{padding:10px 15px;border-radius:11px;background:var(--card2);color:#fff;font-weight:800;font-size:14px;border:1px solid var(--line)}
+.btn.ghost{background:transparent}
+.grid{flex:1;overflow:auto;padding:18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;align-content:start}
+.card{background:var(--card);border:1px solid var(--line);border-top:5px solid var(--primary);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+.card.aviso{border-top-color:var(--amber)}.card.urg{border-top-color:var(--red)}
+.chead{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--line)}
+.chead .m{font-size:21px;font-weight:900}
+.chead .cam{font-size:12px;color:var(--soft);font-weight:700}
+.chead .t{margin-left:auto;font-size:13px;color:var(--soft);font-weight:800}
+.kline{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid #101725}
+.kline.listo{opacity:.5}.kline.listo .kn{text-decoration:line-through}
+.kq{font-weight:900;color:var(--primary);font-size:20px;min-width:34px}
+.kn{flex:1;font-weight:700;font-size:17px}
+.kob{font-size:11px;font-weight:800;color:#fff;padding:2px 9px;border-radius:999px;margin-right:6px}
+.kdet{font-size:13px;color:var(--soft);font-weight:600;margin-top:3px}
+.kbtn{padding:10px 16px;border-radius:10px;font-weight:800;font-size:14px;color:#fff}
+.kbtn.prep{background:var(--primary)}.kbtn.listo{background:var(--green)}
+.tag{font-size:12px;font-weight:800;color:var(--green);padding:6px 10px}
+.cfoot{padding:12px 16px}
+.cfoot .btn{width:100%}
+.btn.avisar{background:var(--amber);color:#1a1205;border:none}
+.btn.recoger{background:var(--green);color:#fff;border:none}
+.empty{grid-column:1/-1;text-align:center;color:var(--soft);padding:70px 20px;font-size:18px;font-weight:600}
+.empty .e{font-size:54px;margin-bottom:12px}
+/* login */
+.login{height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.lcard{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:28px;max-width:380px;width:100%;box-shadow:var(--shadow);text-align:center}
+.lcard h2{margin:0 0 4px;font-size:22px;font-weight:800}
+.lcard p{color:var(--soft);font-size:13px;margin:0 0 18px}
+.users{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:8px}
+.u{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;align-items:center;gap:8px;color:#fff;min-width:96px}
+.av{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;color:#fff}
+.dots{display:flex;gap:12px;justify-content:center;margin:14px 0}
+.d{width:15px;height:15px;border-radius:50%;border:2px solid var(--line)}.d.on{background:var(--primary);border-color:var(--primary)}
+.kp{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.kp button{padding:18px;font-size:22px;font-weight:800;background:var(--card2);border:1px solid var(--line);border-radius:12px;color:#fff}
+.link{background:none;color:var(--soft);font-weight:700;margin-top:12px;padding:6px}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:80;display:flex;flex-direction:column;gap:8px;align-items:center}
+.toast{background:#0e1422;border:1px solid var(--line);padding:12px 20px;border-radius:12px;font-weight:700;box-shadow:var(--shadow)}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast"></div>
+<script src="engine.js"></script>
+<script src="sync.js"></script>
+<script>
+var Auth=window.HOSTELERO_AUTH, Sync=window.HOSTELERO_SYNC;
+var app=document.getElementById('app');
+var ORD={Bebidas:'#0ea5e9',Entrantes:'#16a34a',Primeros:'#2563eb',Segundos:'#7c3aed',Terceros:'#0891b2',Cuartos:'#9333ea',Postres:'#db2777'};
+var ORDLIST=['Bebidas','Entrantes','Primeros','Segundos','Terceros','Cuartos','Postres'];
+var sel=null,pin='';
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function toast(m){var r=document.getElementById('toast');var d=document.createElement('div');d.className='toast';d.textContent=m;r.appendChild(d);setTimeout(function(){d.remove();},2600);}
+function ini(n){return (n||'?').charAt(0).toUpperCase();}
+function ordColor(n){return ORD[n]||'#64748b';}
+function oi(n){var i=ORDLIST.indexOf(n);return i<0?99:i;}
+
+/* ---- Login ---- */
+function showLogin(){
+  var us=Auth.usuarios().map(function(u){var ri=Auth.rolInfo(u.rol);
+    return '<button class="u" data-id="'+u.id+'"><span class="av" style="background:'+(u.color||ri.color)+'">'+ini(u.nombre)+'</span>'+esc(u.nombre)+'</button>';});
+  app.innerHTML='<div class="login"><div class="lcard"><h2>👨‍🍳 Cocina · KDS</h2><p>Identifícate para abrir el monitor</p><div class="users">'+us.join('')+'</div></div></div>';
+}
+function showPin(u){sel=u;pin='';var ri=Auth.rolInfo(u.rol);
+  var keys=['1','2','3','4','5','6','7','8','9','b','0','ok'];
+  var kp=keys.map(function(k){return k==='b'?'<button data-k="back">⌫</button>':k==='ok'?'<button data-k="ok">OK</button>':'<button data-k="'+k+'">'+k+'</button>';}).join('');
+  app.innerHTML='<div class="login"><div class="lcard" id="pw"><span class="av" style="margin:0 auto;background:'+(u.color||ri.color)+'">'+ini(u.nombre)+'</span><h2 style="margin-top:10px">'+esc(u.nombre)+'</h2><p>Introduce tu PIN</p><div class="dots" id="dots"></div><div class="kp">'+kp+'</div><button class="link" data-k="atras">← Cambiar</button></div></div>';
+  dots();
+}
+function dots(){var d=document.getElementById('dots');if(d){var s='';for(var i=0;i<4;i++)s+='<span class="d'+(i<pin.length?' on':'')+'"></span>';d.innerHTML=s;}}
+function pk(k){if(k==='atras')return showLogin();if(k==='back'){pin=pin.slice(0,-1);return dots();}if(k==='ok')return tryPin();if(pin.length<4){pin+=k;dots();if(pin.length===4)setTimeout(tryPin,100);}}
+function tryPin(){var u=Auth.loginPin(sel.id,pin);if(u){if(Auth.puedeAbrir(u.rol,'cocina'))start();else{toast('Tu rol no accede a cocina');Auth.logout();showLogin();}}else{pin='';dots();toast('PIN incorrecto');}}
+
+/* ---- KDS ---- */
+function start(){ Sync.onChange(render); render(); }
+function render(){
+  if(!Auth.sesion())return;
+  var coms=Sync.comandas();
+  var cards=coms.length?coms.map(function(c){
+    var mins=Math.floor((Date.now()-(c.createdAt||Date.now()))/60000);
+    var urg=mins>=12?' urg':(mins>=7?' aviso':'');
+    var ls=c.lineas.slice().sort(function(a,b){return oi(a.orden||'Primeros')-oi(b.orden||'Primeros');});
+    var lis=ls.map(function(l){
+      var btn=l.estado==='pendiente'?'<button class="kbtn prep" data-act="prep" data-id="'+c.id+'" data-kid="'+l.kid+'">Empezar</button>'
+        :l.estado==='preparando'?'<button class="kbtn listo" data-act="listo" data-id="'+c.id+'" data-kid="'+l.kid+'">Listo ✓</button>'
+        :'<span class="tag">✓ Listo</span>';
+      var det='';
+      if(l.subs&&l.subs.length)det='<div class="kdet">'+l.subs.map(esc).join('<br>')+'</div>';
+      else if(l.mods&&l.mods.length)det='<div class="kdet">'+l.mods.map(function(m){return esc(m.n);}).join(' · ')+'</div>';
+      var ob='<span class="kob" style="background:'+ordColor(l.orden||'Primeros')+'">'+(l.orden||'Primeros')+'</span>';
+      return '<div class="kline '+(l.estado||'')+'"><span class="kq">'+l.cantidad+'×</span><span class="kn">'+ob+(l.ic||'')+' '+esc(l.nombre)+det+'</span>'+btn+'</div>';
+    }).join('');
+    var todoListo=c.lineas.length&&c.lineas.every(function(l){return l.estado==='listo';});
+    var foot=todoListo?(c.avisado?'<button class="btn recoger" data-act="recoger" data-id="'+c.id+'">📤 Recogido</button>':'<button class="btn avisar" data-act="avisar" data-id="'+c.id+'">🔔 Avisar camarero</button>'):'';
+    return '<div class="card'+urg+(c.avisado?' aviso':'')+'"><div class="chead"><span class="m">'+esc(c.mesa||'—')+'</span><span class="cam">'+esc(c.camarero||'')+'</span><span class="t">⏱ '+mins+'′</span></div>'+lis+(foot?'<div class="cfoot">'+foot+'</div>':'')+'</div>';
+  }).join(''):'<div class="empty"><div class="e">👨‍🍳</div>Sin comandas. Esperando pedidos…</div>';
+  var modo=Sync.modo();var mc=modo==='servidor'?'#19b562':'#e0a020';
+  app.innerHTML='<div class="app"><div class="top"><h1>👨‍🍳 Cocina</h1><span class="sub">'+coms.length+' comandas activas</span>'
+    +'<div class="right"><span class="sub"><span class="dotmodo" style="background:'+mc+'"></span>'+(modo==='servidor'?'En red (tiempo real)':'Local')+'</span><button class="btn ghost" data-act="logout">Salir</button></div></div>'
+    +'<div class="grid">'+cards+'</div></div>';
+}
+document.addEventListener('click',function(e){
+  var u=e.target.closest('.u');if(u){var us=Auth.usuarios().filter(function(x){return x.id===u.dataset.id;})[0];if(us)showPin(us);return;}
+  var k=e.target.closest('[data-k]');if(k){pk(k.dataset.k);return;}
+  var a=e.target.closest('[data-act]');if(!a)return;
+  var act=a.dataset.act;
+  if(act==='prep')Sync.setLinea(a.dataset.id,a.dataset.kid,'preparando');
+  else if(act==='listo')Sync.setLinea(a.dataset.id,a.dataset.kid,'listo');
+  else if(act==='avisar'){Sync.avisar(a.dataset.id);toast('🔔 Aviso enviado');}
+  else if(act==='recoger')Sync.recoger(a.dataset.id);
+  else if(act==='logout'){Auth.logout();showLogin();}
+});
+// refresco del cronómetro
+setInterval(function(){ if(Auth.sesion()) render(); },15000);
+if(Auth.sesion()&&Auth.puedeAbrir(Auth.sesion().rol,'cocina')) start(); else showLogin();
+</script>
+</body>
+</html>

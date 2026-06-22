@@ -19,8 +19,8 @@
   var APPS = {
     tpv:       { nombre: 'TPV · Venta',        icon: '💳', file: 'HOSTELERO-TPV.html',     desc: 'Terminal de venta y cobro',      listo: true  },
     comandera: { nombre: 'Comandera · Tablet', icon: '📋', file: 'Comandera-Tablet.html',  desc: 'Tomar comandas en sala',         listo: false },
-    movil:     { nombre: 'Comandera · Móvil',  icon: '📱', file: 'Comandera-Movil.html',   desc: 'Comandas desde el móvil',        listo: false },
-    cocina:    { nombre: 'Cocina · KDS',        icon: '👨‍🍳', file: 'Cocina-KDS.html',        desc: 'Monitor de cocina',              listo: false },
+    movil:     { nombre: 'Comandera · Móvil',  icon: '📱', file: 'Comandera-Movil.html',   desc: 'Comandas desde el móvil',        listo: true  },
+    cocina:    { nombre: 'Cocina · KDS',        icon: '👨‍🍳', file: 'Cocina-KDS.html',        desc: 'Monitor de cocina',              listo: true  },
     admin:     { nombre: 'Administración',      icon: '⚙️', file: 'Admin.html',             desc: 'Carta, usuarios, informes',      listo: false, requierePassword: true }
   };
 

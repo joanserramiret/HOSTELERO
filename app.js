@@ -16,7 +16,7 @@ function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){retur
 function svg(e){ return e||'🍽️'; }
 
 /* ---------- Capa de datos ---------- */
-var KEY='hostelero_db_v3';
+var KEY='hostelero_db_v4';
 var DB=null;
 
 function seed(){
@@ -47,11 +47,28 @@ function seed(){
   ];
   var salas=[{id:'s1',nombre:'Comedor',orden:1},{id:'s2',nombre:'Terraza',orden:2},{id:'s3',nombre:'Barra',orden:3},{id:'s4',nombre:'Reservado',orden:4}];
   var mesas=[];
-  for(var i=1;i<=12;i++) mesas.push({id:uid(),salaId:'s1',nombre:'M'+i,plazas:i%3===0?6:4,estado:'libre',ticketId:null,forma:(i%2?'cuadrada':'redonda'),x:((i-1)%4)*156+24,y:Math.floor((i-1)/4)*140+24});
-  for(var j=1;j<=8;j++) mesas.push({id:uid(),salaId:'s2',nombre:'T'+j,plazas:2,estado:'libre',ticketId:null,forma:'redonda',x:((j-1)%4)*150+24,y:Math.floor((j-1)/4)*140+24});
-  for(var k=1;k<=6;k++) mesas.push({id:uid(),salaId:'s3',nombre:'B'+k,plazas:1,estado:'libre',ticketId:null,forma:'barra',x:((k-1)%8)*92+24,y:24});
-  for(var r=1;r<=3;r++) mesas.push({id:uid(),salaId:'s4',nombre:'R'+r,plazas:10,estado:'libre',ticketId:null,forma:'rectangular',x:(r-1)*210+24,y:24});
+  function mk(sala,nombre,plazas,forma,x,y){ return {id:uid(),salaId:sala,nombre:nombre,plazas:plazas,estado:'libre',ticketId:null,forma:forma,x:x,y:y}; }
+  // Comedor — distribución variada y vistosa (demo para enseñar)
+  mesas.push(
+    mk('s1','M1',2,'redonda',24,24),  mk('s1','M2',2,'redonda',172,24), mk('s1','M3',4,'cuadrada',330,24), mk('s1','M4',4,'cuadrada',474,24), mk('s1','M5',2,'redonda',628,24),
+    mk('s1','M6',4,'cuadrada',24,170), mk('s1','M7',2,'redonda',182,180), mk('s1','Mesa Grande',8,'rectangular',330,178), mk('s1','M8',4,'cuadrada',548,170),
+    mk('s1','M9',2,'redonda',24,320), mk('s1','M10',2,'redonda',182,320), mk('s1','M11',4,'cuadrada',330,320), mk('s1','M12',2,'redonda',628,320)
+  );
+  // Terraza — mesas redondas
+  mesas.push(
+    mk('s2','T1',2,'redonda',40,40), mk('s2','T2',2,'redonda',200,40), mk('s2','T3',2,'redonda',360,40), mk('s2','T4',4,'redonda',520,40),
+    mk('s2','T5',2,'redonda',40,200), mk('s2','T6',2,'redonda',200,200), mk('s2','T7',2,'redonda',360,200), mk('s2','T8',4,'redonda',520,200)
+  );
+  // Barra — taburetes en fila
+  for(var k=1;k<=8;k++) mesas.push(mk('s3','B'+k,1,'barra',24+(k-1)*92,90));
+  // Reservado — grandes mesas
+  mesas.push(
+    mk('s4','Reservado A',12,'rectangular',60,60), mk('s4','Reservado B',12,'rectangular',60,210),
+    mk('s4','R3',6,'ovalada',430,60), mk('s4','R4',4,'redonda',470,220)
+  );
   // --- Fase 2b: modificadores y menús ---
+  var paseCat={c1:'Bebidas',c2:'Bebidas',c3:'Bebidas',c4:'Postres',c5:'Entrantes',c6:'Primeros',c7:'Primeros',c8:'Segundos',c9:'Segundos',c10:'Postres'};
+  productos.forEach(function(p){ p.pasePorDefecto=paseCat[p.categoriaId]||'Primeros'; });
   var setMods=function(nm,mods){ var p=productos.filter(function(x){return x.nombre===nm;})[0]; if(p)p.mods=mods; };
   setMods('Café Solo',[{n:'Leche',op:[{n:'Sin leche'},{n:'Entera'},{n:'Desnatada'},{n:'Avena',p:.30},{n:'Soja',p:.30}]}]);
   setMods('Café Leche',[{n:'Leche',op:[{n:'Entera'},{n:'Desnatada'},{n:'Avena',p:.30},{n:'Soja',p:.30}]},{n:'Tamaño',op:[{n:'Normal'},{n:'Grande',p:.40}]}]);
@@ -59,12 +76,12 @@ function seed(){
   setMods('Entrecot',[{n:'Punto',op:[{n:'Poco hecho'},{n:'Al punto'},{n:'Muy hecho'}]},{n:'Guarnición',op:[{n:'Patatas'},{n:'Ensalada'},{n:'Verduras',p:1.5}]},{n:'Extras',tipo:'check',op:[{n:'Huevo frito',p:1.0},{n:'Foie',p:4.0},{n:'Pimienta',p:.5}]}]);
   setMods('Solomillo',[{n:'Punto',op:[{n:'Poco hecho'},{n:'Al punto'},{n:'Muy hecho'}]},{n:'Guarnición',op:[{n:'Patatas'},{n:'Ensalada'},{n:'Verduras',p:1.5}]}]);
   setMods('Ensalada Mixta',[{n:'Extras',tipo:'check',op:[{n:'Atún',p:1.5},{n:'Queso',p:1.0},{n:'Pollo',p:2.0},{n:'Huevo',p:.8}]}]);
-  var menuDia={id:uid(),nombre:'Menú del Día',categoriaId:'c0',precio:13.9,ic:'🍽️',esMenu:true,activo:true,controlStock:false,stock:0,
+  var menuDia={id:uid(),nombre:'Menú del Día',categoriaId:'c0',precio:13.9,ic:'🍽️',esMenu:true,activo:true,controlStock:false,stock:0,pasePorDefecto:'Primeros',
     pasos:[ {n:'Primero',op:[{n:'Ensalada Mixta'},{n:'Gazpacho'},{n:'Ensaladilla'},{n:'Croquetas'}]},
             {n:'Segundo',op:[{n:'Pollo de Corral'},{n:'Calamares'},{n:'Entrecot',p:3.0},{n:'Paella',p:2.0}]},
             {n:'Postre o Café',op:[{n:'Flan'},{n:'Tarta de Queso'},{n:'Fruta'},{n:'Café'}]},
             {n:'Bebida',op:[{n:'Agua'},{n:'Caña'},{n:'Copa de Vino'},{n:'Refresco'}]} ]};
-  var menuInf={id:uid(),nombre:'Menú Infantil',categoriaId:'c0',precio:8.5,ic:'🧒',esMenu:true,activo:true,controlStock:false,stock:0,
+  var menuInf={id:uid(),nombre:'Menú Infantil',categoriaId:'c0',precio:8.5,ic:'🧒',esMenu:true,activo:true,controlStock:false,stock:0,pasePorDefecto:'Primeros',
     pasos:[ {n:'Plato',op:[{n:'Nuggets con patatas'},{n:'Macarrones'},{n:'Mini hamburguesa'}]},
             {n:'Postre',op:[{n:'Helado'},{n:'Natillas'},{n:'Fruta'}]},
             {n:'Bebida',op:[{n:'Agua'},{n:'Refresco'},{n:'Zumo'}]} ]};
@@ -96,6 +113,12 @@ var PASES=[
   {k:'cafe',    n:'Café',    c:'#92400e'},
   {k:'cuenta',  n:'Cuenta',  c:'#16a34a'}
 ];
+var ORDENES=[
+  {n:'Bebidas',c:'#0ea5e9'},{n:'Entrantes',c:'#16a34a'},{n:'Primeros',c:'#2563eb'},
+  {n:'Segundos',c:'#7c3aed'},{n:'Terceros',c:'#0891b2'},{n:'Cuartos',c:'#9333ea'},{n:'Postres',c:'#db2777'}
+];
+function ordenColor(n){ var o=ORDENES.filter(function(x){return x.n===n;})[0]; return o?o.c:'#64748b'; }
+function ordenProducto(p){ return (p&&p.pasePorDefecto)||'Primeros'; }
 function setPase(ticketId,delta){ var t=getTicket(ticketId); if(!t)return; var p=(t.pase||0)+delta; if(p<0)p=0; if(p>PASES.length-1)p=PASES.length-1; t.pase=p; save(); }
 function addMesa(salaId){ var n=DB.mesas.filter(function(m){return m.salaId===salaId;}).length+1; var m={id:uid(),salaId:salaId,nombre:'M'+n,plazas:4,estado:'libre',ticketId:null,forma:'redonda',x:40,y:40}; DB.mesas.push(m); save(); return m; }
 function updateMesa(id,d){ var m=getMesa(id); if(!m)return; if(d.nombre!=null)m.nombre=d.nombre; if(d.forma)m.forma=d.forma; if(d.plazas!=null)m.plazas=d.plazas; save(); }
@@ -124,17 +147,18 @@ function nuevoTicketBarra(){
 function setComensales(ticketId,n){ var t=getTicket(ticketId); if(t){t.comensales=n;save();} }
 function addProducto(ticketId,p,cant){
   cant=cant||1; var t=getTicket(ticketId); if(!t||t.estado!=='abierto')return;
-  var l=t.lineas.filter(function(x){return x.productoId===p.id && !x.enviado && !x.mods && !x.subs;})[0];
-  if(l) l.cantidad+=cant; else t.lineas.push({productoId:p.id,nombre:p.nombre,precio:p.precio,ic:p.ic,cantidad:cant,enviado:false,kestado:'nuevo'});
+  var orden=state.ordenActivo||ordenProducto(p);
+  var l=t.lineas.filter(function(x){return x.productoId===p.id && !x.enviado && !x.mods && !x.subs && (x.orden||'Primeros')===orden;})[0];
+  if(l) l.cantidad+=cant; else t.lineas.push({productoId:p.id,nombre:p.nombre,precio:p.precio,ic:p.ic,cantidad:cant,orden:orden,enviado:false,kestado:'nuevo'});
   save();
 }
 function addLineaConfig(ticketId,p,mods,precio){
   var t=getTicket(ticketId); if(!t||t.estado!=='abierto')return;
-  t.lineas.push({productoId:p.id,nombre:p.nombre,precio:round2(precio),ic:p.ic,cantidad:1,mods:mods,enviado:false,kestado:'nuevo'}); save();
+  t.lineas.push({productoId:p.id,nombre:p.nombre,precio:round2(precio),ic:p.ic,cantidad:1,mods:mods,orden:(state.ordenActivo||ordenProducto(p)),enviado:false,kestado:'nuevo'}); save();
 }
 function addMenu(ticketId,menu,subs,precio){
   var t=getTicket(ticketId); if(!t||t.estado!=='abierto')return;
-  t.lineas.push({productoId:menu.id,nombre:menu.nombre,precio:round2(precio),ic:menu.ic||'🍽️',cantidad:1,subs:subs,esMenu:true,enviado:false,kestado:'nuevo'}); save();
+  t.lineas.push({productoId:menu.id,nombre:menu.nombre,precio:round2(precio),ic:menu.ic||'🍽️',cantidad:1,subs:subs,esMenu:true,orden:(state.ordenActivo||menu.pasePorDefecto||'Primeros'),enviado:false,kestado:'nuevo'}); save();
 }
 function cambiarCantidad(ticketId,idx,delta){
   var t=getTicket(ticketId); if(!t)return; var l=t.lineas[idx]; if(!l)return;
@@ -216,7 +240,7 @@ if(typeof module!=='undefined'&&module.exports){
 }
 
 /* ================= INTERFAZ ================= */
-var state={view:'sala',salaSel:null,editPlano:false,ticketActivo:null,catSel:null,reservaFecha:null,
+var state={view:'sala',salaSel:null,editPlano:false,ordenActivo:null,ticketActivo:null,catSel:null,reservaFecha:null,
   cobro:{pagos:[],ent:'',metodo:'efectivo',propina:''}};
 
 function hoyISO(){ return new Date().toISOString().slice(0,10); }
@@ -294,7 +318,7 @@ function viewVenta(){
   }).join('');
   var uds=t.lineas.reduce(function(s,l){return s+l.cantidad;},0);
   var KEST={pendiente:['⏳','#d97706'],preparando:['🔥','#2563eb'],listo:['✅','#16a34a'],recogido:['📤','#94a3b8']};
-  var lineas=t.lineas.length?t.lineas.map(function(l,i){
+  function renderLinea(l,i){
     var k=l.enviado?'<span class="kbadge" style="color:'+(KEST[l.kestado]?KEST[l.kestado][1]:'#94a3b8')+'">'+(KEST[l.kestado]?KEST[l.kestado][0]:'')+'</span>':'';
     var lock=l.enviado?' enviado':'';
     var det='';
@@ -303,8 +327,18 @@ function viewVenta(){
     return '<div class="linea'+lock+'"><span class="lic">'+(l.ic||'•')+'</span><div class="ln"><b>'+esc(l.nombre)+' '+k+'</b><span>'+eur(l.precio)+(l.enviado?' · en cocina':'')+'</span>'+det+'</div>'
       +'<button class="qtybtn" data-act="menos" data-idx="'+i+'">−</button><span class="qty">'+l.cantidad+'</span>'
       +'<button class="qtybtn" data-act="mas" data-idx="'+i+'">+</button><span class="imp">'+eur(l.precio*l.cantidad)+'</span></div>';
-  }).join(''):'<div class="empty"><div class="emoji">🧾</div>Toca productos para añadirlos a la comanda</div>';
+  }
+  var lineas;
+  if(t.lineas.length){
+    lineas=''; var _usados={};
+    ORDENES.forEach(function(o){
+      var idxs=[]; t.lineas.forEach(function(l,i){ if((l.orden||'Primeros')===o.n){ idxs.push(i); _usados[i]=1; } });
+      if(idxs.length){ lineas+='<div class="orden-head" style="background:'+o.c+'">'+o.n+'</div>'+idxs.map(function(i){return renderLinea(t.lineas[i],i);}).join(''); }
+    });
+    t.lineas.forEach(function(l,i){ if(!_usados[i]) lineas+=renderLinea(l,i); });
+  } else { lineas='<div class="empty"><div class="emoji">🧾</div>Toca productos para añadirlos a la comanda</div>'; }
   var total=totalLineas(t.lineas); var iva=desgloseIVA(total);
+  var ordenBar=state.ordenActivo?('<div class="orden-activo" style="background:'+ordenColor(state.ordenActivo)+'">A\u00f1adiendo a cocina como: <b>'+state.ordenActivo.toUpperCase()+'</b><button data-act="ordendef">Volver al predefinido \u2715</button></div>'):'';
   var pend=lineasPendientesEnvio(t);
   var cms=t.comensales?('👤 '+t.comensales+' comensales'):'👤 Comensales';
   var _P=PASES[t.pase||0]||PASES[0], _nP=PASES[(t.pase||0)+1], _pP=PASES[(t.pase||0)-1];
@@ -313,7 +347,7 @@ function viewVenta(){
     +'<div class="ttl"><h1>'+esc(t.mesaNombre||'Ticket')+'</h1><span class="sub">Ticket #'+t.numero+'</span></div>'
     +'<div class="right">'+pasectrl+'<button class="btn ghost" data-act="comensales">'+cms+'</button><button class="btn danger-ghost" data-act="anular">Anular</button></div></div>'
     +'<div class="content venta-content"><div class="venta">'
-    +'<div class="carta"><div class="cat-bar">'+chips+'</div><div class="prod-grid">'+pg+'</div></div>'
+    +'<div class="carta">'+ordenBar+'<div class="cat-bar"><button class="btn123" data-act="orden123" title="Orden de platos">123</button>'+chips+'</div><div class="prod-grid">'+pg+'</div></div>'
     +'<div class="card ticket"><div class="thead"><b>Comanda</b><span class="uds">'+uds+' uds</span></div><div class="lineas">'+lineas+'</div>'
     +'<div class="tfoot">'
     +'<button class="btn outline block'+(pend?'':' off')+'" '+(pend?'':'disabled')+' data-act="enviarCocina">👨‍🍳 Enviar a cocina'+(pend?' ('+pend+')':'')+'</button>'
@@ -329,7 +363,9 @@ function viewCocina(){
   var cards=coms.length?coms.map(function(c){
     var t=c.ticket; var mins=minsDesde(t.cocinaAt||t.createdAt);
     var urg=mins>=12?' urgente':(mins>=7?' aviso':'');
-    var lis=c.lineas.map(function(l){
+    var _oi=function(n){ for(var z=0;z<ORDENES.length;z++) if(ORDENES[z].n===n) return z; return 99; };
+    var _ls=c.lineas.slice().sort(function(a,b){return _oi(a.orden||'Primeros')-_oi(b.orden||'Primeros');});
+    var lis=_ls.map(function(l){
       var btn='';
       if(l.kestado==='pendiente') btn='<button class="btn sm primary" data-act="kprep" data-tid="'+t.id+'" data-kid="'+l.kid+'">Empezar</button>';
       else if(l.kestado==='preparando') btn='<button class="btn sm green" data-act="klisto" data-tid="'+t.id+'" data-kid="'+l.kid+'">Listo</button>';
@@ -337,7 +373,8 @@ function viewCocina(){
       var kd='';
       if(l.subs&&l.subs.length) kd='<div class="kdet">'+l.subs.map(function(x){return esc(x);}).join('<br>')+'</div>';
       else if(l.mods&&l.mods.length) kd='<div class="kdet">'+l.mods.map(function(m){return esc(m.n);}).join(' · ')+'</div>';
-      return '<div class="kline '+l.kestado+'"><span class="kq">'+l.cantidad+'×</span><span class="kn">'+(l.ic||'')+' '+esc(l.nombre)+kd+'</span>'+btn+'</div>';
+      var ob='<span class="kob" style="background:'+ordenColor(l.orden||'Primeros')+'">'+(l.orden||'Primeros')+'</span>';
+      return '<div class="kline '+l.kestado+'"><span class="kq">'+l.cantidad+'×</span><span class="kn">'+ob+' '+(l.ic||'')+' '+esc(l.nombre)+kd+'</span>'+btn+'</div>';
     }).join('');
     var foot=ticketTodoListo(t)
       ? (t.avisado
@@ -433,7 +470,7 @@ function viewInformes(){
 }
 
 /* ----- MODALES ----- */
-function openModal(html){ document.getElementById('modalRoot').innerHTML='<div class="overlay" data-act="closeModal">'+html+'</div>'; }
+function openModal(html){ document.getElementById('modalRoot').innerHTML='<div class="overlay">'+html+'</div>'; }
 function closeModal(){ document.getElementById('modalRoot').innerHTML=''; }
 
 function modalComensales(){
@@ -475,6 +512,7 @@ function modalProducto(p){
     +'<div class="inline"><div class="field" style="flex:1"><label>Precio (€)</label><input id="mp_p" type="number" step="0.10" value="'+(p?p.precio:'')+'"></div>'
     +'<div class="field" style="flex:1"><label>Stock</label><input id="mp_s" type="number" value="'+(p?p.stock:0)+'"></div></div>'
     +'<div class="field"><label>Categoría</label><select id="mp_c">'+cats+'</select></div>'
+    +'<div class="field"><label>Pase por defecto (cocina)</label><select id="mp_pase">'+ORDENES.map(function(o){return '<option value="'+o.n+'"'+((p?(p.pasePorDefecto||'Primeros'):'Primeros')===o.n?' selected':'')+'>'+o.n+'</option>';}).join('')+'</select></div>'
     +'<div class="inline"><label class="chk"><input type="checkbox" id="mp_cs" '+(!p||p.controlStock?'checked':'')+'> Controlar stock</label>'
     +'<label class="chk"><input type="checkbox" id="mp_a" '+(!p||p.activo?'checked':'')+'> Activo</label></div>'
     +'</div><div class="foot">'+(p?'<button class="btn danger-ghost" data-act="delp" data-id="'+p.id+'" style="margin-right:auto">Eliminar</button>':'')
@@ -495,6 +533,7 @@ function modalReserva(){
 /* ----- EVENTOS ----- */
 function onClick(e){
   var navBtn=e.target.closest('.nav-item'); if(navBtn){ state.view=navBtn.dataset.view; state.ticketActivo=null; render(); return; }
+  if(e.target.classList&&e.target.classList.contains('overlay')){ closeModal(); return; }
   var el=e.target.closest('[data-act]'); if(!el)return;
   var a=el.dataset.act, id=el.dataset.id;
   if(a==='closeModal'){ closeModal(); return; }
@@ -506,13 +545,16 @@ function onClick(e){
     case 'delmesa': { var rdel=deleteMesa(el.dataset.id); if(rdel==='ocupada'){ alert('No se puede eliminar una mesa ocupada.'); } else { closeModal(); render(); } break; }
     case 'pasenext': setPase(state.ticketActivo,1); render(); break;
     case 'paseprev': setPase(state.ticketActivo,-1); render(); break;
-    case 'mesa': { if(state.editPlano)break; var m=getMesa(id); var t=abrirTicketMesa(m); state.ticketActivo=t.id; state.catSel=null; render(); if(!t.comensales) modalComensales(); break; }
-    case 'barra': { var t2=nuevoTicketBarra(); state.ticketActivo=t2.id; state.catSel=null; render(); break; }
+    case 'mesa': { if(state.editPlano)break; var m=getMesa(id); var t=abrirTicketMesa(m); state.ticketActivo=t.id; state.catSel=null; state.ordenActivo=null; render(); if(!t.comensales) modalComensales(); break; }
+    case 'barra': { var t2=nuevoTicketBarra(); state.ticketActivo=t2.id; state.catSel=null; state.ordenActivo=null; render(); break; }
     case 'volver': state.ticketActivo=null; render(); break;
     case 'comensales': modalComensales(); break;
     case 'setcms': { document.getElementById('cms_n').value=el.dataset.n; document.querySelectorAll('.cms-btn').forEach(function(b){b.classList.toggle('active',b.dataset.n===el.dataset.n);}); break; }
     case 'savecms': { var v=parseInt(document.getElementById('cms_n').value)||null; setComensales(state.ticketActivo,v); closeModal(); render(); break; }
     case 'cat': state.catSel=id; render(); break;
+    case 'orden123': modal123(); break;
+    case 'setorden': state.ordenActivo=el.dataset.o; closeModal(); render(); break;
+    case 'ordendef': state.ordenActivo=null; closeModal(); render(); break;
     case 'add': { var p=getProducto(id); if(p.controlStock&&p.stock<=0)break; if(p.esMenu){openMenu(p);} else if(p.mods&&p.mods.length){openConfig(p);} else {addProducto(state.ticketActivo,p);render();} break; }
     case 'cfgsel': { var cg=+el.dataset.g, co=+el.dataset.o; var grp=getProducto(state.cfg.pid).mods[cg]; if(grp.tipo==='check'){ var arr=state.cfg.sel[cg]; var ix=arr.indexOf(co); if(ix>=0)arr.splice(ix,1); else arr.push(co); } else { state.cfg.sel[cg]=co; } modalConfig(); break; }
     case 'addcfg': confirmConfig(); break;
@@ -555,7 +597,7 @@ function saveProducto(id){
   var n=document.getElementById('mp_n').value.trim(); if(!n){alert('Pon el nombre');return;}
   var data={id:id||uid(),nombre:n,ic:document.getElementById('mp_ic').value||'🍽️',categoriaId:document.getElementById('mp_c').value,
     precio:parseFloat(document.getElementById('mp_p').value)||0,stock:parseFloat(document.getElementById('mp_s').value)||0,
-    controlStock:document.getElementById('mp_cs').checked,activo:document.getElementById('mp_a').checked};
+    controlStock:document.getElementById('mp_cs').checked,activo:document.getElementById('mp_a').checked,pasePorDefecto:(document.getElementById('mp_pase')?document.getElementById('mp_pase').value:'Primeros')};
   if(id){ DB.productos=DB.productos.map(function(p){return p.id===id?data:p;}); } else { DB.productos.push(data); }
   save(); closeModal(); render();
 }
@@ -658,4 +700,10 @@ function modalMesaEditor(id){
     +'<div class="field" style="width:96px"><label>Plazas</label><input id="me_p" type="number" value="'+(m.plazas||4)+'"></div></div>'
     +'</div><div class="foot"><button class="btn danger-ghost" data-act="delmesa" data-id="'+m.id+'" style="margin-right:auto">Eliminar</button>'
     +'<button class="btn ghost" data-act="closeModal">Cancelar</button><button class="btn primary" data-act="savemesa" data-id="'+m.id+'">Guardar</button></div></div>');
+}
+
+/* ----- 123: orden de los platos ----- */
+function modal123(){
+  var ops=ORDENES.map(function(o){return '<button class="orden-opt'+(state.ordenActivo===o.n?' active':'')+'" data-act="setorden" data-o="'+o.n+'"><span class="oc" style="background:'+o.c+'"></span>'+o.n+'</button>';}).join('');
+  openModal('<div class="modal sm" data-stop><h2>Orden de los platos (123)</h2><div class="mbody"><p class="muted" style="margin:0 0 12px">Lo que añadas entrará en cocina con este pase.</p><div class="orden-list">'+ops+'</div><button class="btn ghost block" data-act="ordendef" style="margin-top:12px">↩︎ Volver al orden predefinido de cada plato</button></div><div class="foot"><button class="btn ghost" data-act="closeModal">Cerrar</button></div></div>');
 }
