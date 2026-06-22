@@ -43,11 +43,11 @@
   /* ---- Empleados por defecto (cámbialos en Administración) ---- */
   function seedUsuarios() {
     return [
-      { id: uid(), nombre: 'Admin',     rol: 'admin',     pin: '1111', usuario: 'admin',     password: 'admin', color: '#4f46e5', activo: true },
-      { id: uid(), nombre: 'Encargado', rol: 'encargado', pin: '2222', usuario: 'encargado', password: '1234',  color: '#0891b2', activo: true },
-      { id: uid(), nombre: 'Marta',     rol: 'camarero',  pin: '3333', color: '#16a34a', activo: true },
-      { id: uid(), nombre: 'Luis',      rol: 'camarero',  pin: '4444', color: '#15803d', activo: true },
-      { id: uid(), nombre: 'Cocina',    rol: 'cocina',    pin: '9999', color: '#d97706', activo: true }
+      { id: 'u1', nombre: 'Admin',     rol: 'admin',     pin: '1111', usuario: 'admin',     password: 'admin', color: '#4f46e5', activo: true },
+      { id: 'u2', nombre: 'Encargado', rol: 'encargado', pin: '2222', usuario: 'encargado', password: '1234',  color: '#0891b2', activo: true },
+      { id: 'u3', nombre: 'Marta',     rol: 'camarero',  pin: '3333', color: '#16a34a', activo: true },
+      { id: 'u4', nombre: 'Luis',      rol: 'camarero',  pin: '4444', color: '#15803d', activo: true },
+      { id: 'u5', nombre: 'Cocina',    rol: 'cocina',    pin: '9999', color: '#d97706', activo: true }
     ];
   }
 
