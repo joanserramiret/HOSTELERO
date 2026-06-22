@@ -7,7 +7,7 @@
   var listeners = [], state = { comandas: [], v: 0 }, modo = 'local';
   var esServidor = (typeof location !== 'undefined' && (location.protocol === 'http:' || location.protocol === 'https:'));
   function emit() { listeners.forEach(function (f) { try { f(state); } catch (e) {} }); }
-  function setState(s) { if (s) { state = s; emit(); } }
+  function setState(s) { if (s) { state = s; try { if (s.master) localStorage.setItem('hostelero_master_cache', JSON.stringify(s.master)); } catch (e) {} emit(); } }
   function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
   function getC(id) { return state.comandas.filter(function (c) { return c.id === id; })[0]; }
 
@@ -28,6 +28,7 @@
   function initLocal() {
     modo = 'local';
     try { var r = localStorage.getItem(KEY); if (r) state = JSON.parse(r); } catch (e) {}
+    if (!state.fichajes) state.fichajes = [];
     if (typeof BroadcastChannel !== 'undefined') { bc = new BroadcastChannel('hostelero_sync'); bc.onmessage = function (e) { if (e.data && e.data.t === 'state') setState(e.data.state); }; }
     if (typeof window !== 'undefined') window.addEventListener('storage', function (e) { if (e.key === KEY && e.newValue) { try { setState(JSON.parse(e.newValue)); } catch (er) {} } });
   }
@@ -50,7 +51,11 @@
     todoListo: function (id) { var c = getC(id); return !!c && c.lineas.length > 0 && c.lineas.every(function (l) { return l.estado === 'listo'; }); },
     avisar: function (id) { if (modo === 'servidor') return post('/api/avisar', { id: id }); var c = getC(id); if (c) { c.avisado = true; commitLocal(); } },
     recoger: function (id) { if (modo === 'servidor') return post('/api/recoger', { id: id }); var c = getC(id); if (c) { c.estado = 'recogida'; c.avisado = false; commitLocal(); } },
-    reset: function () { if (modo === 'servidor') return post('/api/reset', {}); state = { comandas: [], v: (state.v || 0) + 1 }; commitLocal(); }
+    reset: function () { if (modo === 'servidor') return post('/api/reset', {}); state = { comandas: [], v: (state.v || 0) + 1 }; commitLocal(); },
+    master: function () { return state.master || { categorias: [], productos: [], salas: [], mesas: [] }; },
+    guardarMaster: function (m) { if (modo === 'servidor') return post('/api/master', { master: m }); state.master = m; commitLocal(); },
+    fichajes: function () { return state.fichajes || []; },
+    fichar: function (reg) { if (modo === 'servidor') return post('/api/fichaje', { registro: reg }); if (!state.fichajes) state.fichajes = []; reg.id = reg.id || uid(); state.fichajes.push(reg); commitLocal(); }
   };
 
   if (esServidor) initServidor(); else initLocal();

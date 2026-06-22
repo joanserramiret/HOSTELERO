@@ -21,7 +21,7 @@
     comandera: { nombre: 'Comandera · Tablet', icon: '📋', file: 'Comandera-Tablet.html',  desc: 'Tomar comandas en sala',         listo: false },
     movil:     { nombre: 'Comandera · Móvil',  icon: '📱', file: 'Comandera-Movil.html',   desc: 'Comandas desde el móvil',        listo: true  },
     cocina:    { nombre: 'Cocina · KDS',        icon: '👨‍🍳', file: 'Cocina-KDS.html',        desc: 'Monitor de cocina',              listo: true  },
-    admin:     { nombre: 'Administración',      icon: '⚙️', file: 'Admin.html',             desc: 'Carta, usuarios, informes',      listo: false, requierePassword: true }
+    admin:     { nombre: 'Administración',      icon: '⚙️', file: 'Admin.html',             desc: 'Carta, usuarios, informes',      listo: true,  requierePassword: true }
   };
 
   /* ---- Qué apps puede abrir cada rol ---- */
@@ -52,6 +52,9 @@
   }
 
   function loadUsuarios() {
+    // 1º usuarios centralizados del servidor (cacheados por sync.js)
+    try { var mc = localStorage.getItem('hostelero_master_cache'); if (mc) { var m = JSON.parse(mc); if (m && m.usuarios && m.usuarios.length) return m.usuarios; } } catch (e) {}
+    // 2º cache local antiguo  3º semilla por defecto
     try { var r = localStorage.getItem(AUTH_KEY); if (r) return JSON.parse(r); } catch (e) {}
     var u = seedUsuarios(); saveUsuarios(u); return u;
   }
@@ -74,7 +77,8 @@
       return null;
     },
     loginAdmin: function (usuario, password) {
-      var u = loadUsuarios().filter(function (x) { return x.usuario === usuario && x.password === password && x.activo; })[0];
+      function find(list) { return list.filter(function (x) { return x.usuario === usuario && x.password === password && x.activo !== false; })[0]; }
+      var u = find(loadUsuarios()) || find(seedUsuarios()); // red de seguridad: el admin de fábrica siempre entra
       if (u && (u.rol === 'admin' || u.rol === 'encargado')) { return u; }
       return null;
     },
@@ -96,6 +100,12 @@
   var FICH_KEY = 'hostelero_fichajes_v1';
   function loadFichajes() { try { var r = localStorage.getItem(FICH_KEY); if (r) return JSON.parse(r); } catch (e) {} return []; }
   function saveFichajes(a) { try { localStorage.setItem(FICH_KEY, JSON.stringify(a)); } catch (e) {} }
+  // Lee los fichajes del SERVIDOR si está conectado (centralizado), si no, locales.
+  function _regs() {
+    var S = (typeof window !== 'undefined') && window.HOSTELERO_SYNC;
+    if (S && S.modo && S.modo() === 'servidor' && S.fichajes) return S.fichajes();
+    return loadFichajes();
+  }
   function pad2(n) { return String(n).length < 2 ? '0' + n : String(n); }
   function fechaDe(ts) { var d = new Date(ts); return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
 
@@ -108,9 +118,9 @@
 
   var Fichaje = {
     TIPOS: TIPOS,
-    registros: function () { return loadFichajes(); },
+    registros: function () { return _regs(); },
     registrosDe: function (usuarioId, fecha) {
-      return loadFichajes().filter(function (r) { return r.usuarioId === usuarioId && (!fecha || r.fecha === fecha); })
+      return _regs().filter(function (r) { return r.usuarioId === usuarioId && (!fecha || r.fecha === fecha); })
         .sort(function (a, b) { return a.ts - b.ts; });
     },
     // 'fuera' | 'dentro' | 'pausa'
@@ -140,6 +150,8 @@
         dispositivo: (typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 80) : 'engine'),
         modificado: false
       };
+      var S = (typeof window !== 'undefined') && window.HOSTELERO_SYNC;
+      if (S && S.modo && S.modo() === 'servidor' && S.fichar) { S.fichar(reg); return reg; }
       var a = loadFichajes(); a.push(reg); saveFichajes(a); return reg;
     },
     // minutos trabajados en una fecha (jornada menos pausas)

@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HOSTELERO · Administración</title>
+<style>
+:root{--bg:#f4f6fb;--panel:#fff;--panel2:#f6f8fb;--line:#e6eaf0;--text:#1a2233;--soft:#7c879b;
+--primary:#4f46e5;--primaryd:#4338ca;--green:#16a34a;--red:#e11d48;--amber:#d97706;
+--radius:14px;--shadow:0 1px 2px rgba(16,24,40,.04),0 8px 24px rgba(16,24,40,.06)}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;border:none;transition:.12s}
+input,select{font-family:inherit;font-size:15px;outline:none}
+input:focus,select:focus{border-color:var(--primary)!important;box-shadow:0 0 0 3px rgba(79,70,229,.15)}
+.app{display:flex;height:100vh}
+.side{width:230px;background:#11161f;color:#cbd5e1;flex-shrink:0;display:flex;flex-direction:column;padding:18px 14px}
+.brand{font-weight:800;font-size:16px;color:#fff;margin:4px 8px 22px;letter-spacing:.5px}
+.brand small{display:block;font-size:10px;color:#5b6678;letter-spacing:2px;font-weight:700}
+.nav{display:flex;flex-direction:column;gap:4px}
+.nav button{display:flex;align-items:center;gap:11px;padding:12px 14px;border-radius:11px;background:transparent;color:#9aa6bd;font-weight:700;font-size:15px;text-align:left}
+.nav button:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav button.active{background:var(--primary);color:#fff}
+.side .sp{flex:1}
+.side .me{font-size:12px;color:#7c879b;padding:10px 14px}
+.side .out{background:#1c2536;color:#cbd5e1;border-radius:10px;padding:10px;font-weight:700}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.top{height:62px;background:var(--panel);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 22px;gap:12px;flex-shrink:0}
+.top h1{font-size:20px;margin:0;font-weight:800}
+.top .modo{margin-left:auto;font-size:12px;font-weight:700;color:var(--soft)}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:5px}
+.content{flex:1;overflow:auto;padding:22px}
+.btn{padding:10px 16px;border-radius:10px;background:var(--primary);color:#fff;font-weight:700;font-size:14px}
+.btn:hover{background:var(--primaryd)}
+.btn.ghost{background:var(--panel);color:var(--text);border:1px solid var(--line)}
+.btn.red{background:var(--red)}
+.btn.sm{padding:7px 12px;font-size:13px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.bar{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.bar h2{font-size:18px;margin:0;font-weight:800}
+.bar .r{margin-left:auto;display:flex;gap:10px}
+table{width:100%;border-collapse:collapse}
+th,td{padding:11px 14px;text-align:left;border-bottom:1px solid var(--line);font-size:14px}
+th{color:var(--soft);font-size:11px;text-transform:uppercase;letter-spacing:.4px;font-weight:800}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--panel2)}
+.badge{font-size:11px;padding:3px 9px;border-radius:999px;font-weight:800}
+.tic{font-size:18px}
+.catgrp{font-weight:800;font-size:13px;color:#fff;padding:7px 14px;border-radius:8px;margin:18px 0 8px}
+.avatar{width:30px;height:30px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:14px}
+.mesas-prev{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.mp{padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:var(--panel2);font-weight:700;font-size:13px}
+.overlay{position:fixed;inset:0;background:rgba(15,23,42,.5);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px}
+.modal{background:var(--panel);border-radius:18px;width:100%;max-width:460px;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden;max-height:94vh;overflow-y:auto}
+.modal h3{margin:0;padding:18px 22px;border-bottom:1px solid var(--line);font-size:18px}
+.mb{padding:20px 22px}
+.foot{padding:16px 22px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;font-weight:700;color:var(--soft);margin-bottom:6px}
+.field input,.field select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
+.row{display:flex;gap:12px}.row .field{flex:1}
+.chk{display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px}
+/* login */
+.login{height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.lc{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:30px;max-width:380px;width:100%;box-shadow:var(--shadow)}
+.lc h2{margin:0 0 4px;font-size:22px}.lc p{color:var(--soft);font-size:13px;margin:0 0 20px}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:80;display:flex;flex-direction:column;gap:8px;align-items:center}
+.toast{background:#0f172a;color:#fff;padding:12px 20px;border-radius:12px;font-weight:700;box-shadow:var(--shadow)}
+.toast.ok{background:var(--green)}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast"></div>
+<script src="engine.js"></script>
+<script src="sync.js"></script>
+<script>
+var Auth=window.HOSTELERO_AUTH, Sync=window.HOSTELERO_SYNC, Fichaje=window.HOSTELERO_FICHAJE;
+var app=document.getElementById('app');
+var ORDLIST=['Bebidas','Entrantes','Primeros','Segundos','Terceros','Cuartos','Postres'];
+var FORMAS=[['cuadrada','Cuadrada'],['redonda','Redonda'],['rectangular','Rectangular'],['ovalada','Ovalada'],['barra','Taburete (barra)']];
+var sesion=null, tab='carta', M=null, modalOpen=false;
+
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function clone(o){return JSON.parse(JSON.stringify(o||{}));}
+function toast(m,ok){var r=document.getElementById('toast');var d=document.createElement('div');d.className='toast '+(ok?'ok':'');d.textContent=m;r.appendChild(d);setTimeout(function(){d.remove();},2400);}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function ini(n){return (n||'?').charAt(0).toUpperCase();}
+function saveMaster(){ Sync.guardarMaster(M); }
+
+/* ---- login (contraseña) ---- */
+function showLogin(){
+  app.innerHTML='<div class="login"><div class="lc"><h2>⚙️ Administración</h2><p>Acceso restringido (encargado / administrador)</p>'
+    +'<div class="field"><label>Usuario</label><input id="u" autocomplete="off" placeholder="admin"></div>'
+    +'<div class="field"><label>Contraseña</label><input id="p" type="password" autocomplete="off"></div>'
+    +'<button class="btn" style="width:100%" id="entrar">Entrar</button>'
+    +'<p style="margin-top:14px;font-size:12px">Demo: admin / admin</p></div></div>';
+  document.getElementById('entrar').onclick=login;
+  document.getElementById('p').onkeydown=function(e){if(e.key==='Enter')login();};
+}
+function login(){
+  var u=document.getElementById('u').value.trim(), p=document.getElementById('p').value;
+  var ok=Auth.loginAdmin(u,p);
+  if(ok){ sesion=ok; render(); } else toast('Usuario o contraseña incorrectos');
+}
+
+/* ---- layout ---- */
+function render(){
+  if(!sesion)return showLogin();
+  if(!M) M=clone(Sync.master());
+  var modo=Sync.modo();
+  var navs=[['carta','🍽️ Carta'],['mesas','🪑 Mesas y salas'],['empleados','👤 Empleados'],['fichaje','🕒 Fichajes']];
+  var nav=navs.map(function(n){return '<button class="'+(tab===n[0]?'active':'')+'" data-tab="'+n[0]+'">'+n[1]+'</button>';}).join('');
+  var body= tab==='carta'?viewCarta() : tab==='mesas'?viewMesas() : tab==='empleados'?viewEmpleados() : viewFichaje();
+  app.innerHTML='<div class="app"><aside class="side"><div class="brand">HOSTELERO<small>ADMINISTRACIÓN</small></div>'
+    +'<div class="nav">'+nav+'</div><div class="sp"></div><div class="me">'+esc(sesion.nombre)+' · '+esc(Auth.rolInfo(sesion.rol).nombre)+'</div><button class="out" data-act="logout">Cerrar sesión</button></aside>'
+    +'<div class="main"><div class="top"><h1>'+({carta:'Carta',mesas:'Mesas y salas',empleados:'Empleados',fichaje:'Registro de jornada'}[tab])+'</h1>'
+    +'<span class="modo"><span class="dot" style="background:'+(modo==='servidor'?'#16a34a':'#d97706')+'"></span>'+(modo==='servidor'?'En red (servidor)':'Local')+'</span></div>'
+    +'<div class="content">'+body+'</div></div></div>';
+}
+
+/* ---- CARTA ---- */
+function viewCarta(){
+  var cats=(M.categorias||[]).slice().sort(function(a,b){return a.orden-b.orden;});
+  var html='<div class="bar"><h2>Productos</h2><div class="r"><button class="btn ghost" data-act="nuevacat">+ Categoría</button><button class="btn" data-act="nuevoprod">+ Producto</button></div></div>';
+  cats.forEach(function(c){
+    var prods=(M.productos||[]).filter(function(p){return p.categoriaId===c.id;});
+    html+='<div class="catgrp" style="background:'+c.color+'">'+(c.ic||'')+' '+esc(c.nombre)+' · pase por defecto: '+esc(c.pase||'Primeros')+'</div>';
+    html+='<div class="card"><table><thead><tr><th>Producto</th><th>Precio</th><th>Pase</th><th>Estado</th><th></th></tr></thead><tbody>';
+    if(!prods.length) html+='<tr><td colspan="5" style="color:var(--soft)">Sin productos en esta categoría.</td></tr>';
+    prods.forEach(function(p){
+      html+='<tr><td><span class="tic">'+(p.ic||'')+'</span> <b>'+esc(p.nombre)+'</b></td><td>'+(p.precio||0).toFixed(2)+' €</td>'
+        +'<td>'+esc(p.pasePorDefecto||'Primeros')+'</td>'
+        +'<td><span class="badge" style="background:'+(p.activo?'#dcfce7':'#fee2e2')+';color:'+(p.activo?'#15803d':'#e11d48')+'">'+(p.activo?'Activo':'Inactivo')+'</span></td>'
+        +'<td style="text-align:right"><button class="btn ghost sm" data-editp="'+p.id+'">Editar</button></td></tr>';
+    });
+    html+='</tbody></table></div>';
+  });
+  return html;
+}
+function modalProd(p){
+  modalOpen=true;
+  var cats=(M.categorias||[]).map(function(c){return '<option value="'+c.id+'"'+(p&&p.categoriaId===c.id?' selected':'')+'>'+esc(c.nombre)+'</option>';}).join('');
+  var pases=ORDLIST.map(function(o){return '<option'+((p?(p.pasePorDefecto||'Primeros'):'Primeros')===o?' selected':'')+'>'+o+'</option>';}).join('');
+  ov('<h3>'+(p?'Editar producto':'Nuevo producto')+'</h3><div class="mb">'
+    +'<div class="row"><div class="field" style="max-width:90px"><label>Icono</label><input id="f_ic" value="'+esc(p?p.ic:'🍽️')+'"></div>'
+    +'<div class="field"><label>Nombre</label><input id="f_n" value="'+esc(p?p.nombre:'')+'"></div></div>'
+    +'<div class="row"><div class="field"><label>Precio (€)</label><input id="f_pr" type="number" step="0.10" value="'+(p?p.precio:'')+'"></div>'
+    +'<div class="field"><label>Categoría</label><select id="f_c">'+cats+'</select></div></div>'
+    +'<div class="row"><div class="field"><label>Pase por defecto (cocina)</label><select id="f_pase">'+pases+'</select></div>'
+    +'<div class="field"><label>Stock</label><input id="f_st" type="number" value="'+(p?(p.stock==null?100:p.stock):100)+'"></div></div>'
+    +'<label class="chk"><input type="checkbox" id="f_a" '+(!p||p.activo?'checked':'')+'> Activo</label>'
+    +'</div><div class="foot">'+(p?'<button class="btn red" data-delp="'+p.id+'" style="margin-right:auto">Eliminar</button>':'')
+    +'<button class="btn ghost" data-act="cerrar">Cancelar</button><button class="btn" data-act="saveprod" data-id="'+(p?p.id:'')+'">Guardar</button></div>');
+}
+function modalCat(){
+  modalOpen=true;
+  ov('<h3>Nueva categoría</h3><div class="mb">'
+    +'<div class="row"><div class="field" style="max-width:90px"><label>Icono</label><input id="c_ic" value="🍽️"></div>'
+    +'<div class="field"><label>Nombre</label><input id="c_n"></div></div>'
+    +'<div class="row"><div class="field"><label>Color</label><input id="c_col" type="color" value="#4f46e5"></div>'
+    +'<div class="field"><label>Pase por defecto</label><select id="c_pase">'+ORDLIST.map(function(o){return '<option'+(o==='Primeros'?' selected':'')+'>'+o+'</option>';}).join('')+'</select></div></div>'
+    +'</div><div class="foot"><button class="btn ghost" data-act="cerrar">Cancelar</button><button class="btn" data-act="savecat">Crear</button></div>');
+}
+
+/* ---- MESAS ---- */
+function viewMesas(){
+  var salas=M.salas||[];
+  var html='<div class="bar"><h2>Salas y mesas</h2><div class="r"><button class="btn" data-act="nuevamesa">+ Mesa</button></div></div>';
+  salas.forEach(function(s){
+    var ms=(M.mesas||[]).filter(function(m){return m.salaId===s.id;});
+    html+='<div class="card" style="margin-bottom:16px;padding:16px"><b style="font-size:16px">'+esc(s.nombre)+'</b> <span style="color:var(--soft)">· '+ms.length+' mesas</span><div class="mesas-prev">';
+    ms.forEach(function(m){ html+='<button class="mp" data-editm="'+m.id+'">'+esc(m.nombre)+' · '+esc(m.forma||'cuadrada')+' · '+(m.plazas||4)+'p</button>'; });
+    html+='</div></div>';
+  });
+  return html;
+}
+function modalMesa(m){
+  modalOpen=true;
+  var salas=(M.salas||[]).map(function(s){return '<option value="'+s.id+'"'+(m&&m.salaId===s.id?' selected':'')+'>'+esc(s.nombre)+'</option>';}).join('');
+  var formas=FORMAS.map(function(f){return '<option value="'+f[0]+'"'+((m?(m.forma||'cuadrada'):'cuadrada')===f[0]?' selected':'')+'>'+f[1]+'</option>';}).join('');
+  ov('<h3>'+(m?'Editar mesa':'Nueva mesa')+'</h3><div class="mb">'
+    +'<div class="field"><label>Nombre</label><input id="m_n" value="'+esc(m?m.nombre:'')+'"></div>'
+    +'<div class="row"><div class="field"><label>Sala</label><select id="m_s">'+salas+'</select></div>'
+    +'<div class="field"><label>Plazas</label><input id="m_p" type="number" value="'+(m?m.plazas:4)+'"></div></div>'
+    +'<div class="field"><label>Forma</label><select id="m_f">'+formas+'</select></div>'
+    +'</div><div class="foot">'+(m?'<button class="btn red" data-delm="'+m.id+'" style="margin-right:auto">Eliminar</button>':'')
+    +'<button class="btn ghost" data-act="cerrar">Cancelar</button><button class="btn" data-act="savemesa" data-id="'+(m?m.id:'')+'">Guardar</button></div>');
+}
+
+/* ---- EMPLEADOS (engine local) ---- */
+function viewEmpleados(){
+  var us=M.usuarios||[];
+  var html='<div class="bar"><h2>Empleados y PIN</h2><div class="r"><button class="btn" data-act="nuevoemp">+ Empleado</button></div></div>'
+    +'<div class="card"><table><thead><tr><th>Empleado</th><th>Rol</th><th>PIN</th><th>Estado</th><th></th></tr></thead><tbody>';
+  us.forEach(function(u){var ri=Auth.rolInfo(u.rol);
+    html+='<tr><td><span class="avatar" style="background:'+(u.color||ri.color)+'">'+ini(u.nombre)+'</span> <b>'+esc(u.nombre)+'</b></td>'
+      +'<td><span class="badge" style="background:'+ri.color+'22;color:'+ri.color+'">'+esc(ri.nombre)+'</span></td>'
+      +'<td>'+esc(u.pin||'')+'</td><td><span class="badge" style="background:'+(u.activo?'#dcfce7':'#fee2e2')+';color:'+(u.activo?'#15803d':'#e11d48')+'">'+(u.activo?'Activo':'Baja')+'</span></td>'
+      +'<td style="text-align:right"><button class="btn ghost sm" data-edite="'+u.id+'">Editar</button></td></tr>';
+  });
+  html+='</tbody></table></div><p style="color:var(--soft);font-size:13px;margin-top:12px">Los empleados y su PIN se guardan en el servidor: el mismo PIN funciona en todos los dispositivos (TPV, comandera, cocina).</p>';
+  return html;
+}
+function modalEmp(u){
+  modalOpen=true;
+  var roles=Object.keys(Auth.ROLES).map(function(r){return '<option value="'+r+'"'+(u&&u.rol===r?' selected':'')+'>'+esc(Auth.ROLES[r].nombre)+'</option>';}).join('');
+  ov('<h3>'+(u?'Editar empleado':'Nuevo empleado')+'</h3><div class="mb">'
+    +'<div class="field"><label>Nombre</label><input id="e_n" value="'+esc(u?u.nombre:'')+'"></div>'
+    +'<div class="row"><div class="field"><label>Rol</label><select id="e_r">'+roles+'</select></div>'
+    +'<div class="field"><label>PIN (4 díg.)</label><input id="e_pin" value="'+esc(u?u.pin:'')+'" maxlength="6"></div></div>'
+    +'<div class="row"><div class="field"><label>Color</label><input id="e_col" type="color" value="'+(u&&u.color?u.color:'#16a34a')+'"></div>'
+    +'<div class="field"><label>Usuario (admin)</label><input id="e_u" value="'+esc(u?(u.usuario||''):'')+'" placeholder="solo admin/encargado"></div></div>'
+    +'<div class="field"><label>Contraseña (admin)</label><input id="e_pw" value="'+esc(u?(u.password||''):'')+'" placeholder="solo admin/encargado"></div>'
+    +'<label class="chk"><input type="checkbox" id="e_a" '+(!u||u.activo?'checked':'')+'> Activo</label>'
+    +'</div><div class="foot">'+(u?'<button class="btn red" data-dele="'+u.id+'" style="margin-right:auto">Dar de baja</button>':'')
+    +'<button class="btn ghost" data-act="cerrar">Cancelar</button><button class="btn" data-act="saveemp" data-id="'+(u?u.id:'')+'">Guardar</button></div>');
+}
+
+/* ---- FICHAJE ---- */
+function viewFichaje(){
+  var hoy=new Date().toISOString().slice(0,10);
+  var us=Auth.todos();
+  var html='<div class="bar"><h2>Registro de jornada · hoy</h2></div><div class="card"><table><thead><tr><th>Empleado</th><th>Fichajes de hoy</th><th>Trabajado</th></tr></thead><tbody>';
+  var hay=false;
+  us.forEach(function(u){
+    var regs=Fichaje.registrosDe(u.id,hoy);
+    if(!regs.length)return;
+    hay=true;
+    var mins=Fichaje.minutosDia(u.id,hoy);
+    html+='<tr><td><b>'+esc(u.nombre)+'</b></td><td>'+regs.map(function(r){var t=Fichaje.TIPOS[r.tipo]||{icon:'',etiqueta:r.tipo};return t.icon+' '+r.hora;}).join(' · ')+'</td><td>'+Math.floor(mins/60)+'h '+(mins%60)+'min</td></tr>';
+  });
+  if(!hay) html+='<tr><td colspan="3" style="color:var(--soft)">Sin fichajes hoy en este equipo.</td></tr>';
+  html+='</tbody></table></div><p style="color:var(--soft);font-size:13px;margin-top:12px">Conforme al registro de jornada (art. 3 y 4). La centralización de fichajes de todos los dispositivos llega con el servidor de fichaje (siguiente paso).</p>';
+  return html;
+}
+
+/* ---- modal infra ---- */
+function ov(html){var o=document.createElement('div');o.className='overlay';o.id='ov';o.innerHTML='<div class="modal">'+html+'</div>';document.body.appendChild(o);
+  o.addEventListener('click',function(e){if(e.target===o)cerrar();});}
+function cerrar(){var o=document.getElementById('ov');if(o)o.remove();modalOpen=false;}
+
+/* ---- eventos ---- */
+document.addEventListener('click',function(e){
+  var t=e.target.closest('[data-tab]');if(t){tab=t.dataset.tab;render();return;}
+  var a=e.target.closest('[data-act]');
+  var idp=e.target.closest('[data-editp]'); if(idp){modalProd((M.productos||[]).filter(function(p){return p.id===idp.dataset.editp;})[0]);return;}
+  var idm=e.target.closest('[data-editm]'); if(idm){modalMesa((M.mesas||[]).filter(function(m){return m.id===idm.dataset.editm;})[0]);return;}
+  var ide=e.target.closest('[data-edite]'); if(ide){modalEmp((M.usuarios||[]).filter(function(u){return u.id===ide.dataset.edite;})[0]);return;}
+  var dp=e.target.closest('[data-delp]'); if(dp){M.productos=M.productos.filter(function(p){return p.id!==dp.dataset.delp;});saveMaster();cerrar();render();toast('Producto eliminado');return;}
+  var dm=e.target.closest('[data-delm]'); if(dm){M.mesas=M.mesas.filter(function(m){return m.id!==dm.dataset.delm;});saveMaster();cerrar();render();toast('Mesa eliminada');return;}
+  var de=e.target.closest('[data-dele]'); if(de){M.usuarios=(M.usuarios||[]).map(function(u){if(u.id===de.dataset.dele)u.activo=false;return u;});saveMaster();cerrar();render();toast('Empleado dado de baja');return;}
+  if(!a)return;
+  switch(a.dataset.act){
+    case 'logout': Auth.logout(); sesion=null; showLogin(); break;
+    case 'cerrar': cerrar(); break;
+    case 'nuevoprod': modalProd(null); break;
+    case 'nuevacat': modalCat(); break;
+    case 'nuevamesa': modalMesa(null); break;
+    case 'nuevoemp': modalEmp(null); break;
+    case 'saveprod': guardarProd(a.dataset.id); break;
+    case 'savecat': guardarCat(); break;
+    case 'savemesa': guardarMesa(a.dataset.id); break;
+    case 'saveemp': guardarEmp(a.dataset.id); break;
+  }
+});
+function val(id){var e=document.getElementById(id);return e?e.value:'';}
+function chk(id){var e=document.getElementById(id);return e?e.checked:false;}
+function guardarProd(id){
+  var n=val('f_n').trim(); if(!n)return toast('Pon el nombre');
+  var data={id:id||('p'+uid()),nombre:n,ic:val('f_ic')||'🍽️',categoriaId:val('f_c'),precio:parseFloat(val('f_pr'))||0,
+    pasePorDefecto:val('f_pase'),stock:parseFloat(val('f_st'))||0,activo:chk('f_a')};
+  if(id) M.productos=M.productos.map(function(p){return p.id===id?data:p;}); else M.productos.push(data);
+  saveMaster();cerrar();render();toast('Producto guardado',true);
+}
+function guardarCat(){
+  var n=val('c_n').trim(); if(!n)return toast('Pon el nombre');
+  var orden=(M.categorias||[]).reduce(function(mx,c){return Math.max(mx,c.orden||0);},0)+1;
+  M.categorias.push({id:'c'+uid(),nombre:n,ic:val('c_ic')||'🍽️',color:val('c_col'),orden:orden,pase:val('c_pase')});
+  saveMaster();cerrar();render();toast('Categoría creada',true);
+}
+function guardarMesa(id){
+  var n=val('m_n').trim(); if(!n)return toast('Pon el nombre');
+  var data={id:id||('m'+uid()),nombre:n,salaId:val('m_s'),forma:val('m_f'),plazas:parseInt(val('m_p'))||4};
+  if(id) M.mesas=M.mesas.map(function(m){return m.id===id?Object.assign(m,data):m;}); else M.mesas.push(data);
+  saveMaster();cerrar();render();toast('Mesa guardada',true);
+}
+function guardarEmp(id){
+  var n=val('e_n').trim(); if(!n)return toast('Pon el nombre');
+  if(!M.usuarios)M.usuarios=[];
+  var data={id:id||uid(),nombre:n,rol:val('e_r'),pin:val('e_pin'),color:val('e_col'),usuario:val('e_u')||undefined,password:val('e_pw')||undefined,activo:chk('e_a')};
+  if(id) M.usuarios=M.usuarios.map(function(u){return u.id===id?Object.assign({},u,data):u;}); else M.usuarios.push(data);
+  saveMaster();cerrar();render();toast('Empleado guardado',true);
+}
+
+Sync.onChange(function(){ if(sesion && !modalOpen){ M=clone(Sync.master()); render(); } });
+if(Auth.sesion() && (Auth.sesion().rol==='admin'||Auth.sesion().rol==='encargado')){ sesion=Auth.sesion(); render(); } else showLogin();
+</script>
+</body>
+</html>

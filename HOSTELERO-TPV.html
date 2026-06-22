@@ -225,6 +225,7 @@ table.tbl{width:100%;border-collapse:collapse}
 </div>
 <div id="modalRoot"></div>
 <div id="toastRoot"></div>
+<script src="sync.js"></script>
 <script>
 /* HOSTELERO TPV v3 - app de un solo archivo, sin dependencias. Iconos SVG + Fase 2a. */
 'use strict';
@@ -426,9 +427,11 @@ function anularTicket(ticketId){
 
 /* ---------- Cocina (KDS) + avisador ---------- */
 function enviarCocina(ticketId){
-  var t=getTicket(ticketId); if(!t)return 0; var n=0;
-  t.lineas.forEach(function(l){ if(!l.enviado){ l.enviado=true; l.kestado='pendiente'; l.kid=uid(); n++; } });
-  if(n>0){ t.enviadoCocina=true; t.cocinaAt=Date.now(); t.avisado=false; }
+  var t=getTicket(ticketId); if(!t)return 0; var n=0; var nuevas=[];
+  t.lineas.forEach(function(l){ if(!l.enviado){ l.enviado=true; l.kestado='pendiente'; l.kid=uid(); n++; nuevas.push({nombre:l.nombre,ic:l.ic,cantidad:l.cantidad,orden:l.orden||'Primeros',subs:l.subs,mods:l.mods}); } });
+  if(n>0){ t.enviadoCocina=true; t.cocinaAt=Date.now(); t.avisado=false;
+    try{ if(typeof window!=='undefined'&&window.HOSTELERO_SYNC){ window.HOSTELERO_SYNC.enviarComanda({mesa:(t.mesaNombre||('#'+t.numero)),camarero:'TPV',pase:t.pase,lineas:nuevas}); } }catch(e){}
+  }
   save(); return n;
 }
 function lineasPendientesEnvio(t){ return t.lineas.filter(function(l){return !l.enviado;}).length; }

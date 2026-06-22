@@ -98,6 +98,24 @@ var SALAS=[
  {n:'Barra',mesas:['B1','B2','B3','B4','B5','B6']},
  {n:'Reservado',mesas:['Reservado A','Reservado B']}
 ];
+/* Carta y mesas: del SERVIDOR (datos maestros) si están; si no, demo embebida */
+function getCARTA(){
+  var m=Sync.master();
+  if(m&&m.productos&&m.productos.length&&m.categorias&&m.categorias.length){
+    return m.categorias.slice().sort(function(a,b){return (a.orden||0)-(b.orden||0);}).map(function(c){
+      return {cat:c.nombre,pase:c.pase||'Primeros',color:c.color||'#5b6cff',
+        items:m.productos.filter(function(p){return p.categoriaId===c.id&&p.activo!==false;}).map(function(p){return [p.nombre,p.ic||'🍽️',p.precio||0,p.pasePorDefecto||c.pase||'Primeros'];})};
+    }).filter(function(c){return c.items.length;});
+  }
+  return CARTA.map(function(c){return {cat:c.cat,pase:c.pase,color:c.color,items:c.items.map(function(it){return [it[0],it[1],it[2],c.pase];})};});
+}
+function getSALAS(){
+  var m=Sync.master();
+  if(m&&m.salas&&m.salas.length&&m.mesas&&m.mesas.length){
+    return m.salas.map(function(s){return {n:s.nombre,mesas:m.mesas.filter(function(x){return x.salaId===s.id;}).map(function(x){return x.nombre;})};}).filter(function(s){return s.mesas.length;});
+  }
+  return SALAS;
+}
 var st={view:'login',salaSel:0,catSel:0,mesa:null,lineas:[],ordenActivo:null};
 var sel=null,pin='',avisosVistos={};
 
@@ -126,16 +144,17 @@ function tryPin(){var u=Auth.loginPin(sel.id,pin);if(u){if(Auth.puedeAbrir(u.rol
 
 /* mesas */
 function showMesas(){st.view='mesas';st.mesa=null;st.lineas=[];st.ordenActivo=null;
-  var tabs=SALAS.map(function(s,i){return '<button class="salatab'+(i===st.salaSel?' active':'')+'" data-sala="'+i+'">'+esc(s.n)+'</button>';}).join('');
-  var ms=SALAS[st.salaSel].mesas.map(function(m){return '<button class="mesa'+(m.length>4?' peque':'')+'" data-mesa="'+esc(m)+'">'+esc(m)+'</button>';}).join('');
+  var _S=getSALAS();var _sa=_S[st.salaSel]||_S[0]||{mesas:[]};
+  var tabs=_S.map(function(s,i){return '<button class="salatab'+(i===st.salaSel?' active':'')+'" data-sala="'+i+'">'+esc(s.n)+'</button>';}).join('');
+  var ms=_sa.mesas.map(function(m){return '<button class="mesa'+(m.length>4?' peque':'')+'" data-mesa="'+esc(m)+'">'+esc(m)+'</button>';}).join('');
   app.innerHTML='<div class="app"><div class="top"><h1>📋 '+esc(me().nombre)+'</h1><div class="right"><button class="back" data-go="logout">Salir</button></div></div>'
     +'<div class="body"><div class="h2">Elige una mesa</div><div class="salatabs">'+tabs+'</div><div class="mesas">'+ms+'</div></div></div>';
 }
 
 /* comanda */
 function showComanda(){st.view='comanda';
-  var cat=CARTA[st.catSel];
-  var tabs=CARTA.map(function(c,i){return '<button class="cattab'+(i===st.catSel?' active':'')+'" style="background:'+c.color+'" data-cat="'+i+'">'+esc(c.cat)+'</button>';}).join('');
+  var _C=getCARTA();var cat=_C[st.catSel]||_C[0]||{items:[],color:'#5b6cff'};
+  var tabs=_C.map(function(c,i){return '<button class="cattab'+(i===st.catSel?' active':'')+'" style="background:'+c.color+'" data-cat="'+i+'">'+esc(c.cat)+'</button>';}).join('');
   var prods=cat.items.map(function(it){return '<button class="prod" data-add="'+esc(it[0])+'"><span class="pic">'+it[1]+'</span><span class="pn">'+esc(it[0])+'</span><span class="pp">'+it[2].toFixed(2)+' €</span></button>';}).join('');
   var ordbar=st.ordenActivo?'<div class="ordbar" style="background:'+ordColor(st.ordenActivo)+'">A cocina como: <b>'+st.ordenActivo.toUpperCase()+'</b><button data-go="ordendef">Predefinido ✕</button></div>':'';
   // comanda agrupada por pase
@@ -153,8 +172,8 @@ function showComanda(){st.view='comanda';
     +'<div class="cmd"><div class="lst">'+cmd+'</div><div class="foot"><button class="enviar" '+(uds?'':'disabled')+' data-go="enviar">Enviar a cocina ('+uds+')</button></div></div></div>';
 }
 function addProd(nombre){
-  var cat=CARTA[st.catSel];var it=cat.items.filter(function(x){return x[0]===nombre;})[0];if(!it)return;
-  var orden=st.ordenActivo||cat.pase;
+  var cat=getCARTA()[st.catSel];if(!cat)return;var it=cat.items.filter(function(x){return x[0]===nombre;})[0];if(!it)return;
+  var orden=st.ordenActivo||it[3]||cat.pase;
   var l=st.lineas.filter(function(x){return x.nombre===nombre&&x.orden===orden;})[0];
   if(l)l.cantidad++;else st.lineas.push({nombre:it[0],ic:it[1],precio:it[2],cantidad:1,orden:orden});
   showComanda();
