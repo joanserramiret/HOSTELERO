@@ -42,6 +42,14 @@ button:active{transform:scale(.97)}
 .btn.recoger{background:var(--green);color:#fff;border:none}
 .empty{grid-column:1/-1;text-align:center;color:var(--soft);padding:70px 20px;font-size:18px;font-weight:600}
 .empty .e{font-size:54px;margin-bottom:12px}
+/* disponibilidad */
+.ksov{position:fixed;inset:0;background:rgba(5,8,14,.7);display:flex;align-items:center;justify-content:center;z-index:60;padding:20px}
+.kssheet{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;max-width:760px;width:100%;max-height:86vh;overflow:auto;box-shadow:0 20px 50px rgba(0,0,0,.5)}
+.ksgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px}
+.ksrow{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border-radius:11px;border:1px solid var(--line);background:var(--card2);color:#fff;font-weight:700;text-align:left}
+.ksrow.off{background:#3a1620;border-color:#5a2230;color:#ff9db4;text-decoration:line-through}
+.ksrow .tag{font-size:11px;font-weight:900;padding:4px 9px;border-radius:999px;background:var(--green);color:#04210f}
+.ksrow.off .tag{background:var(--red);color:#fff}
 /* login */
 .login{height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
 .lcard{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:28px;max-width:380px;width:100%;box-shadow:var(--shadow);text-align:center}
@@ -108,6 +116,7 @@ function render(){
       var det='';
       if(l.subs&&l.subs.length)det='<div class="kdet">'+l.subs.map(esc).join('<br>')+'</div>';
       else if(l.mods&&l.mods.length)det='<div class="kdet">'+l.mods.map(function(m){return esc(m.n);}).join(' · ')+'</div>';
+      if(l.comentario)det+='<div class="kdet" style="color:#b45309">📝 '+esc(l.comentario)+'</div>';
       var ob='<span class="kob" style="background:'+ordColor(l.orden||'Primeros')+'">'+(l.orden||'Primeros')+'</span>';
       return '<div class="kline '+(l.estado||'')+'"><span class="kq">'+l.cantidad+'×</span><span class="kn">'+ob+(l.ic||'')+' '+esc(l.nombre)+det+'</span>'+btn+'</div>';
     }).join('');
@@ -117,7 +126,7 @@ function render(){
   }).join(''):'<div class="empty"><div class="e">👨‍🍳</div>Sin comandas. Esperando pedidos…</div>';
   var modo=Sync.modo();var mc=modo==='servidor'?'#19b562':'#e0a020';
   app.innerHTML='<div class="app"><div class="top"><h1>👨‍🍳 Cocina</h1><span class="sub">'+coms.length+' comandas activas</span>'
-    +'<div class="right"><span class="sub"><span class="dotmodo" style="background:'+mc+'"></span>'+(modo==='servidor'?'En red (tiempo real)':'Local')+'</span><button class="btn ghost" data-act="logout">Salir</button></div></div>'
+    +'<div class="right"><span class="sub"><span class="dotmodo" style="background:'+mc+'"></span>'+(modo==='servidor'?'En red (tiempo real)':'Local')+'</span><button class="btn ghost" data-act="disp">🚫 Disponibilidad</button><button class="btn ghost" data-act="logout">Salir</button></div></div>'
     +'<div class="grid">'+cards+'</div></div>';
 }
 document.addEventListener('click',function(e){
@@ -129,8 +138,26 @@ document.addEventListener('click',function(e){
   else if(act==='listo')Sync.setLinea(a.dataset.id,a.dataset.kid,'listo');
   else if(act==='avisar'){Sync.avisar(a.dataset.id);toast('🔔 Aviso enviado');}
   else if(act==='recoger')Sync.recoger(a.dataset.id);
+  else if(act==='disp')dispSheet();
   else if(act==='logout'){Auth.logout();showLogin();}
 });
+function dispSheet(){
+  var m=Sync.master();var cats=(m.categorias||[]).slice().sort(function(a,b){return (a.orden||0)-(b.orden||0);});
+  var body=cats.map(function(c){
+    var ps=(m.productos||[]).filter(function(p){return p.categoriaId===c.id&&p.activo!==false;});
+    if(!ps.length)return '';
+    var items=ps.map(function(p){var ago=Sync.estaAgotado&&Sync.estaAgotado(p.id);
+      return '<button class="ksrow'+(ago?' off':'')+'" data-tdisp="'+esc(p.id)+'"><span>'+(p.ic||'🍽️')+' '+esc(p.nombreBoton||p.nombre)+'</span><span class="tag">'+(ago?'AGOTADO':'OK')+'</span></button>';}).join('');
+    return '<div style="margin-bottom:8px"><div style="font-weight:800;color:'+(c.color||'#fff')+';margin:8px 0 6px">'+esc(c.nombre)+'</div><div class="ksgrid">'+items+'</div></div>';
+  }).join('');
+  var ov=document.createElement('div');ov.className='ksov';
+  ov.innerHTML='<div class="kssheet"><h2 style="margin:0 0 6px">🚫 Disponibilidad</h2><p style="margin:0 0 12px;color:#9aa6bb">Toca un producto para agotarlo o reactivarlo. Se aplica al instante en TPV y comandera.</p>'+body+'<button class="btn ghost" data-dclose="1" style="margin-top:8px">Cerrar</button></div>';
+  ov.addEventListener('click',function(e){
+    if(e.target===ov||e.target.closest('[data-dclose]'))return ov.remove();
+    var b=e.target.closest('[data-tdisp]');if(b){var id=b.dataset.tdisp;Sync.setAgotado(id,!(Sync.estaAgotado&&Sync.estaAgotado(id)));setTimeout(function(){ov.remove();dispSheet();},150);return;}
+  });
+  document.body.appendChild(ov);
+}
 // refresco del cronómetro
 setInterval(function(){ if(Auth.sesion()) render(); },15000);
 if(Auth.sesion()&&Auth.puedeAbrir(Auth.sesion().rol,'cocina')) start(); else showLogin();

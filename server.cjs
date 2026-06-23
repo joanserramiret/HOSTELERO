@@ -33,7 +33,8 @@ function masterSeed() {
     p('p7','Tercio','c2',2.8,'🍺','Bebidas'), p('p8','Cerveza Sin','c2',2.4,'🍺','Bebidas'), p('p9','IPA Artesana','c2',3.8,'🍺','Bebidas'),
     p('p10','Ensalada Mixta','c3',6.5,'🥗','Entrantes'), p('p11','Gazpacho','c3',4.5,'🍅','Entrantes'), p('p12','Croquetas','c3',6.0,'🧆','Entrantes'), p('p13','Patatas Bravas','c3',4.5,'🍟','Entrantes'), p('p14','Ensaladilla','c3',4.0,'🥔','Entrantes'),
     p('p15','Entrecot','c4',18,'🥩','Segundos'), p('p16','Solomillo','c4',21,'🥩','Segundos'), p('p17','Pollo Corral','c4',12,'🍗','Segundos'), p('p18','Paella','c4',16,'🥘','Segundos'), p('p19','Calamares','c4',11,'🦑','Segundos'), p('p20','Pulpo','c4',17,'🐙','Segundos'),
-    p('p21','Tarta de Queso','c5',5,'🍰','Postres'), p('p22','Flan','c5',3.8,'🍮','Postres'), p('p23','Helado','c5',3.5,'🍨','Postres'), p('p24','Fruta','c5',3,'🍓','Postres')
+    p('p21','Tarta de Queso','c5',5,'🍰','Postres'), p('p22','Flan','c5',3.8,'🍮','Postres'), p('p23','Helado','c5',3.5,'🍨','Postres'), p('p24','Fruta','c5',3,'🍓','Postres'),
+    { id:'p25', nombre:'Rape a la plancha', categoriaId:'c4', precio:39, ic:'🐟', pasePorDefecto:'Segundos', activo:true, porPeso:true }
   ];
   function setm(id, mods){ var p=prods.filter(function(x){return x.id===id;})[0]; if(p)p.mods=mods; }
   setm('p6',[{n:'Leche',op:[{n:'Normal'},{n:'Desnatada'},{n:'Avena',p:0.3},{n:'Soja',p:0.3}]}]);
@@ -53,12 +54,32 @@ function masterSeed() {
       {n:'Postre',op:[{n:'Helado'},{n:'Fruta'}]},
       {n:'Bebida',op:[{n:'Agua'},{n:'Zumo'}]} ]}
   );
-  var salas = [{ id: 's1', nombre: 'Comedor' }, { id: 's2', nombre: 'Terraza' }, { id: 's3', nombre: 'Barra' }, { id: 's4', nombre: 'Reservado' }];
-  var mesas = [];
-  for (var i = 1; i <= 10; i++) mesas.push({ id: 'm' + i, salaId: 's1', nombre: 'M' + i, forma: (i % 2 ? 'cuadrada' : 'redonda'), plazas: 4 });
-  for (var j = 1; j <= 6; j++) mesas.push({ id: 't' + j, salaId: 's2', nombre: 'T' + j, forma: 'redonda', plazas: 2 });
-  for (var k = 1; k <= 6; k++) mesas.push({ id: 'b' + k, salaId: 's3', nombre: 'B' + k, forma: 'barra', plazas: 1 });
-  mesas.push({ id: 'r1', salaId: 's4', nombre: 'Reservado A', forma: 'rectangular', plazas: 12 }, { id: 'r2', salaId: 's4', nombre: 'Reservado B', forma: 'rectangular', plazas: 12 });
+  var salas = [
+    { id: 's1', nombre: 'Comedor',   bg: '#fdf6ec' },
+    { id: 's2', nombre: 'Terraza',   bg: '#eef7ec' },
+    { id: 's3', nombre: 'Barra',     bg: '#f4efe8' },
+    { id: 's4', nombre: 'Reservado', bg: '#fbf3e0' }
+  ];
+  function mk(id, sala, nombre, forma, plazas, x, y){ return { id:id, salaId:sala, nombre:nombre, forma:forma, plazas:plazas, x:x, y:y }; }
+  var mesas = [
+    mk('m1','s1','M1','redonda',2,40,40),  mk('m2','s1','M2','redonda',2,190,40), mk('m3','s1','M3','cuadrada',4,340,40), mk('m4','s1','M4','cuadrada',4,500,40), mk('m5','s1','M5','redonda',2,660,40),
+    mk('m6','s1','M6','cuadrada',4,40,210), mk('m7','s1','M7','redonda',2,210,210), mk('m8','s1','M8','cuadrada',6,520,210),
+    mk('m9','s1','M9','redonda',2,40,370),  mk('m10','s1','M10','redonda',2,210,370),
+    mk('t1','s2','T1','redonda',2,40,40),  mk('t2','s2','T2','redonda',2,190,40), mk('t3','s2','T3','redonda',2,340,40), mk('t4','s2','T4','redonda',4,500,40),
+    mk('t5','s2','T5','redonda',2,40,210), mk('t6','s2','T6','redonda',2,190,210),
+    mk('b1','s3','B1','barra',1,40,140), mk('b2','s3','B2','barra',1,132,140), mk('b3','s3','B3','barra',1,224,140), mk('b4','s3','B4','barra',1,316,140), mk('b5','s3','B5','barra',1,408,140), mk('b6','s3','B6','barra',1,500,140),
+    mk('r1','s4','Reservado A','rectangular',12,90,90), mk('r2','s4','Reservado B','rectangular',12,90,230)
+  ];
+  var decor = [
+    { id:'d1', salaId:'s1', tipo:'billar', x:430, y:360 },
+    { id:'d2', salaId:'s1', tipo:'planta', x:700, y:210 },
+    { id:'d3', salaId:'s1', tipo:'planta', x:700, y:370 },
+    { id:'d4', salaId:'s2', tipo:'planta', x:680, y:40 },
+    { id:'d5', salaId:'s2', tipo:'planta', x:680, y:210 },
+    { id:'d6', salaId:'s3', tipo:'barra',  x:24,  y:24, w:568, h:70 },
+    { id:'d7', salaId:'s4', tipo:'planta', x:470, y:90 },
+    { id:'d8', salaId:'s4', tipo:'sofa',   x:450, y:230 }
+  ];
   var usuarios = [
     { id: 'u1', nombre: 'Admin',     rol: 'admin',     pin: '1111', usuario: 'admin',     password: 'admin', color: '#4f46e5', activo: true },
     { id: 'u2', nombre: 'Encargado', rol: 'encargado', pin: '2222', usuario: 'encargado', password: '1234',  color: '#0891b2', activo: true },
@@ -66,7 +87,42 @@ function masterSeed() {
     { id: 'u4', nombre: 'Luis',      rol: 'camarero',  pin: '4444', color: '#15803d', activo: true },
     { id: 'u5', nombre: 'Cocina',    rol: 'cocina',    pin: '9999', color: '#d97706', activo: true }
   ];
-  return { version: 3, categorias: cats, productos: prods, salas: salas, mesas: mesas, usuarios: usuarios, impresoras: [] };
+  var config = {
+    empresa: { nombre: 'La Taberna', direccion: 'C/ Mayor 1', poblacion: '', cif: 'B00000000', telefono: '' },
+    ivaPorDefecto: 10,
+    impuestos: [ { id: 'iva10', nombre: 'IVA 10%', tipo: 10 }, { id: 'iva21', nombre: 'IVA 21%', tipo: 21 }, { id: 'iva4', nombre: 'IVA 4%', tipo: 4 } ],
+    formasPago: [
+      { id: 'efectivo', nombre: 'Efectivo', daCambio: true,  abreCajon: true,  enArqueo: true },
+      { id: 'tarjeta',  nombre: 'Tarjeta',  daCambio: false, abreCajon: false, enArqueo: true },
+      { id: 'vale',     nombre: 'Vale / Invitación', daCambio: false, abreCajon: false, enArqueo: false }
+    ],
+    servicio: { pedirComensales: 'sentar', propinaSugerida: 0, moneda: '€', idioma: 'es' },
+    ticket: { cabecera: '', pie: '¡Gracias por su visita!' },
+    facturacion: { sistema: 'ninguno', serie: 'A' },
+    permisos: {
+      admin:     { anular: true,  caja: true,  informes: true,  descuento: true,  editarCarta: true,  usuarios: true },
+      encargado: { anular: true,  caja: true,  informes: true,  descuento: true,  editarCarta: true,  usuarios: false },
+      camarero:  { anular: false, caja: false, informes: false, descuento: false, editarCarta: false, usuarios: false },
+      cocina:    { anular: false, caja: false, informes: false, descuento: false, editarCarta: false, usuarios: false }
+    }
+  };
+  var promociones = [
+    { id:'pr1', nombre:'Happy Hour Bebidas -20%', tipo:'horario', categoriaId:'c1', pct:20, desde:'18:00', hasta:'20:00', activa:false },
+    { id:'pr2', nombre:'2x1 en Cervezas', tipo:'nxm', categoriaId:'c2', n:2, m:1, activa:false }
+  ];
+  var clientes = [ { id:'cl1', nombre:'Empresa Demo S.L.', cif:'B12345678', direccion:'Pol. Ind. Mayor 1', telefono:'', email:'', descuento:0 } ];
+  var datafonos = [];
+  var comentarios = [
+    { id:'cm1', texto:'Para llevar', categoriaId:null },
+    { id:'cm2', texto:'Sin gluten', categoriaId:null },
+    { id:'cm3', texto:'Sin lactosa', categoriaId:null },
+    { id:'cm4', texto:'Poco hecho', categoriaId:'c4' },
+    { id:'cm5', texto:'Al punto', categoriaId:'c4' },
+    { id:'cm6', texto:'Muy hecho', categoriaId:'c4' },
+    { id:'cm7', texto:'Sin hielo', categoriaId:'c1' },
+    { id:'cm8', texto:'Con limón', categoriaId:'c1' }
+  ];
+  return { version: 13, categorias: cats, productos: prods, salas: salas, mesas: mesas, decor: decor, promociones: promociones, clientes: clientes, datafonos: datafonos, comentarios: comentarios, usuarios: usuarios, impresoras: [], config: config };
 }
 
 function cargar() {
@@ -75,7 +131,12 @@ function cargar() {
   if (!s.master || !s.master.productos || !s.master.productos.length || s.master.version !== masterSeed().version) s.master = masterSeed();
   if (!s.master.usuarios || !s.master.usuarios.length) s.master.usuarios = masterSeed().usuarios;
   if (!s.master.impresoras) s.master.impresoras = [];
+  if (!s.master.config) s.master.config = masterSeed().config;
+  if (!s.master.promociones) s.master.promociones = [];
+  if (!s.master.clientes) s.master.clientes = [];
+  if (!s.master.datafonos) s.master.datafonos = [];
   if (!s.fichajes) s.fichajes = [];
+  if (!s.agotados) s.agotados = [];
   if (typeof s.v !== 'number') s.v = 0;
   return s;
 }
@@ -100,6 +161,7 @@ function escposComanda(c, ancho){
     if(l.orden) o += '    ['+l.orden+']\n';
     if(l.mods) l.mods.forEach(function(m){ o += '    - '+(m.n||m)+'\n'; });
     if(l.subs) l.subs.forEach(function(x){ o += '    . '+x+'\n'; });
+    if(l.comentario) o += '    * '+l.comentario+'\n';
   });
   o += rep('-',ancho) + '\n\n\n' + GS+'V'+'\x42'+'\x00';
   return Buffer.from(o, 'latin1');
@@ -134,7 +196,13 @@ function aplicar(accion, d) {
   } else if (accion === '/api/reset') { state.comandas = [];
   } else if (accion === '/api/master') { if (d.master) state.master = d.master;
   } else if (accion === '/api/fichaje') { if (d.registro) { d.registro.id = d.registro.id || uid(); state.fichajes.push(d.registro); }
-  } else if (accion === '/api/print-test') { try { imprimirEn(d.ip, d.puerto, escposComanda({ mesa: 'PRUEBA', camarero: 'HOSTELERO', lineas: [{ cantidad: 1, nombre: 'Impresora OK' }] }, d.ancho || 42)); } catch (e) {} }
+  } else if (accion === '/api/agotado') { if (!state.agotados) state.agotados = []; var pid = d.id; if (pid) { if (d.agotado) { if (state.agotados.indexOf(pid) < 0) state.agotados.push(pid); } else { state.agotados = state.agotados.filter(function (x) { return x !== pid; }); } }
+  } else if (accion === '/api/print-test') { try { imprimirEn(d.ip, d.puerto, escposComanda({ mesa: 'PRUEBA', camarero: 'HOSTELERO', lineas: [{ cantidad: 1, nombre: 'Impresora OK' }] }, d.ancho || 42)); } catch (e) {}
+  } else if (accion === '/api/datafono') {
+    var dfs = (state.master && state.master.datafonos) || [];
+    var df = d.id ? dfs.filter(function(x){return x.id===d.id;})[0] : dfs.filter(function(x){return x.modo==='integrado' && x.activo!==false && x.ip;})[0];
+    if (df && df.modo === 'integrado' && df.ip) { try { imprimirEn(df.ip, df.puerto || 7777, Buffer.from('VENTA;IMPORTE=' + (d.importe || 0) + ';REF=' + (d.ref || '') + '\n', 'latin1')); } catch (e) {} }
+  }
   state.v = (state.v || 0) + 1;
 }
 

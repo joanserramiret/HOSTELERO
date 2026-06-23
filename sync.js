@@ -55,7 +55,10 @@
     master: function () { return state.master || { categorias: [], productos: [], salas: [], mesas: [] }; },
     guardarMaster: function (m) { if (modo === 'servidor') return post('/api/master', { master: m }); state.master = m; commitLocal(); },
     fichajes: function () { return state.fichajes || []; },
-    fichar: function (reg) { if (modo === 'servidor') return post('/api/fichaje', { registro: reg }); if (!state.fichajes) state.fichajes = []; reg.id = reg.id || uid(); state.fichajes.push(reg); commitLocal(); }
+    fichar: function (reg) { if (modo === 'servidor') return post('/api/fichaje', { registro: reg }); if (!state.fichajes) state.fichajes = []; reg.id = reg.id || uid(); state.fichajes.push(reg); commitLocal(); },
+    agotados: function () { return state.agotados || []; },
+    estaAgotado: function (id) { return (state.agotados || []).indexOf(id) >= 0; },
+    setAgotado: function (id, val) { if (modo === 'servidor') return post('/api/agotado', { id: id, agotado: !!val }); if (!state.agotados) state.agotados = []; var i = state.agotados.indexOf(id); if (val && i < 0) state.agotados.push(id); else if (!val && i >= 0) state.agotados.splice(i, 1); commitLocal(); }
   };
 
   if (esServidor) initServidor(); else initLocal();

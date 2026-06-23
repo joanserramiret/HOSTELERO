@@ -90,7 +90,10 @@
 
     appsDe: function (rol) { return APPS_POR_ROL[rol] || []; },
     puedeAbrir: function (rol, app) { return (APPS_POR_ROL[rol] || []).indexOf(app) >= 0; },
-    permiso: function (rol, accion) { return !!(ACCIONES[rol] && ACCIONES[rol][accion]); }
+    permiso: function (rol, accion) {
+      try { var mc = localStorage.getItem('hostelero_master_cache'); if (mc) { var m = JSON.parse(mc); if (m && m.config && m.config.permisos && m.config.permisos[rol]) return !!m.config.permisos[rol][accion]; } } catch (e) {}
+      return !!(ACCIONES[rol] && ACCIONES[rol][accion]);
+    }
   };
 
   /* ---- Fichaje / registro de jornada (RD de registro de jornada) ----
