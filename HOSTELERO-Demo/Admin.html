@@ -790,7 +790,4 @@ function guardarEmp(id){
 }
 
 Sync.onChange(function(){ if(sesion && !modalOpen){ M=clone(Sync.master()); render(); } });
-if(Auth.sesion() && (Auth.sesion().rol==='admin'||Auth.sesion().rol==='encargado')){ sesion=Auth.sesion(); render(); } else showLogin();
-</script>
-</body>
-</html>
+if(Auth.sesion() && (Auth.sesion().rol==='admin'||Auth.sesion().rol==='encargado')){ sesion=Auth.sesion(); render(); } else showLo

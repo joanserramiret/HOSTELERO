@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HOSTELERO · Marca</title>
+<style>
+:root{--navy:#0F172A;--teal:#14b8a6;--tealD:#0f766e;--mint:#5eead4;--gold:#f59e0b;--ink:#1e293b;--mute:#64748b;--line:#e2e8f0}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;background:#f1f5f9;color:var(--ink)}
+.wrap{max-width:1040px;margin:0 auto;padding:30px 22px 80px}
+.h{font-size:13px;font-weight:800;color:var(--tealD);letter-spacing:1px;text-transform:uppercase;margin:34px 0 12px}
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:26px;box-shadow:0 10px 30px rgba(15,23,42,.05)}
+.dark{background:var(--navy)}
+.grid{display:grid;gap:16px}
+.apps{grid-template-columns:repeat(3,1fr)}
+.cols{grid-template-columns:1fr 1fr}
+.pal{grid-template-columns:repeat(6,1fr)}
+.app{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;text-align:center}
+.app img{width:84px;height:84px}
+.app .n{font-weight:800;margin-top:8px;font-size:15px}
+.app .d{color:var(--mute);font-size:12px}
+.sw{border-radius:14px;height:84px;display:flex;align-items:flex-end;padding:8px;color:#fff;font-weight:800;font-size:11px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.05)}
+.sw small{opacity:.85;font-weight:600}
+.title{font-size:30px;font-weight:900;margin:0 0 4px}
+.sub{color:var(--mute);margin:0}
+.foot{color:var(--mute);font-size:12px;text-align:center;margin-top:40px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="title">HOSTELERO · Sistema de marca</p>
+  <p class="sub">Un ecosistema: un logo, un monograma y una familia de iconos para todas las apps.</p>
+
+  <div class="h">Logo principal</div>
+  <div class="card"><img src="logo.svg" alt="HOSTELERO" style="width:100%;max-width:560px"></div>
+
+  <div class="h">Sobre fondo oscuro</div>
+  <div class="card dark"><img src="logo-light.svg" alt="HOSTELERO" style="width:100%;max-width:560px"></div>
+
+  <div class="grid cols" style="margin-top:16px">
+    <div><div class="h">Monograma (mark)</div><div class="card" style="text-align:center"><img src="mark.svg" style="width:150px;height:150px"></div></div>
+    <div><div class="h">Splash de carga</div><div class="card" style="padding:0;overflow:hidden"><img src="splash.svg" style="width:100%;display:block"></div></div>
+  </div>
+
+  <div class="h">Iconos de las aplicaciones</div>
+  <div class="grid apps">
+    <div class="app"><img src="mark.svg"><div class="n">Lanzador</div><div class="d">Punto de entrada</div></div>
+    <div class="app"><img src="icon-tpv.svg"><div class="n">TPV</div><div class="d">Venta y cobro</div></div>
+    <div class="app"><img src="icon-comandera.svg"><div class="n">Comandera</div><div class="d">Móvil / tablet</div></div>
+    <div class="app"><img src="icon-cocina.svg"><div class="n">Cocina (KDS)</div><div class="d">Monitor de cocina</div></div>
+    <div class="app"><img src="icon-admin.svg"><div class="n">Administración</div><div class="d">Gestión</div></div>
+    <div class="app"><img src="icon-carta.svg"><div class="n">Carta digital</div><div class="d">QR + reservas</div></div>
+  </div>
+
+  <div class="h">Paleta</div>
+  <div class="grid pal">
+    <div class="sw" style="background:#0F172A">Navy<br><small>0F172A</small></div>
+    <div class="sw" style="background:#0F766E">Teal oscuro<br><small>0F766E</small></div>
+    <div class="sw" style="background:#14B8A6">Teal<br><small>14B8A6</small></div>
+    <div class="sw" style="background:#5EEAD4;color:#0f172a">Menta<br><small>5EEAD4</small></div>
+    <div class="sw" style="background:#F59E0B;color:#0f172a">Ámbar<br><small>F59E0B</small></div>
+    <div class="sw" style="background:#6D28D9">Púrpura<br><small>6D28D9</small></div>
+  </div>
+
+  <div class="foot">HOSTELERO · marca · SVG escalable para apps, presentación, web e impresión</div>
+</div>
+</body>
+</html>

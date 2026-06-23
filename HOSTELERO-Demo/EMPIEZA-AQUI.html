@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HOSTELERO · Empieza aquí</title>
+<style>
+:root{--bg:#0f172a;--bg2:#1e293b;--card:#ffffff;--ink:#1e293b;--mute:#64748b;--teal:#14b8a6;--tealD:#0f766e;--mint:#5eead4;--line:#e2e8f0;--gold:#f59e0b}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;background:#f1f5f9;color:var(--ink)}
+.hero{background:linear-gradient(160deg,#0f766e,#0f172a);color:#fff;padding:46px 28px 40px;border-radius:0 0 28px 28px}
+.wrap{max-width:980px;margin:0 auto;padding:0 22px 70px}
+.badge{display:inline-block;background:var(--teal);color:#04231e;font-weight:800;font-size:12px;padding:6px 12px;border-radius:999px;letter-spacing:.5px}
+h1{font-size:46px;margin:14px 0 6px;font-weight:900;letter-spacing:.5px}
+.hero p{color:var(--mint);font-size:18px;font-weight:700;margin:0}
+.demo{background:#fef3c7;border:1px solid #fde68a;color:#92400e;border-radius:14px;padding:14px 18px;margin:26px 0;font-weight:600}
+.concept{background:#0f172a;color:#fff;border-radius:18px;padding:22px 24px;margin:22px 0;box-shadow:0 14px 34px rgba(0,0,0,.18)}
+.concept h3{margin:0 0 6px;color:var(--mint);font-size:14px;letter-spacing:.5px;text-transform:uppercase}
+.concept p{margin:0;font-size:19px;font-weight:800;line-height:1.4}
+.concept .sm{font-size:14px;font-weight:500;color:#cbd5e1;margin-top:8px}
+h2{font-size:22px;margin:34px 0 14px}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.step{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
+.step .n{width:38px;height:38px;border-radius:50%;background:var(--teal);color:#04231e;font-weight:900;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:12px}
+.step b{font-size:16px}
+.step p{color:var(--mute);font-size:14px;margin:6px 0 0}
+.kbd{background:#0f172a;color:#fff;padding:2px 8px;border-radius:6px;font-weight:700;font-family:monospace}
+table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+th,td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--line);font-size:14px}
+th{background:#f8fafc;font-weight:800;color:var(--mute);font-size:12px;text-transform:uppercase;letter-spacing:.4px}
+td a{color:var(--tealD);font-weight:700;text-decoration:none}
+.pin{font-family:monospace;font-weight:800}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px}
+.card h3{margin:0 0 10px;font-size:16px}
+.card ul{margin:0;padding-left:18px;color:var(--mute);font-size:14px;line-height:1.7}
+.foot{color:var(--mute);font-size:13px;text-align:center;margin-top:40px}
+@media(max-width:760px){.steps,.grid2{grid-template-columns:1fr}h1{font-size:34px}}
+</style>
+</head>
+<body>
+<div class="hero"><div style="max-width:980px;margin:0 auto;padding:0 22px">
+  <span class="badge">DEMO</span>
+  <h1>HOSTELERO</h1>
+  <p>TPV de hostelería · 100% local · pruébalo en tu ordenador</p>
+</div></div>
+<div class="wrap">
+
+  <div class="demo">⚠️ Esto es una <b>demo para enseñar los módulos y ver cómo funciona</b>, con datos de ejemplo. No cobra ni factura de verdad: todo (impresoras, datáfonos, efectivo…) está simulado para que puedas probarlo sin instalar nada físico.</div>
+
+  <div class="concept">
+    <h3>El concepto</h3>
+    <p>HOSTELERO nunca dice que no a una integración.</p>
+    <div class="sm">Cualquier datáfono, sistema de efectivo (Cashlogy, CashKeeper, Glory…), plataforma de reservas (TheFork, Google, CoverManager…), carta digital o agente de voz se contempla siempre. Todo se conecta a su API abierta y unificada. Si un proveedor existe, HOSTELERO habla con él.</div>
+  </div>
+
+  <h2>Ponlo en marcha en 3 pasos</h2>
+  <div class="steps">
+    <div class="step"><div class="n">1</div><b>Instala Node.js</b><p>Solo la primera vez. Es gratis. Si no lo tienes, el iniciador te abre la página: descarga la versión <b>LTS</b> y reinicia.</p></div>
+    <div class="step"><div class="n">2</div><b>Doble clic en el iniciador</b><p>Abre <span class="kbd">INICIAR-HOSTELERO.bat</span>. Se abre una ventana negra (el servidor): déjala abierta.</p></div>
+    <div class="step"><div class="n">3</div><b>Usa HOSTELERO</b><p>Se abre solo el navegador en el lanzador. Entra y prueba los módulos. Para parar, cierra la ventana negra.</p></div>
+  </div>
+
+  <h2>Accesos (se abren en el navegador)</h2>
+  <table>
+    <thead><tr><th>Aplicación</th><th>Dirección</th><th>Para qué</th></tr></thead>
+    <tbody>
+      <tr><td>🔑 Lanzador</td><td><a href="http://localhost:7870">localhost:7870</a></td><td>Punto de entrada (empieza aquí)</td></tr>
+      <tr><td>💳 TPV</td><td><a href="http://localhost:7871">localhost:7871</a></td><td>Venta, mesas y cobro</td></tr>
+      <tr><td>📱 Comandera</td><td><a href="http://localhost:7872">localhost:7872</a></td><td>Comandas desde móvil/tablet</td></tr>
+      <tr><td>👨‍🍳 Cocina (KDS)</td><td><a href="http://localhost:7873">localhost:7873</a></td><td>Monitor de cocina</td></tr>
+      <tr><td>⚙️ Administración</td><td><a href="http://localhost:7874">localhost:7874</a></td><td>Carta, tarifas, reservas, informes…</td></tr>
+      <tr><td>🍽️ Carta digital (QR)</td><td><a href="http://localhost:7875">localhost:7875</a></td><td>La carta para el cliente + reservas</td></tr>
+    </tbody>
+  </table>
+
+  <div class="grid2" style="margin-top:18px">
+    <div class="card">
+      <h3>🔐 Claves de la demo</h3>
+      <ul>
+        <li>Administración: usuario <span class="pin">admin</span> / contraseña <span class="pin">admin</span></li>
+        <li>PIN Administrador: <span class="pin">1111</span></li>
+        <li>PIN Encargado: <span class="pin">2222</span></li>
+        <li>PIN Camarero (Marta): <span class="pin">3333</span> · (Luis): <span class="pin">4444</span></li>
+        <li>PIN Cocina: <span class="pin">9999</span></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>📲 Probarlo en varios dispositivos</h3>
+      <ul>
+        <li>Funciona en la red local (WiFi), sin internet.</li>
+        <li>En el PC servidor abre <span class="kbd">cmd</span> y escribe <span class="kbd">ipconfig</span> para ver su IP (ej. 192.168.1.20).</li>
+        <li>Desde el móvil/tablet en la misma WiFi: <span class="kbd">http://ESA-IP:7872</span> (comandera) o <span class="kbd">:7875</span> (carta).</li>
+        <li>Todo se sincroniza en tiempo real entre dispositivos.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>Qué puedes probar</h2>
+  <div class="card">
+    <ul>
+      <li><b>TPV:</b> abre una mesa en el plano, añade productos, cambia precio/cantidad/comentario por línea, cobra (efectivo/tarjeta/mixto/dividir) e imprime ticket.</li>
+      <li><b>Administración:</b> edita la carta (ficha de producto, copiar, por peso, escandallo), tarifas por sala/horario, comentarios, reservas, empleados y permisos, informes y cierre Z.</li>
+      <li><b>Comandera:</b> toma una comanda desde el móvil sobre el mismo plano; llega a Cocina al instante.</li>
+      <li><b>Disponibilidad (86):</b> marca un producto agotado desde cualquier app y míralo bloquearse en todas.</li>
+      <li><b>Carta digital:</b> mira la carta como cliente y envía una solicitud de reserva: aparece en la agenda de Administración.</li>
+    </ul>
+  </div>
+
+  <div class="foot">HOSTELERO · demo local · todos los módulos, datos de ejemplo · nada se cobra ni se factura de verdad</div>
+</div>
+</body>
+</html>

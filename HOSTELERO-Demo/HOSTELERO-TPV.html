@@ -1359,9 +1359,4 @@ function registroFiscal(t){
   var url=base+'?nif='+encodeURIComponent(emp.cif||'')+'&serie='+encodeURIComponent(serie)+'&num='+numero+'&fecha='+fecha.toLocaleDateString('es-ES')+'&importe='+total.toFixed(2);
   var reg={sistema:cfg.sistema,serie:serie,numero:numero,fecha:fecha.getTime(),nif:emp.cif||'',importe:total,huellaAnterior:prev,huella:huella,id:id,url:url};
   t.regFiscal=reg; DB.regFiscalUltimo=huella; if(!DB.regFiscal)DB.regFiscal=[]; DB.regFiscal.push(reg); save();
-  return reg;
-}
-
-</script>
-</body>
-</html>
+  return r

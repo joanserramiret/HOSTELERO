@@ -1,0 +1,14 @@
+<svg viewBox="0 0 1560 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="HOSTELERO">
+  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0F766E"/><stop offset="1" stop-color="#14B8A6"/></linearGradient></defs>
+  <g transform="translate(24,34) scale(0.46)">
+    <rect x="16" y="16" width="480" height="480" rx="118" fill="url(#g)"/>
+    <rect x="150" y="156" width="48" height="200" rx="16" fill="#ffffff"/>
+    <rect x="314" y="156" width="48" height="200" rx="16" fill="#ffffff"/>
+    <rect x="150" y="232" width="212" height="48" rx="16" fill="#ffffff"/>
+    <circle cx="384" cy="150" r="40" fill="#0F172A"/>
+    <circle cx="384" cy="150" r="34" fill="#F59E0B"/>
+    <circle cx="384" cy="150" r="13" fill="#0F172A" opacity="0.9"/>
+  </g>
+  <text x="292" y="168" font-family="Arial, Helvetica, sans-serif" font-size="104" font-weight="800" letter-spacing="2" fill="#ffffff">HOSTELERO</text>
+  <text x="296" y="220" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="700" letter-spacing="5" fill="#5EEAD4">TPV · EN RED · SIN INTERNET</text>
+</svg>

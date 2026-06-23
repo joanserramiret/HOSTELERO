@@ -1,0 +1,44 @@
+========================================================
+  HOSTELERO — DEMO  (TPV de hostelería, 100% local)
+========================================================
+
+QUÉ ES
+  Una demo para ver cómo funciona HOSTELERO y todos sus módulos,
+  con datos de ejemplo. NO cobra ni factura de verdad: impresoras,
+  datáfonos y sistemas de efectivo están simulados para que puedas
+  probarlo sin instalar nada físico.
+
+EL CONCEPTO
+  HOSTELERO NUNCA dice que no a una integración. Cualquier datáfono,
+  sistema de efectivo (Cashlogy, CashKeeper, Glory...), plataforma de
+  reservas (TheFork, Google, CoverManager...), carta digital o agente
+  de voz se contempla siempre, a través de su API abierta y unificada.
+
+CÓMO ARRANCARLO (3 pasos)
+  1) Instala Node.js (solo la primera vez, es gratis):
+     https://nodejs.org/es  -> descarga la versión LTS y reinicia.
+  2) Doble clic en  INICIAR-HOSTELERO.bat
+     Se abre una ventana negra (el servidor): déjala abierta.
+  3) Se abre solo el navegador en el lanzador. ¡A probar!
+     Para parar la demo, cierra la ventana negra.
+
+  (Para una guía visual, abre EMPIEZA-AQUI.html en el navegador.)
+
+ACCESOS
+  Lanzador .............. http://localhost:7870
+  TPV ................... http://localhost:7871
+  Comandera (móvil) ..... http://localhost:7872
+  Cocina (KDS) .......... http://localhost:7873
+  Administración ........ http://localhost:7874
+  Carta digital (QR) .... http://localhost:7875
+
+CLAVES DE LA DEMO
+  Administración: usuario "admin" / contraseña "admin"
+  PIN Administrador 1111 · Encargado 2222 · Marta 3333 · Luis 4444 · Cocina 9999
+
+VARIOS DISPOSITIVOS (misma WiFi, sin internet)
+  En el PC servidor: abre cmd y escribe  ipconfig  para ver su IP.
+  Desde el móvil/tablet:  http://ESA-IP:7872  (comandera)  o  :7875  (carta).
+  Todo se sincroniza en tiempo real.
+
+========================================================

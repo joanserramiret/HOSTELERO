@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Carta · HOSTELERO</title>
+<script src="brand.js"></script>
+<style>
+:root{--bg:#0b0f17;--card:#161d2b;--card2:#1d2636;--line:#2a3446;--text:#eef2f8;--soft:#94a3b8;--teal:#14b8a6;--tealD:#0f766e;--mint:#5eead4;--gold:#f59e0b;--shadow:0 12px 34px rgba(0,0,0,.45)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
+.wrap{max-width:760px;margin:0 auto;padding:0 16px 120px}
+.hero{padding:max(26px,env(safe-area-inset-top)) 18px 22px;background:linear-gradient(160deg,#0f766e,#0b0f17);border-radius:0 0 26px 26px;box-shadow:var(--shadow)}
+.hero h1{margin:0;font-size:30px;font-weight:900;letter-spacing:.5px}
+.hero p{margin:6px 0 0;color:var(--mint);font-weight:700;font-size:14px}
+.tabs{position:sticky;top:0;z-index:20;background:var(--bg);display:flex;gap:8px;overflow-x:auto;padding:14px 16px;margin:0 -16px}
+.tab{white-space:nowrap;padding:9px 15px;border-radius:999px;background:var(--card2);border:1px solid var(--line);color:var(--soft);font-weight:800;font-size:14px}
+.tab.active{background:#fff;color:#0b0f17;border-color:#fff}
+.fam{margin:18px 0 8px}
+.fam h2{margin:0;font-size:19px;font-weight:900}
+.fam .sub{color:var(--soft);font-size:12px;font-weight:700}
+.item{display:flex;gap:12px;align-items:flex-start;padding:14px 4px;border-bottom:1px solid var(--line)}
+.item .ic{font-size:26px;line-height:1}
+.item .b{flex:1}
+.item .n{font-weight:800;font-size:16px}
+.item .d{color:var(--soft);font-size:13px;margin-top:2px}
+.item .pr{font-weight:900;color:var(--mint);font-size:16px;white-space:nowrap}
+.fab{position:fixed;left:50%;transform:translateX(-50%);bottom:max(18px,env(safe-area-inset-bottom));z-index:40;background:var(--teal);color:#04231e;font-weight:900;font-size:17px;border:none;border-radius:16px;padding:16px 26px;box-shadow:var(--shadow)}
+.empty{color:var(--soft);text-align:center;padding:60px 20px}
+.overlay{position:fixed;inset:0;background:rgba(5,8,14,.78);display:flex;align-items:flex-end;justify-content:center;z-index:60}
+.sheet{background:var(--card);border-radius:22px 22px 0 0;width:100%;max-width:560px;padding:22px;padding-bottom:max(22px,env(safe-area-inset-bottom));box-shadow:var(--shadow)}
+.sheet h3{margin:0 0 4px;font-size:20px}
+.sheet p.mut{margin:0 0 14px;color:var(--soft);font-size:13px}
+.row{display:flex;gap:10px;margin-bottom:10px}
+.field{flex:1}
+label{display:block;font-size:12px;color:var(--soft);font-weight:700;margin-bottom:5px}
+input{width:100%;padding:13px;border-radius:12px;background:var(--card2);border:1px solid var(--line);color:#fff;font-size:16px}
+.send{width:100%;padding:16px;border-radius:14px;background:var(--teal);color:#04231e;font-weight:900;font-size:17px;border:none;margin-top:6px}
+.ghost{background:none;border:none;color:var(--soft);font-weight:700;display:block;margin:10px auto 0;padding:8px}
+.ok{text-align:center;padding:16px 0}
+.ok .big{font-size:46px}
+.foot{color:var(--soft);text-align:center;font-size:12px;padding:24px 0 0}
+</style>
+</head>
+<body>
+<div class="hero"><h1 id="nom">Nuestra carta</h1><p id="sub">Escanea, mira la carta y reserva tu mesa</p></div>
+<div class="wrap">
+  <div class="tabs" id="tabs"></div>
+  <div id="carta"></div>
+  <div class="foot">HOSTELERO · carta digital</div>
+</div>
+<button class="fab" id="fab">📅 Reservar mesa</button>
+<div id="modal"></div>
+<script src="sync.js"></script>
+<script>
+var Sync=window.HOSTELERO_SYNC;
+var catSel=0;
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function fams(){
+  var m=Sync.master();
+  if(!(m&&m.categorias&&m.productos))return [];
+  return m.categorias.slice().sort(function(a,b){return (a.orden||0)-(b.orden||0);}).map(function(c){
+    return {id:c.id,nombre:c.nombre,ic:c.ic||'',pase:c.pase||'',
+      items:m.productos.filter(function(p){return p.categoriaId===c.id&&p.activo!==false;})};
+  }).filter(function(c){return c.items.length;});
+}
+function precioTxt(p){
+  if(p.precio==null)return 'Consultar';
+  var t=p.precio.toFixed(2)+' €';
+  if(p.porPeso)t+=' /kg';
+  return t;
+}
+function render(){
+  var F=fams();
+  var m=Sync.master();
+  if(m&&m.config&&m.config.empresa&&m.config.empresa.nombre){document.getElementById('nom').textContent=m.config.empresa.nombre;}
+  if(!F.length){document.getElementById('carta').innerHTML='<div class="empty">Cargando la carta…</div>';document.getElementById('tabs').innerHTML='';return;}
+  if(catSel>=F.length)catSel=0;
+  document.getElementById('tabs').innerHTML=F.map(function(c,i){return '<button class="tab'+(i===catSel?' active':'')+'" data-cat="'+i+'">'+esc((c.ic?c.ic+' ':'')+c.nombre)+'</button>';}).join('');
+  var c=F[catSel];
+  var html='<div class="fam"><h2>'+esc((c.ic?c.ic+' ':'')+c.nombre)+'</h2></div>';
+  html+=c.items.map(function(p){
+    var agotado=Sync.estaAgotado&&Sync.estaAgotado(p.id);
+    return '<div class="item" style="'+(agotado?'opacity:.45':'')+'"><span class="ic">'+esc(p.ic||'🍽️')+'</span><div class="b"><div class="n">'+esc(p.nombreBoton||p.nombre)+(agotado?' · (agotado hoy)':'')+'</div>'+(p.descripcion?'<div class="d">'+esc(p.descripcion)+'</div>':'')+'</div><div class="pr">'+precioTxt(p)+'</div></div>';
+  }).join('');
+  document.getElementById('carta').innerHTML=html;
+}
+function hoy(){var d=new Date();return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
+function modalReserva(){
+  var html='<div class="overlay" id="ov"><div class="sheet" data-stop>'
+    +'<h3>📅 Reservar mesa</h3><p class="mut">Te enviamos la solicitud al restaurante. Te confirmarán la reserva.</p>'
+    +'<div class="row"><div class="field"><label>Fecha</label><input id="r_f" type="date" value="'+hoy()+'"></div>'
+    +'<div class="field"><label>Hora</label><input id="r_h" type="time" value="14:00"></div>'
+    +'<div class="field" style="max-width:90px"><label>Personas</label><input id="r_p" type="number" min="1" value="2"></div></div>'
+    +'<div class="row"><div class="field"><label>Tu nombre</label><input id="r_c" placeholder="Nombre"></div>'
+    +'<div class="field"><label>Teléfono</label><input id="r_t" placeholder="Móvil"></div></div>'
+    +'<div class="field"><label>Notas (alergias, trona…)</label><input id="r_n" placeholder="Opcional"></div>'
+    +'<button class="send" id="r_ok">Enviar solicitud</button><button class="ghost" id="r_x">Cancelar</button>'
+    +'</div></div>';
+  var d=document.createElement('div');d.innerHTML=html;document.body.appendChild(d.firstChild);
+  document.getElementById('ov').addEventListener('click',function(e){if(e.target.id==='ov')cerrar();});
+  document.getElementById('r_x').addEventListener('click',cerrar);
+  document.getElementById('r_ok').addEventListener('click',enviar);
+}
+function cerrar(){var o=document.getElementById('ov');if(o)o.remove();}
+function enviar(){
+  var f=document.getElementById('r_f').value, h=document.getElementById('r_h').value;
+  var c=document.getElementById('r_c').value.trim();
+  if(!f||!h){alert('Indica fecha y hora');return;}
+  if(!c){alert('Indica tu nombre');return;}
+  Sync.guardarReserva({fecha:f,hora:h,personas:parseInt(document.getElementById('r_p').value,10)||2,
+    cliente:c,telefono:document.getElementById('r_t').value.trim(),notas:document.getElementById('r_n').value.trim(),
+    origen:'carta',estado:'pendiente'});
+  var sh=document.querySelector('#ov .sheet');
+  sh.innerHTML='<div class="ok"><div class="big">✅</div><h3>¡Solicitud enviada!</h3><p class="mut">El restaurante te confirmará la reserva en breve. ¡Gracias!</p><button class="send" id="r_close">Cerrar</button></div>';
+  document.getElementById('r_close').addEventListener('click',cerrar);
+}
+document.getElementById('fab').addEventListener('click',modalReserva);
+document.getElementById('tabs').addEventListener('click',function(e){var t=e.target.closest('[data-cat]');if(t){catSel=+t.dataset.cat;render();}});
+Sync.onChange(render);
+render();
+</script>
+</body>
+</html>

@@ -161,7 +161,4 @@ function dispSheet(){
 }
 // refresco del cronómetro
 setInterval(function(){ if(Auth.sesion()) render(); },15000);
-if(Auth.sesion()&&Auth.puedeAbrir(Auth.sesion().rol,'cocina')) start(); else showLogin();
-</script>
-</body>
-</html>
+if(Auth.sesion()&&Auth.puedeAbrir(Auth.sesion().rol,'cocina')) start(); else showLo

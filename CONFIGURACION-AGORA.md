@@ -25,7 +25,9 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente
 - ✅ **Acciones por línea** (TPV): tocar una línea → cambiar cantidad, cambiar precio (con permiso), descuento de línea y comentario
 - ✅ **Botón de disponibilidad (86) en todas las apps** (TPV, venta, comandera y cocina/KDS), accionable por cualquiera: marca productos agotados/disponibles en tiempo real y bloquea su venta en todas las pantallas
 - ✅ **Producto por peso**: al añadirlo pregunta el peso (kg) y cobra €/kg × peso; la línea sale con el peso en comanda y ticket (TPV y comandera). Demo: "Rape a la plancha" 39 €/kg
-- ⬜ Subfamilias · Tarifas / listas de precio · Packs a precio fijo · Escandallos (recetas/coste)
+- ✅ **Tarifas / listas de precio** (Admin): ajuste por % o precios fijos por producto, asignables por **sala** y/o **franja horaria**, con tarifa «por defecto». TPV y comandera aplican la tarifa activa según la sala/hora; el TPV muestra qué tarifa rige. Demo: Terraza +10%, Happy Hour −15% (18–20h)
+- ✅ **Coste / escandallo por producto**: campo de coste en la ficha; calcula y muestra **margen €, % y food cost** en la ficha y una columna **Coste / margen** en la lista de carta
+- ⬜ Subfamilias · Packs a precio fijo · Escandallo por ingredientes (recetas)
 - ⬜ Ficha de producto con imagen y alérgenos · disponibilidad por porciones de peso (teclas 1,5/1/0,7 kg)
 
 ## Sala
@@ -57,14 +59,18 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente
 ## Clientes
 - ✅ Clientes con datos fiscales y **descuento** (gestión en Admin)
 - ✅ **Facturación a cliente**: asignar cliente al ticket y emitir **factura numerada** con datos fiscales y desglose de IVA
-- 🟡 Tipos de cliente / tarifas / recargo de equivalencia (descuento por cliente hecho; tarifas pendientes)
+- 🟡 Tipos de cliente / tarifas / recargo de equivalencia (descuento por cliente y **tarifas** hechos; recargo de equivalencia pendiente)
 - ⬜ Fidelización (puntos/premios)
 
 ## Integraciones
 - ✅ API local (servidor) + tiempo real (SSE)
 - 🟡 Datáfonos: **lista escalable** (varios terminales, marca, modo, IP:puerto) gestionada en Admin; ruteo del importe al terminal por la red — probado con 2 terminales simulados. El protocolo concreto depende del modelo (Redsys/Stripe Terminal)
+- 🟡 **Control de efectivo** (Cashlogy · CashKeeper · Glory): lista escalable de dispositivos en Admin; el TPV envía el importe a cobrar/devolver al dispositivo por la red (`/api/efectivo`). El protocolo concreto se conecta en el despliegue según el modelo
 - 🟡 TicketBAI / Verifactu: base montada — **huella encadenada (SHA-256, validada)**, identificador y URL de verificación en ticket/factura, configurable (sistema + serie). Falta la **firma con certificado** y el envío a Hacienda (específico del despliegue)
-- ⬜ Reservas (TheFork/Google) · Delivery · Webhooks
+- 🟡 **Reservas**: módulo propio en Admin (agenda por día, cubiertos, mesa, estado, notas) + **API de entrada unificada** (`/api/reserva`) con etiqueta de **origen** (TheFork, Google, CoverManager, teléfono, web, walk-in, **carta digital**, **agente de voz**). La conexión real de cada plataforma necesita su cuenta/API y un servidor accesible (ver RESERVAS.md) — el buzón y la agenda ya están listos
+- ✅ **Carta digital (QR)**: página pública servida en `:7875` (`Carta-Digital.html`) que muestra la carta en vivo (precios, agotados, por peso) y permite **pedir reserva** → entra en la agenda al instante (origen *carta digital*). Enlace en el lanzador
+- 🟡 **Agente de voz captador (CreativeLab)**: vuelca las reservas a la misma API (`origen: voz`). El agente en sí es externo (ya desarrollado con CreativeLab); el hook de entrada está listo
+- ⬜ Delivery · Fidelización (puntos)
 
 ---
 Orden de construcción previsto (sin parar): editor de modificadores/menús en Admin → impuestos por producto →

@@ -206,15 +206,4 @@ document.addEventListener('click',function(e){
   var u=e.target.closest('.user');if(u){var us=Auth.usuarios().filter(function(x){return x.id===u.dataset.id;})[0];if(us)showPin(us);return;}
   var k=e.target.closest('[data-k]');if(k){pinKey(k.dataset.k);return;}
   var f=e.target.closest('[data-f]');if(f){var s=Auth.sesion();var su=Auth.usuarios().filter(function(x){return x.id===s.id;})[0];Fichaje.fichar(su,f.dataset.f);var t=Fichaje.TIPOS[f.dataset.f];toast(t.icon+' '+t.etiqueta+' registrada');showPersona(su);return;}
-  var g=e.target.closest('[data-go]');if(g){var go=g.dataset.go;
-    if(go==='launcher')showLauncher();
-    else if(go==='logout'){Auth.logout();showSelect();}
-    else if(go==='persona'){var s2=Auth.sesion();var su2=Auth.usuarios().filter(function(x){return x.id===s2.id;})[0];showPersona(su2);}
-    else if(go==='carta'){window.location.href='Carta-Digital.html';}
-    return;}
-  var ap=e.target.closest('[data-app]');if(ap){abrirApp(ap.dataset.app);return;}
-});
-if(Auth.sesion()) showLauncher(); else showSelect();
-</script>
-</body>
-</html>
+  var g=e.target.closest('[data-go]');if(g

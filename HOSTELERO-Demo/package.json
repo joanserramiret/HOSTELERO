@@ -1,0 +1,10 @@
+{
+  "name": "hostelero-demo",
+  "version": "1.0.0",
+  "description": "HOSTELERO - TPV de hosteleria (demo local). Arranque: node server.cjs",
+  "main": "server.cjs",
+  "scripts": {
+    "start": "node server.cjs"
+  },
+  "private": true
+}

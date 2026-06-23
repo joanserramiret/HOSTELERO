@@ -1,0 +1,26 @@
+<svg viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="HOSTELERO">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0B1220"/><stop offset="1" stop-color="#0F172A"/>
+    </linearGradient>
+    <linearGradient id="hm" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0F766E"/><stop offset="1" stop-color="#14B8A6"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <circle cx="1120" cy="120" r="220" fill="#14B8A6" opacity="0.06"/>
+  <circle cx="180" cy="640" r="180" fill="#14B8A6" opacity="0.05"/>
+  <g transform="translate(528,168) scale(0.45)">
+    <rect x="16" y="16" width="480" height="480" rx="118" fill="url(#hm)"/>
+    <rect x="150" y="156" width="48" height="200" rx="16" fill="#ffffff"/>
+    <rect x="314" y="156" width="48" height="200" rx="16" fill="#ffffff"/>
+    <rect x="150" y="232" width="212" height="48" rx="16" fill="#ffffff"/>
+    <circle cx="384" cy="150" r="40" fill="#0F172A"/>
+    <circle cx="384" cy="150" r="34" fill="#F59E0B"/>
+    <circle cx="384" cy="150" r="13" fill="#0F172A" opacity="0.9"/>
+  </g>
+  <text x="640" y="500" font-family="Arial, Helvetica, sans-serif" font-size="68" font-weight="800" letter-spacing="4" fill="#ffffff" text-anchor="middle">HOSTELERO</text>
+  <text x="640" y="548" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" letter-spacing="9" fill="#5EEAD4" text-anchor="middle">TPV · EN RED · SIN INTERNET</text>
+  <rect x="540" y="596" width="200" height="6" rx="3" fill="#1E293B"/>
+  <rect x="540" y="596" width="86" height="6" rx="3" fill="#14B8A6"/>
+</svg>
