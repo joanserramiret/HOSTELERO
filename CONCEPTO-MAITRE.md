@@ -35,6 +35,19 @@ operativa— vive en un dato central, no en el código. Por eso el Maître puede
 cambia la **configuración**, no las entrañas. Eso convierte "modificaciones ilimitadas" en algo
 **real y seguro**. Un asistente pegado por fuera solo puede hablar; el Maître puede **dirigir**.
 
+## Lo que NO es (y por qué importa)
+Esto **no** es un TPV de restauración al que se le ha "añadido IA" para parecer moderno o subirse
+a la tendencia del momento. Eso es *AI-washing*: marketing. La diferencia es de raíz:
+
+- **No es** un asistente opcional en una pestaña que puedes ignorar. **Es** la capa que gobierna todo.
+- **No es** un chatbot que responde si le preguntas. **Es** un gerente que se adelanta y actúa.
+- **No es** "el mismo POS de siempre + IA". Si quitas el Maître, no queda un TPV con menos
+  funciones: queda **un cuerpo sin cabeza**.
+- **No** nació como POS y luego se le pegó IA. **Nació como IA** y tomó forma de POS para dirigir el local.
+
+La prueba del algodón: en otros productos, la IA es una *feature* en la lista. En HOSTELERO,
+la IA es **la razón de ser**; todo lo demás existe para que el Maître pueda ver, decidir y ejecutar.
+
 ## En una frase
 > **HOSTELERO no tiene IA. HOSTELERO es IA con forma de TPV.**
 > El Maître es el gerente, el cerebro y el jefe de operaciones de tu local.
