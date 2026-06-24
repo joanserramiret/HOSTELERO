@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HOSTELERO · IA POS — Dossier</title>
+<style>
+:root{--navy:#0f172a;--navy2:#1e293b;--teal:#14b8a6;--tealD:#0f766e;--mint:#5eead4;--gold:#f59e0b;--purple:#6d28d9;--ink:#1e293b;--mute:#64748b;--line:#e2e8f0;--bg:#f1f5f9}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;line-height:1.55}
+.page{max-width:960px;margin:0 auto;background:#fff;box-shadow:0 10px 40px rgba(15,23,42,.08)}
+.hero{background:linear-gradient(155deg,#0f766e,#0f172a);color:#fff;padding:38px 44px}
+.hero .top{display:flex;align-items:center;gap:16px}
+.hero .mk{width:64px;height:64px;flex-shrink:0}
+.badge{display:inline-block;background:var(--gold);color:#3a2400;font-weight:800;font-size:11px;padding:4px 10px;border-radius:999px;letter-spacing:.6px}
+.hero h1{margin:6px 0 0;font-size:40px;font-weight:900;letter-spacing:1px}
+.hero .tg{color:var(--mint);font-weight:700;font-size:18px;margin-top:6px}
+.hero .lead{color:#cbd5e1;font-size:15px;margin-top:14px;max-width:680px}
+.body{padding:34px 44px}
+h2{font-size:14px;text-transform:uppercase;letter-spacing:1px;color:var(--tealD);margin:30px 0 10px}
+h2:first-child{margin-top:0}
+p{margin:0 0 10px;font-size:15px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:1fr 1fr 1fr}
+.card{border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.card h3{margin:0 0 6px;font-size:15px}
+.card p{font-size:13.5px;color:var(--mute);margin:0}
+.pill{display:inline-block;font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;background:#ecfdf7;color:var(--tealD);margin:0 6px 6px 0}
+.kpi{display:flex;gap:14px;flex-wrap:wrap}
+.kpi div{flex:1;min-width:120px;border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center}
+.kpi .n{font-size:26px;font-weight:900;color:var(--tealD)}
+.kpi .l{font-size:12px;color:var(--mute)}
+.ph{background:#fff7ed;border:1px dashed #fdba74;color:#9a3412;border-radius:10px;padding:10px 14px;font-size:13px;margin:8px 0}
+.foot{padding:18px 44px;border-top:1px solid var(--line);color:var(--mute);font-size:12px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.note{font-size:12px;color:var(--mute);font-style:italic}
+@media print{body{background:#fff}.page{box-shadow:none;max-width:none}}
+@media(max-width:720px){.g2,.g3{grid-template-columns:1fr}.hero,.body,.foot{padding-left:22px;padding-right:22px}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="hero">
+    <div class="top">
+      <svg class="mk" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0F766E"/><stop offset="1" stop-color="#14B8A6"/></linearGradient></defs><rect x="16" y="16" width="480" height="480" rx="118" fill="url(#g)"/><rect x="150" y="156" width="48" height="200" rx="16" fill="#fff"/><rect x="314" y="156" width="48" height="200" rx="16" fill="#fff"/><rect x="150" y="232" width="212" height="48" rx="16" fill="#fff"/><circle cx="384" cy="150" r="40" fill="#0F172A"/><circle cx="384" cy="150" r="34" fill="#F59E0B"/></svg>
+      <div><span class="badge">IA POS · DOSSIER CONFIDENCIAL</span><h1>HOSTELERO</h1></div>
+    </div>
+    <div class="tg">El primer TPV que se piensa a sí mismo.</div>
+    <div class="lead">Un punto de venta de hostelería con inteligencia artificial en su raíz: analiza el negocio en tiempo real, propone mejoras concretas y las ejecuta — el dueño aprueba, el sistema actúa. 100% local, abierto a cualquier integración y configurable al milímetro.</div>
+  </div>
+
+  <div class="body">
+    <h2>El problema</h2>
+    <p>Durante 30 años el software de hostelería ha hecho lo mismo: <b>registrar lo que ya ha pasado</b>. Toma comandas, cobra, imprime. El hostelero sigue decidiendo solo —precios, stock, turnos, promociones— a ojo y a deshora, perdiendo margen cada día. Los TPV son pasivos; el dato existe pero nadie lo convierte en decisión.</p>
+
+    <h2>La solución</h2>
+    <p>HOSTELERO no es un TPV con un par de funciones de IA. Es un <b>POS con IA viviendo en su núcleo</b>: el <b>Copiloto</b> lee ventas, escandallo, reservas y personal en tiempo real y propone cambios accionables con un clic — <i>"sube el rape, el margen pasa de 44% a 62%", "día fuerte mañana, activa la tarifa de hora punta", "86 la paella a partir de las 22h"</i>. Informes que no solo describen: <b>proponen y ejecutan</b>.</p>
+
+    <h2>Producto</h2>
+    <div class="grid g3">
+      <div class="card"><h3>Suite multipuesto</h3><p>TPV, comandera (móvil/tablet), cocina (KDS), administración y carta digital (QR). En tiempo real, sin internet.</p></div>
+      <div class="card"><h3>Copiloto IA</h3><p>Optimización continua de precios, márgenes, tarifas, disponibilidad y turnos, con grados por rol y permisos.</p></div>
+      <div class="card"><h3>Ecosistema abierto</h3><p>Datáfonos, efectivo (Cashlogy, CashKeeper, Glory), reservas (TheFork, Google, CoverManager) y agente de voz.</p></div>
+    </div>
+
+    <h2>Diferencial</h2>
+    <div class="grid g2">
+      <div class="card"><h3>IA nativa, no un añadido</h3><p>El producto config-driven permite que la IA adapte el 100% del sistema sin tocar el código — modificaciones ilimitadas y seguras.</p></div>
+      <div class="card"><h3>Abierto por diseño</h3><p>Nunca dice que no a una integración. API unificada: si un proveedor existe, HOSTELERO habla con él.</p></div>
+      <div class="card"><h3>Local-first, sin cuotas de nube</h3><p>Funciona en la red del local; si cae internet, sigue cobrando. Los datos son del cliente.</p></div>
+      <div class="card"><h3>Cumplimiento</h3><p>Preparado para TicketBAI y Verifactu (huella encadenada, QR de verificación) y registro de jornada (RD).</p></div>
+    </div>
+
+    <h2>Mercado</h2>
+    <p>La hostelería es uno de los sectores con más locales y mayor rotación de software de gestión, con migración acelerada a soluciones digitales y normativa fiscal (TicketBAI/Verifactu) que obliga a renovar sistemas.</p>
+    <div class="ph">A completar con datos reales: nº de locales objetivo (España/UE), TAM/SAM/SOM y fuentes.</div>
+
+    <h2>Modelo de negocio</h2>
+    <div class="kpi">
+      <div><div class="n">SaaS</div><div class="l">cuota por local / mes</div></div>
+      <div><div class="n">Módulos</div><div class="l">copiloto IA, reservas, voz…</div></div>
+      <div><div class="n">Setup</div><div class="l">alta y formación</div></div>
+      <div><div class="n">Hardware</div><div class="l">partners (datáfono, impresión)</div></div>
+    </div>
+    <div class="ph">A completar: precios por plan, márgenes, LTV/CAC y proyección.</div>
+
+    <h2>Estado actual</h2>
+    <p>HOSTELERO está en <b>fase MVP funcional</b>: demo completa y operativa (todas las apps, copiloto, branding y materiales comerciales listos) que se prueba en cualquier ordenador. El producto es <b>embrionario por diseño</b> — la columna vertebral es sólida y deja margen para perfeccionar cada módulo a medida que se incorporan locales piloto.</p>
+    <div class="grid g3" style="margin-top:8px">
+      <div class="card"><h3>Hecho</h3><p>Suite multipuesto, copiloto IA (demo), ecosistema de integraciones, branding y presentación.</p></div>
+      <div class="card"><h3>En curso</h3><p>Perfeccionar módulos, conectores reales (datáfono/efectivo/reservas), copiloto con IA en vivo.</p></div>
+      <div class="card"><h3>Siguiente</h3><p>Locales piloto, cumplimiento fiscal firmado, despliegue comercial.</p></div>
+    </div>
+
+    <h2>Equipo</h2>
+    <div class="ph">A completar: fundadores, roles y experiencia (producto, hostelería, IA, comercial). Partner de voz: CreativeLab.</div>
+
+    <h2>La oportunidad</h2>
+    <p>Buscamos [tipo de inversión/partner] para [objetivo: pilotos, producto, comercial]. El momento es ahora: la IA aplicada al punto de venta es un cambio de categoría, y HOSTELERO ya tiene producto, concepto y marca para liderarlo.</p>
+    <div class="ph">A completar: importe buscado, uso de fondos e hitos.</div>
+
+    <p class="note">Las secciones marcadas son plantillas para rellenar con datos reales antes de presentar a un inversor.</p>
+  </div>
+
+  <div class="foot">
+    <span>© 2026 HOSTELERO · IA POS — Documento confidencial. Prohibida su difusión.</span>
+    <span>El primer TPV que se piensa a sí mismo.</span>
+  </div>
+</div>
+</body>
+</html>

@@ -113,12 +113,12 @@ function render(){
   if(!sesion)return showLogin();
   if(!M) M=clone(Sync.master());
   var modo=Sync.modo();
-  var navs=[['config','⚙️ Configuración'],['carta','🍽️ Carta'],['tarifas','💲 Tarifas'],['comentarios','📝 Comentarios'],['promos','🎯 Promociones'],['reservas','📅 Reservas'],['clientes','🧾 Clientes'],['mesas','🪑 Mesas y salas'],['empleados','👤 Empleados'],['impresoras','🖨️ Impresoras'],['fichaje','🕒 Fichajes']];
+  var navs=[['copiloto','🤖 Copiloto IA'],['config','⚙️ Configuración'],['carta','🍽️ Carta'],['acciones','⚡ Acciones'],['tarifas','💲 Tarifas'],['comentarios','📝 Comentarios'],['promos','🎯 Promociones'],['reservas','📅 Reservas'],['clientes','🧾 Clientes'],['mesas','🪑 Mesas y salas'],['empleados','👤 Empleados'],['impresoras','🖨️ Impresoras'],['fichaje','🕒 Fichajes']];
   var nav=navs.map(function(n){return '<button class="'+(tab===n[0]?'active':'')+'" data-tab="'+n[0]+'">'+n[1]+'</button>';}).join('');
-  var body= tab==='config'?viewConfig() : tab==='carta'?viewCarta() : tab==='tarifas'?viewTarifas() : tab==='comentarios'?viewComentarios() : tab==='promos'?viewPromos() : tab==='reservas'?viewReservas() : tab==='clientes'?viewClientes() : tab==='mesas'?viewMesas() : tab==='empleados'?viewEmpleados() : tab==='impresoras'?viewImpresoras() : viewFichaje();
+  var body= tab==='copiloto'?viewCopiloto() : tab==='config'?viewConfig() : tab==='carta'?viewCarta() : tab==='acciones'?viewAcciones() : tab==='tarifas'?viewTarifas() : tab==='comentarios'?viewComentarios() : tab==='promos'?viewPromos() : tab==='reservas'?viewReservas() : tab==='clientes'?viewClientes() : tab==='mesas'?viewMesas() : tab==='empleados'?viewEmpleados() : tab==='impresoras'?viewImpresoras() : viewFichaje();
   app.innerHTML='<div class="app"><aside class="side"><div class="brand">HOSTELERO<small>ADMINISTRACIÓN</small></div>'
     +'<div class="nav">'+nav+'</div><div class="sp"></div><div class="me">'+esc(sesion.nombre)+' · '+esc(Auth.rolInfo(sesion.rol).nombre)+'</div><button class="out" data-act="logout">Cerrar sesión</button></aside>'
-    +'<div class="main"><div class="top"><h1>'+({config:'Configuración',carta:'Carta',tarifas:'Tarifas',comentarios:'Comentarios',promos:'Promociones',reservas:'Reservas',clientes:'Clientes',mesas:'Mesas y salas',empleados:'Empleados',impresoras:'Impresoras',fichaje:'Registro de jornada'}[tab])+'</h1>'
+    +'<div class="main"><div class="top"><h1>'+({copiloto:'Copiloto IA',config:'Configuración',carta:'Carta',acciones:'Acciones rápidas',tarifas:'Tarifas',comentarios:'Comentarios',promos:'Promociones',reservas:'Reservas',clientes:'Clientes',mesas:'Mesas y salas',empleados:'Empleados',impresoras:'Impresoras',fichaje:'Registro de jornada'}[tab])+'</h1>'
     +'<span class="modo"><span class="dot" style="background:'+(modo==='servidor'?'#16a34a':'#d97706')+'"></span>'+(modo==='servidor'?'En red (servidor)':'Local')+'</span></div>'
     +'<div class="content">'+body+'</div></div></div>';
 }
@@ -540,6 +540,8 @@ document.addEventListener('click',function(e){
   var rde=e.target.closest('[data-recdel]'); if(rde){_recetaLeerDOM();window._receta.splice(+rde.dataset.recdel,1);modalEscandallo((M.productos||[]).filter(function(p){return p.id===window._recetaPid;})[0]);return;}
   var eca=e.target.closest('[data-editcat]'); if(eca){modalCat((M.categorias||[]).filter(function(c){return c.id===eca.dataset.editcat;})[0]);return;}
   var dca=e.target.closest('[data-delcat]'); if(dca){ var cid=dca.dataset.delcat; if((M.productos||[]).some(function(p){return p.categoriaId===cid;})){toast('La familia tiene productos; muévelos antes');return;} M.categorias=(M.categorias||[]).filter(function(c){return c.id!==cid;}); M.categorias.forEach(function(c){if(c.padreId===cid)c.padreId=undefined;}); saveMaster();cerrar();render();toast('Familia eliminada');return;}
+  var eac=e.target.closest('[data-editacc]'); if(eac){modalAccion((M.accionesRapidas||[]).filter(function(a){return a.id===eac.dataset.editacc;})[0]);return;}
+  var dac=e.target.closest('[data-delacc]'); if(dac){M.accionesRapidas=(M.accionesRapidas||[]).filter(function(a){return a.id!==dac.dataset.delacc;});saveMaster();cerrar();render();toast('Acción eliminada');return;}
   var er=e.target.closest('[data-editrsv]'); if(er){modalReserva((Sync.reservas?Sync.reservas():[]).filter(function(r){return r.id===er.dataset.editrsv;})[0]);return;}
   var dr=e.target.closest('[data-delrsv]'); if(dr){Sync.borrarReserva(dr.dataset.delrsv);cerrar();render();toast('Reserva eliminada');return;}
   var dm=e.target.closest('[data-delm]'); if(dm){M.mesas=M.mesas.filter(function(m){return m.id!==dm.dataset.delm;});saveMaster();cerrar();render();toast('Mesa eliminada');return;}
@@ -594,12 +596,17 @@ document.addEventListener('click',function(e){
     case 'savetarifa': guardarTarifa(a.dataset.id); break;
     case 'newreserva': modalReserva(null); break;
     case 'savereserva': guardarReserva(a.dataset.id); break;
+    case 'newacc': modalAccion(null); break;
+    case 'saveacc': guardarAccion(a.dataset.id); break;
+    case 'cop_precio': { var pid=a.dataset.pid, v=parseFloat(a.dataset.val); M.productos=M.productos.map(function(p){return p.id===pid?Object.assign({},p,{precio:v}):p;}); saveMaster(); render(); toast('✅ Precio aplicado por el Copiloto',true); break; }
+    case 'cop_esc': { var pe=(M.productos||[]).filter(function(p){return p.id===a.dataset.pid;})[0]; if(pe){window._receta=null;modalEscandallo(pe);} break; }
+    case 'cop_tarifa': { var tid=a.dataset.tid; M.tarifas=(M.tarifas||[]).map(function(t){return t.id===tid?Object.assign({},t,{activa:true}):t;}); saveMaster(); render(); toast('✅ Tarifa activada por el Copiloto',true); break; }
     case 'savecat': guardarCat(a.dataset.id); break;
     case 'savemesa': guardarMesa(a.dataset.id); break;
     case 'saveemp': guardarEmp(a.dataset.id); break;
   }
 });
-document.addEventListener('change',function(e){ if(e.target.id==='pr_tipo'){ readPromo(); modalPromo(); } });
+document.addEventListener('change',function(e){ if(e.target.id==='pr_tipo'){ readPromo(); modalPromo(); } if(e.target.id==='ac_t'){ accSyncParam(); } });
 function val(id){var e=document.getElementById(id);return e?e.value:'';}
 function chk(id){var e=document.getElementById(id);return e?e.checked:false;}
 function guardarProd(id){
@@ -721,6 +728,139 @@ function guardarTarifa(id){
   if(!M.tarifas)M.tarifas=[];
   if(id) M.tarifas=M.tarifas.map(function(t){return t.id===id?data:t;}); else M.tarifas.push(data);
   saveMaster();cerrar();render();toast('Tarifa guardada',true);
+}
+/* ---- ACCIONES RÁPIDAS personalizadas (orquestan módulos existentes) ---- */
+var ACC_TIPOS={descuento:'Descuento % al ticket',invitacion:'Invitación (100%)',tarifa:'Activar/desactivar tarifa','86':'Marcar producto agotado (86)'};
+function viewAcciones(){
+  var acc=M.accionesRapidas||[];
+  var h='<div class="bar"><p class="muted" style="margin:0;max-width:640px">Crea <b>botones a medida</b> para el TPV que ejecutan acciones de los módulos que ya existen (descuentos, tarifas, 86…). Personalizas la operativa sin tocar el núcleo del sistema.</p><button class="btn" data-act="newacc" style="margin-left:auto">+ Acción</button></div>';
+  h+='<table class="tbl"><thead><tr><th>Botón</th><th>Tipo</th><th>Parámetro</th><th></th></tr></thead><tbody>';
+  if(!acc.length) h+='<tr><td colspan="4" style="color:var(--soft)">Sin acciones. Crea botones rápidos para tu TPV.</td></tr>';
+  acc.forEach(function(a){
+    var par=a.tipo==='descuento'?(a.param+'%'):a.tipo==='tarifa'?((M.tarifas||[]).filter(function(t){return t.id===a.param;})[0]||{}).nombre||'—':a.tipo==='86'?((M.productos||[]).filter(function(p){return p.id===a.param;})[0]||{}).nombre||'—':'—';
+    h+='<tr><td><span class="badge" style="background:'+(a.color||'#334155')+';color:#fff">'+(a.ic||'⚡')+' '+esc(a.label)+'</span></td><td>'+esc(ACC_TIPOS[a.tipo]||a.tipo)+'</td><td>'+esc(par)+'</td><td style="text-align:right"><button class="btn ghost sm" data-editacc="'+a.id+'">Editar</button></td></tr>';
+  });
+  h+='</tbody></table><p class="muted" style="font-size:12px;margin-top:12px">Aparecen como botones en la pantalla de venta del TPV. La columna vertebral del sistema no se altera: las acciones solo combinan funciones ya existentes.</p>';
+  return h;
+}
+function modalAccion(a){
+  modalOpen=true;
+  var tipos=Object.keys(ACC_TIPOS).map(function(k){return '<option value="'+k+'"'+((a?a.tipo:'descuento')===k?' selected':'')+'>'+ACC_TIPOS[k]+'</option>';}).join('');
+  var tarifas=(M.tarifas||[]).map(function(t){return '<option value="'+t.id+'"'+(a&&a.param===t.id?' selected':'')+'>'+esc(t.nombre)+'</option>';}).join('');
+  var prods=(M.productos||[]).filter(function(p){return !p.esMenu;}).map(function(p){return '<option value="'+p.id+'"'+(a&&a.param===p.id?' selected':'')+'>'+esc(p.nombre)+'</option>';}).join('');
+  ov('<h3>'+(a?'Editar acción':'Nueva acción rápida')+'</h3><div class="mb">'
+    +'<div class="row"><div class="field" style="max-width:84px"><label>Icono</label><input id="ac_ic" value="'+esc(a?a.ic:'⚡')+'"></div>'
+    +'<div class="field"><label>Texto del botón</label><input id="ac_l" value="'+esc(a?a.label:'')+'" placeholder="-10% cliente"></div>'
+    +'<div class="field" style="max-width:110px"><label>Color</label><input id="ac_c" type="color" value="'+esc(a&&a.color||'#0891b2')+'"></div></div>'
+    +'<div class="field"><label>Qué hace (módulo del sistema)</label><select id="ac_t">'+tipos+'</select></div>'
+    +'<div class="field" id="ac_pwrap"><label>Parámetro</label>'
+      +'<input id="ac_p_desc" type="number" value="'+(a&&a.tipo==='descuento'?a.param:10)+'" placeholder="% descuento">'
+      +'<select id="ac_p_tar" style="display:none">'+tarifas+'</select>'
+      +'<select id="ac_p_prod" style="display:none">'+prods+'</select>'
+      +'<div id="ac_p_none" class="muted" style="display:none;font-size:13px">Esta acción no necesita parámetro.</div></div>'
+    +'</div><div class="foot">'+(a?'<button class="btn red" data-delacc="'+a.id+'" style="margin-right:auto">Eliminar</button>':'')
+    +'<button class="btn ghost" data-act="cerrar">Cancelar</button><button class="btn" data-act="saveacc" data-id="'+(a?a.id:'')+'">Guardar</button></div>');
+  accSyncParam();
+}
+function accSyncParam(){
+  var t=val('ac_t');
+  var show=function(id,on){var e=document.getElementById(id);if(e)e.style.display=on?'':'none';};
+  show('ac_p_desc',t==='descuento'); show('ac_p_tar',t==='tarifa'); show('ac_p_prod',t==='86'); show('ac_p_none',t==='invitacion');
+}
+function guardarAccion(id){
+  var l=val('ac_l').trim(); if(!l)return toast('Pon el texto del botón');
+  var t=val('ac_t'); var param;
+  if(t==='descuento')param=parseFloat(val('ac_p_desc'))||0; else if(t==='tarifa')param=val('ac_p_tar'); else if(t==='86')param=val('ac_p_prod'); else param=undefined;
+  if(!M.accionesRapidas)M.accionesRapidas=[];
+  var data={id:id||('ar'+uid()),label:l,ic:val('ac_ic')||'⚡',color:val('ac_c'),tipo:t,param:param};
+  if(id) M.accionesRapidas=M.accionesRapidas.map(function(a){return a.id===id?data:a;}); else M.accionesRapidas.push(data);
+  saveMaster();cerrar();render();toast('Acción guardada',true);
+}
+/* ---- COPILOTO IA: análisis + propuestas aplicables ---- */
+function copilotoPropuestas(){
+  var prods=(M.productos||[]).filter(function(p){return !p.esMenu;});
+  var props=[];
+  // 1) Precios con margen bajo (food cost alto)
+  prods.forEach(function(p){
+    if(p.coste!=null && p.precio!=null && p.precio>0){
+      var fc=p.coste/p.precio; // food cost
+      if(fc>0.40){
+        var nuevo=Math.ceil((p.coste/0.38)*10)/10; // objetivo food cost 38%
+        if(nuevo>p.precio){
+          props.push({ic:'📈',c:'#16a34a',t:'Sube el precio de '+esc(p.nombre),
+            d:'Food cost actual '+Math.round(fc*100)+'% (alto). Subiéndolo a '+nuevo.toFixed(2)+' € el food cost baja al 38% y el margen sube a '+Math.round((1-p.coste/nuevo)*100)+'%.',
+            imp:'+'+((nuevo-p.precio)).toFixed(2)+' € / unidad',
+            btn:'Aplicar precio '+nuevo.toFixed(2)+' €',act:'cop_precio',pid:p.id,val:nuevo});
+        }
+      }
+    }
+  });
+  // 2) Productos sin escandallo (no se puede optimizar margen)
+  var sinCoste=prods.filter(function(p){return p.coste==null && p.precio!=null;});
+  sinCoste.slice(0,4).forEach(function(p){
+    props.push({ic:'🧮',c:'#7c3aed',t:'Completa el escandallo de '+esc(p.nombre),
+      d:'Sin coste no puedo calcular su margen ni proponer precio. Define el coste de sus ingredientes y entrará en la optimización automática.',
+      imp:'Desbloquea optimización de margen',btn:'Abrir escandallo',act:'cop_esc',pid:p.id});
+  });
+  // 3) Demanda del día (reservas) -> tarifa de hora punta
+  var hoy=hoyStr();
+  var resHoy=(Sync.reservas?Sync.reservas():[]).filter(function(r){return r.fecha===hoy && r.estado!=='cancelada' && r.estado!=='noshow';});
+  var cub=resHoy.reduce(function(s,r){return s+(parseInt(r.personas,10)||0);},0);
+  if(cub>=6){
+    var horas={}; resHoy.forEach(function(r){var h=(r.hora||'').slice(0,2);horas[h]=(horas[h]||0)+(parseInt(r.personas,10)||0);});
+    var pico=Object.keys(horas).sort(function(a,b){return horas[b]-horas[a];})[0]||'';
+    var tInact=(M.tarifas||[]).filter(function(t){return t.activa===false;})[0];
+    if(tInact){
+      props.push({ic:'⚡',c:'#d97706',t:'Día fuerte: activa una tarifa de hora punta',
+        d:cub+' cubiertos reservados hoy (pico a las '+pico+':00). Activa la tarifa «'+esc(tInact.nombre)+'» para aprovechar la demanda.',
+        imp:'Más ingreso por cubierto en pico',btn:'Activar «'+esc(tInact.nombre)+'»',act:'cop_tarifa',tid:tInact.id});
+    } else {
+      props.push({ic:'⚡',c:'#d97706',t:'Día fuerte previsto',
+        d:cub+' cubiertos reservados hoy (pico a las '+pico+':00). Refuerza cocina y sala en esa franja y revisa el stock de los platos estrella.',
+        imp:'Anticipa el pico de servicio',btn:'',act:''});
+    }
+  }
+  // 4) Personal vs demanda (fichaje)
+  var dentro=(Auth.usuarios?Auth.usuarios():[]).filter(function(u){try{return Fichaje&&Fichaje.estado&&Fichaje.estado(u.id)==='dentro';}catch(e){return false;}}).length;
+  if(cub>=10 && dentro>0){
+    props.push({ic:'👥',c:'#0891b2',t:'Ajusta el turno a la demanda',
+      d:'Hoy hay '+cub+' cubiertos reservados y '+dentro+' persona(s) fichadas ahora. Valora reforzar el turno de la franja punta.',
+      imp:'Mejor servicio sin sobrecostes',btn:'',act:''});
+  }
+  return props;
+}
+function viewCopiloto(){
+  var prods=(M.productos||[]).filter(function(p){return !p.esMenu;});
+  var conCoste=prods.filter(function(p){return p.coste!=null;});
+  var margenes=conCoste.filter(function(p){return p.precio>0;}).map(function(p){return (p.precio-p.coste)/p.precio;});
+  var margMedio=margenes.length?Math.round(margenes.reduce(function(s,m){return s+m;},0)/margenes.length*100):null;
+  var pctEsc=prods.length?Math.round(conCoste.length/prods.length*100):0;
+  var hoy=hoyStr();
+  var resHoy=(Sync.reservas?Sync.reservas():[]).filter(function(r){return r.fecha===hoy && r.estado!=='cancelada' && r.estado!=='noshow';});
+  var cub=resHoy.reduce(function(s,r){return s+(parseInt(r.personas,10)||0);},0);
+  var agot=(Sync.agotados?Sync.agotados():[]).length;
+  var props=copilotoPropuestas();
+  function kpi(v,l,c){return '<div class="card pad" style="text-align:center;flex:1"><div style="font-size:30px;font-weight:900;color:'+c+'">'+v+'</div><div class="muted" style="font-size:12px;margin-top:2px">'+l+'</div></div>';}
+  var h='<div class="card pad" style="background:linear-gradient(160deg,#0f766e,#0f172a);color:#fff;margin-bottom:16px">'
+    +'<div style="display:flex;align-items:center;gap:12px"><img src="brand/mark.svg" style="width:44px;height:44px"><div><div style="font-weight:900;font-size:19px">Copiloto HOSTELERO</div>'
+    +'<div style="color:#5eead4;font-size:13px">Analiza tu negocio y te propone mejoras concretas, aplicables con un clic.</div></div></div></div>';
+  h+='<div class="row" style="gap:12px;margin-bottom:16px">'+kpi(prods.length,'Productos','#0f172a')+kpi(pctEsc+'%','Con escandallo','#7c3aed')+kpi(margMedio==null?'—':margMedio+'%','Margen medio','#16a34a')+kpi(cub,'Cubiertos hoy','#0891b2')+kpi(agot,'Agotados (86)','#e11d48')+'</div>';
+  h+='<h2 style="font-size:16px;margin:6px 0 12px">Propuestas del Copiloto ('+props.length+')</h2>';
+  if(!props.length){
+    h+='<div class="card pad muted">Todo en orden por ahora. Completa los escandallos y registra reservas para recibir más propuestas.</div>';
+  } else {
+    h+=props.map(function(p){
+      var btn=p.btn?('<button class="btn" data-act="'+p.act+'"'+(p.pid?(' data-pid="'+p.pid+'"'):'')+(p.tid?(' data-tid="'+p.tid+'"'):'')+(p.val!=null?(' data-val="'+p.val+'"'):'')+'>'+p.btn+'</button>'):'';
+      return '<div class="card pad" style="margin-bottom:10px;display:flex;gap:14px;align-items:flex-start">'
+        +'<div style="font-size:26px;line-height:1">'+p.ic+'</div>'
+        +'<div style="flex:1"><div style="font-weight:800;font-size:15px">'+p.t+'</div>'
+        +'<div class="muted" style="font-size:13px;margin:3px 0 6px">'+p.d+'</div>'
+        +'<span class="badge" style="background:'+p.c+'22;color:'+p.c+'">'+esc(p.imp)+'</span></div>'
+        +'<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">'+btn+'</div></div>';
+    }).join('');
+  }
+  h+='<p class="muted" style="font-size:12px;margin-top:14px">En esta demo el Copiloto calcula las propuestas localmente con las mismas reglas. En producción, <b>Claude</b> vive dentro de HOSTELERO: lee tus ventas en tiempo real, redacta los informes en lenguaje natural y propone adaptaciones del TPV de forma continua — tú apruebas, él ejecuta.</p>';
+  return h;
 }
 /* ---- RESERVAS (con orígenes: TheFork, Google, CoverManager…) ---- */
 var ORIGENES={telefono:{n:'Teléfono',ic:'📞',c:'#475569'},web:{n:'Web propia',ic:'🌐',c:'#0891b2'},walkin:{n:'Sin reserva',ic:'🚶',c:'#64748b'},carta:{n:'Carta digital',ic:'📱',c:'#0d9488'},voz:{n:'Agente de voz',ic:'🎙️',c:'#7c3aed'},thefork:{n:'TheFork',ic:'🍴',c:'#00a699'},google:{n:'Google',ic:'🔎',c:'#4285f4'},covermanager:{n:'CoverManager',ic:'📗',c:'#e0492f'}};

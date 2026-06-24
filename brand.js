@@ -27,10 +27,24 @@
     var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
     var s = document.createElement('div'); s.id = 'hsl-splash';
     s.innerHTML = '<img class="mk" alt="" src="data:image/svg+xml,' + MARK + '">'
-      + '<div style="text-align:center"><div class="wm">HOSTELERO</div><div class="tg">TPV · EN RED</div></div>'
+      + '<div style="text-align:center"><div class="wm">HOSTELERO</div><div class="tg">IA POS · EL TPV QUE SE PIENSA SOLO</div></div>'
       + '<div class="bar"><i></i></div>';
     var mount = function () { (document.body || document.documentElement).appendChild(s);
       setTimeout(function () { if (s && s.parentNode) s.parentNode.removeChild(s); }, 2000); };
     if (document.body) mount(); else document.addEventListener('DOMContentLoaded', mount);
+  } catch (e) {}
+
+  // Aviso de copyright discreto en todas las ventanas
+  try {
+    var YEAR = new Date().getFullYear();
+    var cp = document.createElement('div');
+    cp.id = 'hsl-cp';
+    cp.textContent = '© ' + YEAR + ' HOSTELERO · IA POS — Todos los derechos reservados';
+    cp.style.cssText = 'position:fixed;right:8px;bottom:6px;z-index:9000;pointer-events:none;'
+      + 'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;'
+      + 'font-size:10px;letter-spacing:.2px;color:rgba(120,135,160,.55);user-select:none;'
+      + 'text-shadow:0 1px 2px rgba(0,0,0,.18)';
+    var mc = function () { if (document.body && !document.getElementById('hsl-cp')) document.body.appendChild(cp); };
+    if (document.body) mc(); else document.addEventListener('DOMContentLoaded', mc);
   } catch (e) {}
 })();

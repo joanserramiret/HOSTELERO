@@ -246,6 +246,12 @@ table.tbl{width:100%;border-collapse:collapse}
 function round2(n){ return Math.round((n + Number.EPSILON) * 100) / 100; }
 function eur(n){ try{ return new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR'}).format(n||0); }catch(e){ return (n||0).toFixed(2)+' €'; } }
 function agotadoProd(p){ try{ return !!(window.HOSTELERO_SYNC && window.HOSTELERO_SYNC.estaAgotado && window.HOSTELERO_SYNC.estaAgotado(p.id)); }catch(e){ return false; } }
+function ejecutarAccion(ac){
+  if(ac.tipo==='descuento'){ autorizar('descuento',function(){ var t=getTicket(state.ticketActivo); if(!t){toast('Abre un ticket primero');return;} t.descuento={tipo:'pct',valor:ac.param||0}; save(); render(); toast('🏷️ '+(ac.param||0)+'% aplicado'); }); return; }
+  if(ac.tipo==='invitacion'){ autorizar('descuento',function(){ var t=getTicket(state.ticketActivo); if(!t){toast('Abre un ticket primero');return;} t.descuento={tipo:'invit'}; save(); render(); toast('🎁 Invitación aplicada'); }); return; }
+  if(ac.tipo==='86'){ var on=!agotadoProd({id:ac.param}); if(window.HOSTELERO_SYNC&&window.HOSTELERO_SYNC.setAgotado){ window.HOSTELERO_SYNC.setAgotado(ac.param,on); toast(on?'🚫 Marcado agotado':'✅ Disponible de nuevo'); } return; }
+  if(ac.tipo==='tarifa'){ autorizar('descuento',function(){ try{ var S=window.HOSTELERO_SYNC; var m=S.master(); var mm=JSON.parse(JSON.stringify(m)); var nom='',nuevo=false; mm.tarifas=(mm.tarifas||[]).map(function(x){ if(x.id===ac.param){ nuevo=!(x.activa!==false); nom=x.nombre; return Object.assign({},x,{activa:nuevo}); } return x; }); S.guardarMaster(mm); toast('💲 '+esc(nom)+(nuevo?' activada':' desactivada')); }catch(e){} }); return; }
+}
 function acumularPuntos(t,total){
   if(!t.clienteId)return;
   var ppe=(DB.config&&DB.config.puntosPorEuro)||0; if(!ppe)return;
@@ -385,6 +391,7 @@ function aplicarMaster(){
   DB.clientes=m.clientes||DB.clientes||[];
   DB.comentarios=m.comentarios||DB.comentarios||[];
   DB.tarifas=m.tarifas||DB.tarifas||[];
+  DB.accionesRapidas=m.accionesRapidas||DB.accionesRapidas||[];
   DB.datafonos=m.datafonos||DB.datafonos||[];
   DB.cajasEfectivo=m.cajasEfectivo||DB.cajasEfectivo||[];
   DB.categorias=(m.categorias||[]).map(function(c,i){return {id:c.id,nombre:c.nombre,color:c.color||'#64748b',ic:c.ic||'🍽️',orden:(c.orden==null?i+1:c.orden)};});
@@ -726,7 +733,7 @@ function viewVenta(){
     +'<div class="ttl"><h1>'+esc(t.mesaNombre||'Ticket')+'</h1><span class="sub">Ticket #'+t.numero+'</span></div>'
     +'<div class="right">'+pasectrl+'<button class="btn ghost" data-act="cliente">👤 '+(t.clienteId?esc((getCliente(t.clienteId)||{}).nombre||'Cliente'):'Cliente')+'</button><button class="btn ghost" data-act="descuento">🏷️ '+(t.descuento?('-'+eur(descuentoImporte(t))):'Dto')+'</button><button class="btn ghost" data-act="comensales">'+cms+'</button><button class="btn danger-ghost" data-act="anular">Anular</button></div></div>'
     +'<div class="content venta-content"><div class="venta">'
-    +'<div class="carta">'+ordenBar+(function(){var ta=tarifaActiva(t.salaId);return (ta&&(ta.pct||(ta.precios&&Object.keys(ta.precios).length)))?'<div class="orden-activo" style="background:#0891b2">💲 Tarifa aplicada: <b>'+esc(ta.nombre)+'</b></div>':'';})()+'<div class="cat-bar"><button class="btn123" data-act="orden123" title="Orden de platos">123</button><button class="btn123" data-act="disponibilidad" title="Disponibilidad" style="background:#fee2e2;color:#b91c1c">🚫</button>'+chips+'</div><div class="prod-grid">'+pg+'</div></div>'
+    +'<div class="carta">'+ordenBar+(function(){var ta=tarifaActiva(t.salaId);return (ta&&(ta.pct||(ta.precios&&Object.keys(ta.precios).length)))?'<div class="orden-activo" style="background:#0891b2">💲 Tarifa aplicada: <b>'+esc(ta.nombre)+'</b></div>':'';})()+'<div class="cat-bar"><button class="btn123" data-act="orden123" title="Orden de platos">123</button><button class="btn123" data-act="disponibilidad" title="Disponibilidad" style="background:#fee2e2;color:#b91c1c">🚫</button>'+chips+'</div>'+(function(){var A=DB.accionesRapidas||[];return A.length?'<div style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 2px">'+A.map(function(a){return '<button class="btn" style="background:'+(a.color||'#334155')+';color:#fff;border:none;font-weight:800" data-act="accrap" data-id="'+a.id+'">'+(a.ic||'⚡')+' '+esc(a.label)+'</button>';}).join('')+'</div>':'';})()+'<div class="prod-grid">'+pg+'</div></div>'
     +'<div class="card ticket"><div class="thead"><b>Comanda</b><span class="uds">'+uds+' uds</span></div><div class="lineas">'+lineas+'</div>'
     +'<div class="tfoot">'
     +'<button class="btn outline block'+(pend?'':' off')+'" '+(pend?'':'disabled')+' data-act="enviarCocina">👨‍🍳 Enviar a cocina'+(pend?' ('+pend+')':'')+'</button>'
@@ -961,6 +968,7 @@ function onClick(e){
     case 'ordendef': state.ordenActivo=null; closeModal(); render(); break;
     case 'add': { var p=getProducto(id); if((p.controlStock&&p.stock<=0)||agotadoProd(p)){ toast('🚫 '+(p.nombreBoton||p.nombre)+' no disponible'); break; } if(p.esMenu){openMenu(p);} else if(p.mods&&p.mods.length){openConfig(p);} else {addProducto(state.ticketActivo,p);render();} break; }
     case 'disponibilidad': modalDisponibilidad(); break;
+    case 'accrap': { var ac=(DB.accionesRapidas||[]).filter(function(x){return x.id===id;})[0]; if(ac) ejecutarAccion(ac); break; }
     case 'togdisp': { var pid=el.dataset.id; window.HOSTELERO_SYNC.setAgotado(pid, !agotadoProd({id:pid})); setTimeout(function(){ if(document.getElementById('dispPanel'))modalDisponibilidad(); },150); break; }
     case 'cfgsel': { var cg=+el.dataset.g, co=+el.dataset.o; var grp=getProducto(state.cfg.pid).mods[cg]; if(grp.tipo==='check'){ var arr=state.cfg.sel[cg]; var ix=arr.indexOf(co); if(ix>=0)arr.splice(ix,1); else arr.push(co); } else { state.cfg.sel[cg]=co; } modalConfig(); break; }
     case 'addcfg': confirmConfig(); break;

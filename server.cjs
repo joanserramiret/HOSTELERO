@@ -37,6 +37,9 @@ function masterSeed() {
     p('p21','Tarta de Queso','c5',5,'🍰','Postres'), p('p22','Flan','c5',3.8,'🍮','Postres'), p('p23','Helado','c5',3.5,'🍨','Postres'), p('p24','Fruta','c5',3,'🍓','Postres'),
     { id:'p25', nombre:'Rape a la plancha', categoriaId:'c4', precio:39, ic:'🐟', pasePorDefecto:'Segundos', activo:true, porPeso:true }
   ];
+  function setc(id, coste){ var p=prods.filter(function(x){return x.id===id;})[0]; if(p)p.coste=coste; }
+  // costes de ejemplo (escandallo) para que el Copiloto pueda optimizar márgenes
+  setc('p10',2.0); setc('p12',2.7); setc('p15',7.6); setc('p16',9.0); setc('p18',5.2); setc('p20',7.5); setc('p25',22.0);
   function setm(id, mods){ var p=prods.filter(function(x){return x.id===id;})[0]; if(p)p.mods=mods; }
   setm('p6',[{n:'Leche',op:[{n:'Normal'},{n:'Desnatada'},{n:'Avena',p:0.3},{n:'Soja',p:0.3}]}]);
   setm('p13',[{n:'Salsa',op:[{n:'Brava'},{n:'Alioli'},{n:'Mixta'}]},{n:'Tamaño',op:[{n:'Tapa'},{n:'Ración',p:2}]}]);
@@ -126,9 +129,15 @@ function masterSeed() {
   var tarifas = [
     { id:'tf0', nombre:'Carta (general)', pct:0, porDefecto:true, activa:true },
     { id:'tf1', nombre:'Terraza +10%', pct:10, salaIds:['s2'], activa:true },
-    { id:'tf2', nombre:'Happy Hour -15% (18-20h)', pct:-15, desde:'18:00', hasta:'20:00', activa:true }
+    { id:'tf2', nombre:'Happy Hour -15% (18-20h)', pct:-15, desde:'18:00', hasta:'20:00', activa:false }
   ];
-  return { version: 14, categorias: cats, productos: prods, salas: salas, mesas: mesas, decor: decor, promociones: promociones, clientes: clientes, datafonos: datafonos, comentarios: comentarios, tarifas: tarifas, usuarios: usuarios, impresoras: [], config: config };
+  // Acciones rápidas personalizadas: botones a medida que orquestan módulos existentes
+  var accionesRapidas = [
+    { id:'ar1', label:'-10% cliente', ic:'🏷️', color:'#0891b2', tipo:'descuento', param:10 },
+    { id:'ar2', label:'Invitación', ic:'🎁', color:'#d97706', tipo:'invitacion' },
+    { id:'ar3', label:'Happy Hour', ic:'⚡', color:'#7c3aed', tipo:'tarifa', param:'tf2' }
+  ];
+  return { version: 16, categorias: cats, productos: prods, salas: salas, mesas: mesas, decor: decor, promociones: promociones, clientes: clientes, datafonos: datafonos, comentarios: comentarios, tarifas: tarifas, accionesRapidas: accionesRapidas, usuarios: usuarios, impresoras: [], config: config };
 }
 
 // Reservas de demostración (hoy)
@@ -154,6 +163,7 @@ function cargar() {
   if (!s.master.datafonos) s.master.datafonos = [];
   if (!s.master.cajasEfectivo) s.master.cajasEfectivo = [];
   if (!s.master.tarifas) s.master.tarifas = [];
+  if (!s.master.accionesRapidas) s.master.accionesRapidas = [];
   if (!s.fichajes) s.fichajes = [];
   if (!s.agotados) s.agotados = [];
   if (!s.reservas) s.reservas = sembrarReservas();
