@@ -113,12 +113,12 @@ function render(){
   if(!sesion)return showLogin();
   if(!M) M=clone(Sync.master());
   var modo=Sync.modo();
-  var navs=[['copiloto','🤖 Copiloto IA'],['config','⚙️ Configuración'],['carta','🍽️ Carta'],['acciones','⚡ Acciones'],['tarifas','💲 Tarifas'],['comentarios','📝 Comentarios'],['promos','🎯 Promociones'],['reservas','📅 Reservas'],['clientes','🧾 Clientes'],['mesas','🪑 Mesas y salas'],['empleados','👤 Empleados'],['impresoras','🖨️ Impresoras'],['fichaje','🕒 Fichajes']];
+  var navs=[['copiloto','🤖 Maître IA'],['config','⚙️ Configuración'],['carta','🍽️ Carta'],['acciones','⚡ Acciones'],['tarifas','💲 Tarifas'],['comentarios','📝 Comentarios'],['promos','🎯 Promociones'],['reservas','📅 Reservas'],['clientes','🧾 Clientes'],['mesas','🪑 Mesas y salas'],['empleados','👤 Empleados'],['impresoras','🖨️ Impresoras'],['fichaje','🕒 Fichajes']];
   var nav=navs.map(function(n){return '<button class="'+(tab===n[0]?'active':'')+'" data-tab="'+n[0]+'">'+n[1]+'</button>';}).join('');
   var body= tab==='copiloto'?viewCopiloto() : tab==='config'?viewConfig() : tab==='carta'?viewCarta() : tab==='acciones'?viewAcciones() : tab==='tarifas'?viewTarifas() : tab==='comentarios'?viewComentarios() : tab==='promos'?viewPromos() : tab==='reservas'?viewReservas() : tab==='clientes'?viewClientes() : tab==='mesas'?viewMesas() : tab==='empleados'?viewEmpleados() : tab==='impresoras'?viewImpresoras() : viewFichaje();
   app.innerHTML='<div class="app"><aside class="side"><div class="brand">HOSTELERO<small>ADMINISTRACIÓN</small></div>'
     +'<div class="nav">'+nav+'</div><div class="sp"></div><div class="me">'+esc(sesion.nombre)+' · '+esc(Auth.rolInfo(sesion.rol).nombre)+'</div><button class="out" data-act="logout">Cerrar sesión</button></aside>'
-    +'<div class="main"><div class="top"><h1>'+({copiloto:'Copiloto IA',config:'Configuración',carta:'Carta',acciones:'Acciones rápidas',tarifas:'Tarifas',comentarios:'Comentarios',promos:'Promociones',reservas:'Reservas',clientes:'Clientes',mesas:'Mesas y salas',empleados:'Empleados',impresoras:'Impresoras',fichaje:'Registro de jornada'}[tab])+'</h1>'
+    +'<div class="main"><div class="top"><h1>'+({copiloto:'Maître IA',config:'Configuración',carta:'Carta',acciones:'Acciones rápidas',tarifas:'Tarifas',comentarios:'Comentarios',promos:'Promociones',reservas:'Reservas',clientes:'Clientes',mesas:'Mesas y salas',empleados:'Empleados',impresoras:'Impresoras',fichaje:'Registro de jornada'}[tab])+'</h1>'
     +'<span class="modo"><span class="dot" style="background:'+(modo==='servidor'?'#16a34a':'#d97706')+'"></span>'+(modo==='servidor'?'En red (servidor)':'Local')+'</span></div>'
     +'<div class="content">'+body+'</div></div></div>';
 }
@@ -598,9 +598,9 @@ document.addEventListener('click',function(e){
     case 'savereserva': guardarReserva(a.dataset.id); break;
     case 'newacc': modalAccion(null); break;
     case 'saveacc': guardarAccion(a.dataset.id); break;
-    case 'cop_precio': { var pid=a.dataset.pid, v=parseFloat(a.dataset.val); M.productos=M.productos.map(function(p){return p.id===pid?Object.assign({},p,{precio:v}):p;}); saveMaster(); render(); toast('✅ Precio aplicado por el Copiloto',true); break; }
+    case 'cop_precio': { var pid=a.dataset.pid, v=parseFloat(a.dataset.val); M.productos=M.productos.map(function(p){return p.id===pid?Object.assign({},p,{precio:v}):p;}); saveMaster(); render(); toast('✅ Precio aplicado por el Maître',true); break; }
     case 'cop_esc': { var pe=(M.productos||[]).filter(function(p){return p.id===a.dataset.pid;})[0]; if(pe){window._receta=null;modalEscandallo(pe);} break; }
-    case 'cop_tarifa': { var tid=a.dataset.tid; M.tarifas=(M.tarifas||[]).map(function(t){return t.id===tid?Object.assign({},t,{activa:true}):t;}); saveMaster(); render(); toast('✅ Tarifa activada por el Copiloto',true); break; }
+    case 'cop_tarifa': { var tid=a.dataset.tid; M.tarifas=(M.tarifas||[]).map(function(t){return t.id===tid?Object.assign({},t,{activa:true}):t;}); saveMaster(); render(); toast('✅ Tarifa activada por el Maître',true); break; }
     case 'savecat': guardarCat(a.dataset.id); break;
     case 'savemesa': guardarMesa(a.dataset.id); break;
     case 'saveemp': guardarEmp(a.dataset.id); break;
@@ -842,10 +842,10 @@ function viewCopiloto(){
   var props=copilotoPropuestas();
   function kpi(v,l,c){return '<div class="card pad" style="text-align:center;flex:1"><div style="font-size:30px;font-weight:900;color:'+c+'">'+v+'</div><div class="muted" style="font-size:12px;margin-top:2px">'+l+'</div></div>';}
   var h='<div class="card pad" style="background:linear-gradient(160deg,#0f766e,#0f172a);color:#fff;margin-bottom:16px">'
-    +'<div style="display:flex;align-items:center;gap:12px"><img src="brand/mark.svg" style="width:44px;height:44px"><div><div style="font-weight:900;font-size:19px">Copiloto HOSTELERO</div>'
+    +'<div style="display:flex;align-items:center;gap:12px"><img src="brand/mark.svg" style="width:44px;height:44px"><div><div style="font-weight:900;font-size:19px">El Maître · IA de HOSTELERO</div>'
     +'<div style="color:#5eead4;font-size:13px">Analiza tu negocio y te propone mejoras concretas, aplicables con un clic.</div></div></div></div>';
   h+='<div class="row" style="gap:12px;margin-bottom:16px">'+kpi(prods.length,'Productos','#0f172a')+kpi(pctEsc+'%','Con escandallo','#7c3aed')+kpi(margMedio==null?'—':margMedio+'%','Margen medio','#16a34a')+kpi(cub,'Cubiertos hoy','#0891b2')+kpi(agot,'Agotados (86)','#e11d48')+'</div>';
-  h+='<h2 style="font-size:16px;margin:6px 0 12px">Propuestas del Copiloto ('+props.length+')</h2>';
+  h+='<h2 style="font-size:16px;margin:6px 0 12px">Propuestas del Maître ('+props.length+')</h2>';
   if(!props.length){
     h+='<div class="card pad muted">Todo en orden por ahora. Completa los escandallos y registra reservas para recibir más propuestas.</div>';
   } else {
@@ -859,7 +859,7 @@ function viewCopiloto(){
         +'<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">'+btn+'</div></div>';
     }).join('');
   }
-  h+='<p class="muted" style="font-size:12px;margin-top:14px">En esta demo el Copiloto calcula las propuestas localmente con las mismas reglas. En producción, <b>Claude</b> vive dentro de HOSTELERO: lee tus ventas en tiempo real, redacta los informes en lenguaje natural y propone adaptaciones del TPV de forma continua — tú apruebas, él ejecuta.</p>';
+  h+='<p class="muted" style="font-size:12px;margin-top:14px">En esta demo el Maître calcula las propuestas localmente con las mismas reglas. En producción, el <b>Maître</b> (IA) vive dentro de HOSTELERO: lee tus ventas en tiempo real, redacta los informes en lenguaje natural y propone adaptaciones del sistema de forma continua — tú apruebas, él ejecuta.</p>';
   return h;
 }
 /* ---- RESERVAS (con orígenes: TheFork, Google, CoverManager…) ---- */

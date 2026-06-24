@@ -19,7 +19,7 @@ alta. El hardware (datáfono, impresoras) va por **partners**, no lo vendes tú.
 | Carta digital (QR) | ✅ | ✅ | ✅ |
 | Tarifas / promociones | — | ✅ | ✅ |
 | Reservas (agenda + API) | — | ✅ | ✅ |
-| **Copiloto IA** | — | propuestas básicas | **completo + informes** |
+| **Maître IA** | — | propuestas básicas | **completo + informes** |
 | Acciones personalizadas | — | ✅ | ✅ |
 | Integraciones (datáfono, efectivo, reservas) | 1 | varias | todas |
 | Soporte | email | prioritario | dedicado |
@@ -35,7 +35,7 @@ alta. El hardware (datáfono, impresoras) va por **partners**, no lo vendes tú.
 
 ## Estrategia de precios (notas)
 - **Ancla en PRO** (el plan recomendado): que START parezca "para empezar" y IA "para los que van en serio".
-- **El argumento no es el precio, es el retorno:** el Copiloto IA suele **recuperar su cuota en margen**
+- **El argumento no es el precio, es el retorno:** el Maître IA suele **recuperar su cuota en margen**
   (subir 3–4 platos un 10% ya la paga). Véndelo como inversión, no como gasto.
 - **Prueba piloto gratuita** 1–2 semanas para vencer la inercia del "ya tengo TPV".
 - **Sin permanencia agresiva** al principio: genera confianza y boca a boca.
@@ -46,7 +46,7 @@ alta. El hardware (datáfono, impresoras) va por **partners**, no lo vendes tú.
 |---|---|---|
 | Cuota /mes | [____] | [____] |
 | ¿Funciona sin internet? | normalmente no | **sí** |
-| ¿Optimiza margen solo? | no | **sí (Copiloto IA)** |
+| ¿Optimiza margen solo? | no | **sí (Maître IA)** |
 | ¿Cuotas de nube por puesto? | habitual | **no** |
 | Integraciones | limitadas | **abiertas** |
 

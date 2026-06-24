@@ -31,11 +31,11 @@ Proteger el signo con el que el mercado te identifica.
 - ⬜ Presentar solicitud y pagar tasas (verificar importes vigentes OEPM/EUIPO).
 - ⬜ Registrar el/los **dominios** (.com, .es) y handles de redes con el nombre definitivo.
 
-## 3. Secreto empresarial (el "know-how" del Copiloto)
+## 3. Secreto empresarial (el "know-how" del Maître)
 La lógica de IA, las reglas de optimización y la arquitectura "Claude dentro de HOSTELERO" son tu
 ventaja. Se protegen manteniéndolas **en secreto** (Ley 1/2019 de Secretos Empresariales).
 
-- ⬜ No publicar en abierto la lógica del Copiloto ni los prompts/reglas.
+- ⬜ No publicar en abierto la lógica del Maître ni los prompts/reglas.
 - ⬜ Control de acceso al código y a la documentación sensible (mínimos necesarios).
 - ⬜ NDA firmado con **todo** el que acceda (ver doc 02).
 - ⬜ Marcar la documentación interna como **"Confidencial"**.
@@ -62,7 +62,7 @@ Si HOSTELERO trata datos de clientes finales (reservas, fidelización…), aplic
 
 - ⬜ Redactar **política de privacidad** y base legal del tratamiento.
 - ⬜ **Contrato de encargado de tratamiento** entre tu empresa y los locales (y con la IA si procesa datos personales).
-- ⬜ Minimizar datos personales que pasan por el Copiloto/IA.
+- ⬜ Minimizar datos personales que pasan por el Maître/IA.
 
 ## 7. Prioridad (qué hacer ya)
 1. 🔴 **NDA** activo con cualquiera que vea producto/código (hoy).

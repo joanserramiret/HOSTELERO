@@ -31,7 +31,7 @@ con motivo de [OBJETO].
 
 **2. Información Confidencial.** Toda información técnica, comercial, financiera u operativa
 revelada por una parte a la otra, en cualquier soporte, incluyendo de forma no limitativa:
-código fuente y arquitectura del software, la lógica y reglas del módulo de IA ("Copiloto"),
+código fuente y arquitectura del software, la lógica y reglas del módulo de IA ("Maître"),
 prompts, diseños, interfaces, datos de clientes, planes de negocio, precios y know-how. Se
 considera confidencial esté o no marcada como tal, cuando por su naturaleza deba entenderse reservada.
 

@@ -38,7 +38,7 @@ cuando tú dices que sí. **Tú apruebas, él ejecuta.**"
 
 **Demo (lo que enseñas, en este orden):**
 1. **TPV + plano** → abre una mesa, añade platos, cobra. "Rápido y bonito."
-2. **Copiloto IA** → enseña las propuestas y aplica una (subir precio / activar Happy Hour). *Momento WOW.*
+2. **Maître IA** → enseña las propuestas y aplica una (subir precio / activar Happy Hour). *Momento WOW.*
 3. **Carta digital (QR)** → escanéala con su móvil, que vea su carta y pida una reserva → aparece en la agenda. *Segundo WOW.*
 4. **Sin internet** → "Todo esto, en la red del local. Si cae la línea, sigues cobrando."
 5. **Abierto** → "Tu datáfono, tu sistema de efectivo, tus reservas… se integra con todo."
@@ -63,7 +63,7 @@ Si duda → "¿Qué te falta para verlo claro?" (vuelve a la objeción concreta)
 
 ## 6. Seguimiento
 - Envía el **dossier** y la **carta digital de su local** ya cargada (efecto sorpresa).
-- A las 48–72h: "¿Probaste el copiloto? ¿Qué te propuso?"
+- A las 48–72h: "¿Probaste el Maître? ¿Qué te propuso?"
 
 ---
 © 2026 HOSTELERO · IA POS — Documento confidencial.

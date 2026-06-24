@@ -19,9 +19,10 @@ Claude viviendo en su raíz**, que se mapea, cambia y se adapta al 100% de cada 
 - **Nunca se dice que no a una integración.** Cualquier datáfono, efectivo, reserva o proveedor
   se contempla, a través de una API abierta y unificada.
 - **Funciona sin depender de la nube.** Si cae internet, el local sigue. Tus datos son tuyos.
+- **Una herramienta 360°, sin límites.** Cubre todo el ciclo del local —venta, sala, cocina, reservas, clientes, gestión e IA— y crece sin techo: tantos dispositivos, integraciones y adaptaciones como haga falta. No hay "hasta aquí".
 
 ## Qué hace distinto a HOSTELERO
-El **Copiloto** lee ventas, escandallo, reservas y personal en tiempo real y propone cambios
+El **Maître** lee ventas, escandallo, reservas y personal en tiempo real y propone cambios
 concretos y aplicables con un clic: *"sube el rape, el margen pasa de 44% a 62%"*, *"día fuerte
 mañana, activa la tarifa de hora punta"*, *"86 la paella a partir de las 22h, no rota"*. Informes
 que no solo describen: **proponen y ejecutan**. Y crece contigo: cuanto más lo usas, mejor te conoce.

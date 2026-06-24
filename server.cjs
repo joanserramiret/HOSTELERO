@@ -38,7 +38,7 @@ function masterSeed() {
     { id:'p25', nombre:'Rape a la plancha', categoriaId:'c4', precio:39, ic:'🐟', pasePorDefecto:'Segundos', activo:true, porPeso:true }
   ];
   function setc(id, coste){ var p=prods.filter(function(x){return x.id===id;})[0]; if(p)p.coste=coste; }
-  // costes de ejemplo (escandallo) para que el Copiloto pueda optimizar márgenes
+  // costes de ejemplo (escandallo) para que el Maître pueda optimizar márgenes
   setc('p10',2.0); setc('p12',2.7); setc('p15',7.6); setc('p16',9.0); setc('p18',5.2); setc('p20',7.5); setc('p25',22.0);
   function setm(id, mods){ var p=prods.filter(function(x){return x.id===id;})[0]; if(p)p.mods=mods; }
   setm('p6',[{n:'Leche',op:[{n:'Normal'},{n:'Desnatada'},{n:'Avena',p:0.3},{n:'Soja',p:0.3}]}]);
