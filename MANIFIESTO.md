@@ -12,7 +12,7 @@ Claude viviendo en su raíz**, que se mapea, cambia y se adapta al 100% de cada 
 **no para de proponer cómo ganar más y trabajar mejor**.
 
 ## Lo que creemos
-- **La IA no es un extra. Es el núcleo.** El TPV es el sistema nervioso; la IA, la cabeza.
+- **La IA no es un extra. Es el cerebro y el gerente.** El Maître dirige el local: el TPV, la cocina y la sala son los sentidos y las manos; la IA es la cabeza que piensa, decide y manda (siempre con tu aprobación). HOSTELERO no tiene IA — **es IA con forma de TPV.**
 - **El software trabaja para el local, no al revés.** Se adapta a cómo trabaja cada uno —botones,
   acciones y operativa a medida— sin romper la columna vertebral del sistema.
 - **El dueño manda; la IA ejecuta.** Cada propuesta se aprueba antes de aplicarse. Confianza primero.
