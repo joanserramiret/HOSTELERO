@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HOSTELERO · IA POS — El TPV que se piensa a sí mismo</title>
+<style>
+:root{--navy:#0f172a;--navy2:#1e293b;--teal:#14b8a6;--tealD:#0f766e;--mint:#5eead4;--gold:#f59e0b;--purple:#6d28d9;--ink:#1e293b;--mute:#64748b;--line:#e6ebf2;--bg:#ffffff}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:var(--ink);line-height:1.6;background:#fff}
+a{text-decoration:none;color:inherit}
+.wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+.btn{display:inline-block;background:var(--teal);color:#04231e;font-weight:800;padding:14px 24px;border-radius:14px;font-size:15px}
+.btn.ghost{background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.4)}
+.btn.dark{background:#0f172a;color:#fff}
+/* nav */
+nav{position:sticky;top:0;z-index:50;background:rgba(15,23,42,.92);backdrop-filter:blur(8px);color:#fff}
+nav .wrap{display:flex;align-items:center;gap:14px;padding:12px 22px}
+nav .mk{width:34px;height:34px}
+nav .nm{font-weight:900;letter-spacing:1px}
+nav .nm small{color:var(--gold);font-weight:800;font-size:11px;margin-left:6px;letter-spacing:1px}
+nav .sp{flex:1}
+nav a.lnk{color:#cbd5e1;font-weight:600;font-size:14px;margin:0 10px}
+@media(max-width:760px){nav a.lnk{display:none}}
+/* hero */
+.hero{background:radial-gradient(120% 120% at 75% 0%,#10202e,#0b1220 60%,#0f172a);color:#fff;padding:70px 0 80px}
+.hero h1{font-size:54px;font-weight:900;letter-spacing:.5px;line-height:1.05}
+.hero h1 .hl{color:var(--mint)}
+.hero p.lead{font-size:20px;color:#cbd5e1;margin:18px 0 28px;max-width:640px}
+.hero .cta{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.hero .pills{margin-top:26px;display:flex;gap:10px;flex-wrap:wrap}
+.pill{font-size:12.5px;font-weight:700;color:var(--mint);background:rgba(20,184,166,.12);border:1px solid rgba(20,184,166,.3);padding:6px 12px;border-radius:999px}
+@media(max-width:760px){.hero h1{font-size:38px}}
+/* sections */
+section{padding:66px 0}
+.kick{color:var(--tealD);font-weight:800;font-size:13px;letter-spacing:1px;text-transform:uppercase}
+h2.t{font-size:34px;font-weight:900;margin:8px 0 8px}
+.sub{color:var(--mute);font-size:17px;max-width:680px}
+.grid{display:grid;gap:18px;margin-top:34px}
+.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:860px){.g3,.g4{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.g3,.g4{grid-template-columns:1fr}}
+.card{border:1px solid var(--line);border-radius:18px;padding:22px;background:#fff}
+.card .ic{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;margin-bottom:12px}
+.card h3{font-size:17px;margin-bottom:6px}
+.card p{color:var(--mute);font-size:14px}
+.alt{background:#f8fafc}
+/* copiloto */
+.cop{background:var(--navy);color:#fff;border-radius:24px;padding:40px;margin-top:34px}
+.cop .ex{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:24px}
+@media(max-width:760px){.cop .ex{grid-template-columns:1fr}}
+.ex .c{background:var(--navy2);border-radius:14px;padding:18px}
+.ex .tag{font-size:11px;font-weight:800;padding:3px 10px;border-radius:999px;color:#04231e}
+.ex h4{margin:10px 0 4px;font-size:15px}
+.ex p{color:#cbd5e1;font-size:13px}
+.ex .imp{color:var(--mint);font-weight:800;font-size:13px;margin-top:8px}
+/* planes */
+.plan{border:1px solid var(--line);border-radius:18px;padding:26px;text-align:center;background:#fff}
+.plan.feat{border:2px solid var(--teal);position:relative}
+.plan .badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--teal);color:#04231e;font-weight:800;font-size:11px;padding:4px 12px;border-radius:999px}
+.plan h3{font-size:18px}
+.plan .pr{font-size:34px;font-weight:900;color:var(--tealD);margin:8px 0}
+.plan .pr small{font-size:14px;color:var(--mute);font-weight:600}
+.plan ul{list-style:none;text-align:left;margin:14px 0;font-size:14px;color:var(--mute)}
+.plan li{padding:5px 0 5px 22px;position:relative}
+.plan li:before{content:"✓";position:absolute;left:0;color:var(--teal);font-weight:900}
+/* cta */
+.final{background:linear-gradient(155deg,#0f766e,#0f172a);color:#fff;text-align:center;border-radius:24px;padding:56px 30px;margin:30px 0}
+.final h2{font-size:38px;font-weight:900}
+.final p{color:var(--mint);font-size:18px;margin:12px 0 24px}
+footer{background:#0b1220;color:#94a3b8;font-size:13px;padding:28px 0}
+footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<nav><div class="wrap">
+  <svg class="mk" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0F766E"/><stop offset="1" stop-color="#14B8A6"/></linearGradient></defs><rect x="16" y="16" width="480" height="480" rx="118" fill="url(#g)"/><rect x="150" y="156" width="48" height="200" rx="16" fill="#fff"/><rect x="314" y="156" width="48" height="200" rx="16" fill="#fff"/><rect x="150" y="232" width="212" height="48" rx="16" fill="#fff"/><circle cx="384" cy="150" r="40" fill="#0F172A"/><circle cx="384" cy="150" r="34" fill="#F59E0B"/></svg>
+  <span class="nm">HOSTELERO<small>IA POS</small></span>
+  <span class="sp"></span>
+  <a class="lnk" href="#producto">Producto</a>
+  <a class="lnk" href="#copiloto">Copiloto IA</a>
+  <a class="lnk" href="#planes">Planes</a>
+  <a class="btn" href="#demo">Pedir demo</a>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="pill">El primer TPV con IA dentro</span>
+  <h1 style="margin-top:16px">El TPV que se <span class="hl">piensa a sí mismo.</span></h1>
+  <p class="lead">HOSTELERO analiza tu negocio en tiempo real, te propone cómo ganar más margen y lo aplica con un clic. 100% local, abierto a cualquier integración y configurable al milímetro.</p>
+  <div class="cta">
+    <a class="btn" href="#demo">Probar la demo</a>
+    <a class="btn ghost" href="#copiloto">Ver el Copiloto IA</a>
+  </div>
+  <div class="pills">
+    <span class="pill">Funciona sin internet</span>
+    <span class="pill">Tiempo real multipuesto</span>
+    <span class="pill">TicketBAI / Verifactu</span>
+    <span class="pill">Sin cuotas de nube</span>
+  </div>
+</div></header>
+
+<section id="producto"><div class="wrap">
+  <div class="kick">Una suite, un cerebro</div>
+  <h2 class="t">Todo tu local, en una red</h2>
+  <p class="sub">Cinco aplicaciones coordinadas en tiempo real, más el Copiloto que las hace inteligentes.</p>
+  <div class="grid g3">
+    <div class="card"><div class="ic" style="background:#14b8a6">€</div><h3>TPV de venta</h3><p>Plano de mesas, comanda, cobro (efectivo, tarjeta, mixto, dividir), tickets y facturas.</p></div>
+    <div class="card"><div class="ic" style="background:#1d4ed8">▤</div><h3>Comandera</h3><p>Toma comandas desde el móvil o la tablet sobre el mismo plano. A cocina al instante.</p></div>
+    <div class="card"><div class="ic" style="background:#f59e0b">♨</div><h3>Cocina (KDS)</h3><p>Las comandas llegan por zonas; marca preparando/listo y avisa al camarero.</p></div>
+    <div class="card"><div class="ic" style="background:#6d28d9">⚙</div><h3>Administración + IA</h3><p>Carta, tarifas, reservas, informes… y el Copiloto que lo optimiza todo.</p></div>
+    <div class="card"><div class="ic" style="background:#10b981">▦</div><h3>Carta digital (QR)</h3><p>Tus clientes ven la carta y reservan desde el móvil. La reserva entra en tu agenda al instante.</p></div>
+    <div class="card"><div class="ic" style="background:#0f766e">◉</div><h3>Local-first</h3><p>Vive en la red de tu local. Si cae internet, sigues vendiendo y cobrando.</p></div>
+  </div>
+</div></section>
+
+<section class="alt" id="copiloto"><div class="wrap">
+  <div class="kick">Inteligencia dentro del POS</div>
+  <h2 class="t">El Copiloto que optimiza tu negocio solo</h2>
+  <p class="sub">Lee tus ventas, escandallo, reservas y personal en tiempo real y te propone mejoras concretas. Tú apruebas, él ejecuta.</p>
+  <div class="cop">
+    <div style="font-size:20px;font-weight:800">Informes que no solo describen: <span style="color:var(--mint)">proponen y ejecutan.</span></div>
+    <div class="ex">
+      <div class="c"><span class="tag" style="background:#5dcaa5">PRECIO</span><h4>Sube Entrecot a 20,00 €</h4><p>Food cost 42% (alto). A 20 € baja al 38% y el margen sube al 62%.</p><div class="imp">+2,00 € / unidad</div></div>
+      <div class="c"><span class="tag" style="background:#fac775">DEMANDA</span><h4>Día fuerte: activa Happy Hour</h4><p>12 cubiertos reservados hoy, pico a las 21:00. Activa la tarifa de hora punta.</p><div class="imp">+ ingreso por cubierto</div></div>
+      <div class="c"><span class="tag" style="background:#cecbf6">ESCANDALLO</span><h4>Completa el coste de Croquetas</h4><p>Sin coste no se optimiza su margen. Defínelo y entra en la mejora automática.</p><div class="imp">Desbloquea optimización</div></div>
+    </div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <div class="kick">Abierto por diseño</div>
+  <h2 class="t">Nunca decimos que no a una integración</h2>
+  <p class="sub">Una API abierta y unificada. Si un proveedor existe, HOSTELERO habla con él.</p>
+  <div class="grid g4">
+    <div class="card"><h3>Datáfonos</h3><p>Lista escalable de terminales; el importe se rutea por la red.</p></div>
+    <div class="card"><h3>Control de efectivo</h3><p>Cashlogy, CashKeeper, Glory… integrables.</p></div>
+    <div class="card"><h3>Reservas</h3><p>TheFork, Google, CoverManager, carta digital y agente de voz.</p></div>
+    <div class="card"><h3>Impresión ESC/POS</h3><p>Impresoras de red por zona (cocina/barra).</p></div>
+  </div>
+</div></section>
+
+<section class="alt" id="planes"><div class="wrap">
+  <div class="kick">Planes</div>
+  <h2 class="t">Empieza pequeño, crece con la IA</h2>
+  <p class="sub">Una cuota por local. Sube de plan, no de precio, a medida que ves el valor.</p>
+  <div class="grid g3">
+    <div class="plan"><h3>START</h3><div class="pr">19–29 €<small>/mes</small></div><ul><li>TPV + cobro + tickets</li><li>Comandera</li><li>Carta digital (QR)</li></ul><a class="btn dark" href="#demo">Empezar</a></div>
+    <div class="plan feat"><div class="badge">RECOMENDADO</div><h3>PRO</h3><div class="pr">49–69 €<small>/mes</small></div><ul><li>Todo lo de START</li><li>Cocina (KDS) + plano</li><li>Tarifas, reservas, acciones</li><li>Copiloto IA (propuestas)</li></ul><a class="btn" href="#demo">Pedir demo</a></div>
+    <div class="plan"><h3>IA</h3><div class="pr">89–129 €<small>/mes</small></div><ul><li>Todo lo de PRO</li><li>Copiloto IA completo + informes</li><li>Todas las integraciones</li><li>Soporte dedicado</li></ul><a class="btn dark" href="#demo">Hablar con ventas</a></div>
+  </div>
+  <p style="color:var(--mute);font-size:13px;margin-top:14px">Precios orientativos por local. Prueba piloto sin compromiso. Consulta condiciones.</p>
+</div></section>
+
+<section id="demo"><div class="wrap">
+  <div class="final">
+    <h2>Tú apruebas. Él ejecuta.</h2>
+    <p>Tu local crece porque el sistema piensa por él.</p>
+    <a class="btn" href="mailto:[TU-EMAIL]?subject=Quiero%20probar%20HOSTELERO%20IA%20POS">Pedir una demo gratuita</a>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <span>© 2026 HOSTELERO · IA POS — Todos los derechos reservados.</span>
+  <span>El primer TPV que se piensa a sí mismo.</span>
+</div></footer>
+</body>
+</html>

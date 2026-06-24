@@ -875,4 +875,62 @@ function viewReservas(){
   var cubiertos=todas.filter(function(r){return r.estado!=='cancelada'&&r.estado!=='noshow';}).reduce(function(s,r){return s+(parseInt(r.personas,10)||0);},0);
   var h='<div class="bar"><div class="r" style="align-items:center;gap:8px"><button class="btn ghost sm" data-resday="-1">◀</button><b style="min-width:160px;text-align:center">'+f+(f===hoyStr()?' (hoy)':'')+'</b><button class="btn ghost sm" data-resday="1">▶</button><button class="btn ghost sm" data-resday="0">Hoy</button></div>'
     +'<div class="r" style="margin-left:auto;align-items:center;gap:10px"><span class="muted">'+todas.length+' reservas · '+cubiertos+' cubiertos</span><button class="btn" data-act="newreserva">+ Reserva</button></div></div>';
-  h+='<table class="tbl"><thead><tr><th>Hora</th><th>Cliente</th><th>Pax</th><th>Mesa</th><th>Origen</th><th>Es
+  h+='<table class="tbl"><thead><tr><th>Hora</th><th>Cliente</th><th>Pax</th><th>Mesa</th><th>Origen</th><th>Estado</th><th>Notas</th><th></th></tr></thead><tbody>';
+  if(!todas.length) h+='<tr><td colspan="8" style="color:var(--soft)">Sin reservas para este día.</td></tr>';
+  todas.forEach(function(r){ var es=ESTRES[r.estado]||ESTRES.pendiente;
+    h+='<tr><td><b>'+esc(r.hora||'')+'</b></td><td>'+esc(r.cliente||'')+(r.telefono?'<br><span class="muted">'+esc(r.telefono)+'</span>':'')+'</td><td>'+(r.personas||'')+'</td><td>'+esc(r.mesa||'—')+'</td><td>'+origenBadge(r.origen)+'</td><td><span class="badge" style="background:'+es.bg+';color:'+es.c+'">'+es.n+'</span></td><td class="muted">'+esc(r.notas||'')+'</td><td style="text-align:right"><button class="btn ghost sm" data-editrsv="'+r.id+'">Editar</button></td></tr>';
+  });
+  h+='</tbody></table><p class="muted" style="margin-top:14px;font-size:12px">Las reservas de TheFork, Google y CoverManager entran automáticamente por la API de HOSTELERO (ver RESERVAS.md). Aquí puedes crear y gestionar también las de teléfono/web.</p>';
+  return h;
+}
+function modalReserva(r){
+  modalOpen=true;
+  var f=r?r.fecha:(window._resFecha||hoyStr());
+  var mesas=(M.mesas||[]).map(function(m){return '<option'+(r&&r.mesa===m.nombre?' selected':'')+'>'+esc(m.nombre)+'</option>';}).join('');
+  var ori=Object.keys(ORIGENES).map(function(k){return '<option value="'+k+'"'+((r?r.origen:'telefono')===k?' selected':'')+'>'+ORIGENES[k].ic+' '+ORIGENES[k].n+'</option>';}).join('');
+  var est=Object.keys(ESTRES).map(function(k){return '<option value="'+k+'"'+((r?r.estado:'pendiente')===k?' selected':'')+'>'+ESTRES[k].n+'</option>';}).join('');
+  ov('<h3>'+(r?'Editar reserva':'Nueva reserva')+'</h3><div class="mb">'
+    +'<div class="row"><div class="field"><label>Fecha</label><input id="r_f" type="date" value="'+esc(f)+'"></div>'
+    +'<div class="field" style="max-width:130px"><label>Hora</label><input id="r_h" type="time" value="'+esc(r&&r.hora||'')+'"></div>'
+    +'<div class="field" style="max-width:110px"><label>Personas</label><input id="r_p" type="number" min="1" value="'+(r&&r.personas||2)+'"></div></div>'
+    +'<div class="row"><div class="field"><label>Cliente</label><input id="r_c" value="'+esc(r&&r.cliente||'')+'"></div>'
+    +'<div class="field"><label>Teléfono</label><input id="r_t" value="'+esc(r&&r.telefono||'')+'"></div></div>'
+    +'<div class="row"><div class="field"><label>Mesa</label><select id="r_m"><option value="">(sin asignar)</option>'+mesas+'</select></div>'
+    +'<div class="field"><label>Origen</label><select id="r_o">'+ori+'</select></div>'
+    +'<div class="field"><label>Estado</label><select id="r_e">'+est+'</select></div></div>'
+    +'<div class="field"><label>Notas</label><input id="r_n" value="'+esc(r&&r.notas||'')+'" placeholder="Alergias, trona, celebración…"></div>'
+    +'</div><div class="foot">'+(r?'<button class="btn red" data-delrsv="'+r.id+'" style="margin-right:auto">Eliminar</button>':'')
+    +'<button class="btn ghost" data-act="cerrar">Cancelar</button><button class="btn" data-act="savereserva" data-id="'+(r?r.id:'')+'">Guardar</button></div>');
+}
+function guardarReserva(id){
+  var c=val('r_c').trim(); var f=val('r_f'); var hora=val('r_h');
+  if(!f||!hora)return toast('Pon fecha y hora');
+  var data={id:id||undefined,fecha:f,hora:hora,personas:parseInt(val('r_p'),10)||1,cliente:c,telefono:val('r_t').trim(),mesa:val('r_m'),origen:val('r_o'),estado:val('r_e'),notas:val('r_n').trim()};
+  Sync.guardarReserva(data); window._resFecha=f; cerrar(); render(); toast('Reserva guardada',true);
+}
+function guardarCat(id){
+  var n=val('c_n').trim(); if(!n)return toast('Pon el nombre');
+  var padre=val('c_padre')||undefined;
+  if(id){ M.categorias=M.categorias.map(function(c){return c.id===id?Object.assign({},c,{nombre:n,ic:val('c_ic')||'🍽️',color:val('c_col'),pase:val('c_pase'),padreId:padre}):c;}); }
+  else { var orden=(M.categorias||[]).reduce(function(mx,c){return Math.max(mx,c.orden||0);},0)+1; M.categorias.push({id:'c'+uid(),nombre:n,ic:val('c_ic')||'🍽️',color:val('c_col'),orden:orden,pase:val('c_pase'),padreId:padre}); }
+  saveMaster();cerrar();render();toast('Familia guardada',true);
+}
+function guardarMesa(id){
+  var n=val('m_n').trim(); if(!n)return toast('Pon el nombre');
+  var data={id:id||('m'+uid()),nombre:n,salaId:val('m_s'),forma:val('m_f'),plazas:parseInt(val('m_p'))||4};
+  if(id) M.mesas=M.mesas.map(function(m){return m.id===id?Object.assign(m,data):m;}); else M.mesas.push(data);
+  saveMaster();cerrar();render();toast('Mesa guardada',true);
+}
+function guardarEmp(id){
+  var n=val('e_n').trim(); if(!n)return toast('Pon el nombre');
+  if(!M.usuarios)M.usuarios=[];
+  var data={id:id||uid(),nombre:n,rol:val('e_r'),pin:val('e_pin'),color:val('e_col'),usuario:val('e_u')||undefined,password:val('e_pw')||undefined,activo:chk('e_a')};
+  if(id) M.usuarios=M.usuarios.map(function(u){return u.id===id?Object.assign({},u,data):u;}); else M.usuarios.push(data);
+  saveMaster();cerrar();render();toast('Empleado guardado',true);
+}
+
+Sync.onChange(function(){ if(sesion && !modalOpen){ M=clone(Sync.master()); render(); } });
+if(Auth.sesion() && (Auth.sesion().rol==='admin'||Auth.sesion().rol==='encargado')){ sesion=Auth.sesion(); render(); } else showLogin();
+</script>
+</body>
+</html>

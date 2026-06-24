@@ -282,4 +282,17 @@ function handler(porDefecto) {
       req.on('end', function () {
         var d = {}; try { d = JSON.parse(body || '{}'); } catch (e) {}
         aplicar(pathname, d); guardar(); difundir();
-        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }); 
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }); res.end(JSON.stringify({ ok: true, v: state.v }));
+      });
+      return;
+    }
+    servirEstatico(req, res, porDefecto);
+  };
+}
+
+Object.keys(PUERTOS).forEach(function (port) {
+  http.createServer(handler(PUERTOS[port])).listen(parseInt(port), '0.0.0.0', function () {
+    console.log('  ' + PUERTOS[port].replace(/(.{22}).*/, '$1').padEnd(22) + ' →  http://<IP-del-PC>:' + port);
+  });
+});
+console.log('HOSTELERO servidor local en marcha (WiFi, sin internet). Ctrl+C para parar.\nPuertos:');
