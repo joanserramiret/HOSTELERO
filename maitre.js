@@ -80,6 +80,14 @@
     function drawPanel(sg) {
       var rolTxt = esAdmin() ? 'Gerencia' : (rol() === 'cocina' ? 'Cocina' : 'Sala');
       var h = '<div class="h"><img src="' + MARK + '"><div><b>El Maître</b><span>Tu gerente IA · ' + rolTxt + '</span></div></div>';
+      if (esAdmin()) {
+        var mm = master(), v7 = mm.ventas7d || {}, pot = 0, no = 0;
+        sg.forEach(function (s) { if (s.act === 'precio') { var p = (mm.productos || []).filter(function (x) { return x.id === s.pid; })[0]; if (p && p.precio != null) { pot += (s.val - p.precio) * (v7[p.id] || 0); no++; } } });
+        if (pot > 0) h += '<div style="padding:13px 16px;background:#0f766e;color:#fff">'
+          + '<div style="font-size:11px;color:#5eead4;font-weight:800;letter-spacing:.6px;text-transform:uppercase">Resumen de la semana</div>'
+          + '<div style="font-size:16px;font-weight:800;margin-top:2px">Margen potencial: +' + Math.round(pot) + ' €/sem</div>'
+          + '<div style="font-size:12px;color:#cbd5e1;margin-top:1px">' + no + ' ajuste(s) de precio con impacto · aprueba abajo</div></div>';
+      }
       if (!sg.length) { h += '<div class="empty">Todo en orden. El Maître está vigilando tu negocio. 👀</div>'; }
       else { sg.forEach(function (s, i) { h += '<div class="it"><div class="tt">' + esc(s.ic + ' ' + s.t) + '</div><div class="dd">' + esc(s.d) + '</div>' + (s.act ? ('<button data-mi="' + i + '">Aplicar</button>') : '') + '</div>'; }); }
       panel.innerHTML = h;
