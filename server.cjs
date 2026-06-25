@@ -131,13 +131,17 @@ function masterSeed() {
     { id:'tf1', nombre:'Terraza +10%', pct:10, salaIds:['s2'], activa:true },
     { id:'tf2', nombre:'Happy Hour -15% (18-20h)', pct:-15, desde:'18:00', hasta:'20:00', activa:false }
   ];
+  // Ventas de ejemplo (unidades últimos 7 días) para que el Maître proponga con datos reales
+  var ventas7d = { p1:380, p2:120, p3:160, p4:90, p5:70, p6:210, p7:120, p8:40, p9:55,
+    p10:70, p11:35, p12:110, p13:140, p14:48, p15:46, p16:20, p17:33, p18:64, p19:41, p20:8,
+    p21:52, p22:30, p23:44, p24:18, p25:12, menu1:95 };
   // Acciones rápidas personalizadas: botones a medida que orquestan módulos existentes
   var accionesRapidas = [
     { id:'ar1', label:'-10% cliente', ic:'🏷️', color:'#0891b2', tipo:'descuento', param:10 },
     { id:'ar2', label:'Invitación', ic:'🎁', color:'#d97706', tipo:'invitacion' },
     { id:'ar3', label:'Happy Hour', ic:'⚡', color:'#7c3aed', tipo:'tarifa', param:'tf2' }
   ];
-  return { version: 16, categorias: cats, productos: prods, salas: salas, mesas: mesas, decor: decor, promociones: promociones, clientes: clientes, datafonos: datafonos, comentarios: comentarios, tarifas: tarifas, accionesRapidas: accionesRapidas, usuarios: usuarios, impresoras: [], config: config };
+  return { version: 17, categorias: cats, productos: prods, salas: salas, mesas: mesas, decor: decor, promociones: promociones, clientes: clientes, datafonos: datafonos, comentarios: comentarios, tarifas: tarifas, accionesRapidas: accionesRapidas, ventas7d: ventas7d, usuarios: usuarios, impresoras: [], config: config };
 }
 
 // Reservas de demostración (hoy)
@@ -164,6 +168,7 @@ function cargar() {
   if (!s.master.cajasEfectivo) s.master.cajasEfectivo = [];
   if (!s.master.tarifas) s.master.tarifas = [];
   if (!s.master.accionesRapidas) s.master.accionesRapidas = [];
+  if (!s.master.ventas7d) s.master.ventas7d = {};
   if (!s.fichajes) s.fichajes = [];
   if (!s.agotados) s.agotados = [];
   if (!s.reservas) s.reservas = sembrarReservas();

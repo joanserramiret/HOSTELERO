@@ -29,6 +29,9 @@
           }
         });
         if (cub >= 6) { var ti = (m.tarifas || []).filter(function (t) { return t.activa === false; })[0]; if (ti) out.push({ ic: '⚡', t: 'Día fuerte: activa «' + ti.nombre + '»', d: cub + ' cubiertos reservados hoy. Aprovecha la demanda.', act: 'tarifa', tid: ti.id }); }
+        var v7 = m.ventas7d || {};
+        var lento = prods.filter(function (p) { return p.activo !== false && p.precio != null && v7[p.id] != null && v7[p.id] <= 10; }).sort(function (a, b) { return (v7[a.id] || 0) - (v7[b.id] || 0); })[0];
+        if (lento) out.push({ ic: '🐌', t: (lento.nombreBoton || lento.nombre) + ' rota poco', d: 'Solo ' + (v7[lento.id] || 0) + ' uds en 7 días. Promociónalo, cámbialo de sitio o retíralo.' });
       }
       if (r === 'camarero') out.push({ ic: '🍷', t: 'Sube el ticket medio', d: 'Ofrece postre o café en cada mesa antes de cobrar.' });
       if (r === 'cocina' && cub > 0) out.push({ ic: '👨‍🍳', t: 'Hoy ~' + cub + ' cubiertos reservados', d: 'Adelanta fondos y mise en place para el pico.' });

@@ -97,6 +97,7 @@ input:focus,select:focus{border-color:var(--primary)!important;box-shadow:0 0 0 
 .linea .ln{flex:1}.linea .ln b{display:block;font-size:14px}.linea .ln span{font-size:11px;color:var(--soft);font-weight:600}
 .kbadge{font-size:12px}
 .qtybtn{width:30px;height:30px;border-radius:9px;background:var(--panel2);border:1px solid var(--line);font-size:18px;font-weight:800;color:var(--text);display:flex;align-items:center;justify-content:center}
+.qtybtn.coment{font-size:15px}.qtybtn.coment.on{background:#0891b2;border-color:#0891b2}
 .linea .qty{width:24px;text-align:center;font-weight:800}
 .linea .imp{width:62px;text-align:right;font-weight:800}
 .ticket .tfoot{border-top:2px solid var(--line);padding:14px 18px}
@@ -175,7 +176,10 @@ table.tbl{width:100%;border-collapse:collapse}
 .menuwiz .precio-prev{text-align:center;font-size:22px;font-weight:900;margin:6px 0 14px;color:var(--primary)}
 .plano{position:relative;min-height:560px;background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:auto}
 .plano.editing{background-image:radial-gradient(#dfe5ee 1.3px,transparent 1.3px);background-size:22px 22px;border-style:dashed;border-color:#c7cedb}
-.plano .mesa{position:absolute;width:120px;height:106px;aspect-ratio:auto;margin:0}
+.plano .mesa{position:absolute;width:120px;height:106px;aspect-ratio:auto;margin:0;touch-action:none}
+.plano .decor{touch-action:none}
+.plano .mesa.dragging,.plano .decor.dragging{z-index:50;transform:scale(1.06);box-shadow:0 12px 28px rgba(15,118,110,.45);outline:3px solid #14b8a6}
+.plano .mesa.unida::after{content:'🔗';position:absolute;top:2px;left:4px;font-size:13px}
 .mesa.editable{cursor:grab;touch-action:none}
 .mesa.dragging{cursor:grabbing;z-index:20;box-shadow:var(--shadow-lg);opacity:.93}
 .mghint{font-size:10px;color:var(--soft);font-weight:600;text-transform:none;letter-spacing:0}
@@ -483,12 +487,17 @@ function getTicket(id){ return DB.tickets.filter(function(t){return t.id===id;})
 function getMesa(id){ return DB.mesas.filter(function(m){return m.id===id;})[0]; }
 function getProducto(id){ return DB.productos.filter(function(p){return p.id===id;})[0]; }
 
+function mesaRaiz(m){ var seen={}; while(m&&m.grupo&&!seen[m.id]){ seen[m.id]=1; var p=getMesa(m.grupo); if(!p){ m.grupo=undefined; break; } m=p; } return m; }
+function mesasUnidas(rootId){ return (DB.mesas||[]).filter(function(x){return x.grupo===rootId;}); }
 function abrirTicketMesa(mesa, comensales){
-  if(mesa.ticketId){ var ex=getTicket(mesa.ticketId); if(ex&&ex.estado==='abierto')return ex; }
+  var m=mesaRaiz(mesa);
+  if(m.ticketId){ var ex=getTicket(m.ticketId); if(ex&&ex.estado==='abierto')return ex; }
+  var sub=mesasUnidas(m.id);
+  var nombre=m.nombre+(sub.length?('+'+sub.map(function(x){return x.nombre;}).join('+')):'');
   var c=cajaAbierta();
-  var t={id:uid(),numero:DB.numeroTicket++,mesaId:mesa.id,mesaNombre:mesa.nombre,salaId:mesa.salaId,estado:'abierto',lineas:[],
+  var t={id:uid(),numero:DB.numeroTicket++,mesaId:m.id,mesaNombre:nombre,salaId:m.salaId,estado:'abierto',lineas:[],
     comensales:comensales||null,pase:0,pagos:[],propina:0,enviadoCocina:false,avisado:false,createdAt:Date.now(),cajaId:c?c.id:null};
-  DB.tickets.push(t); mesa.estado='ocupada'; mesa.ticketId=t.id; save(); return t;
+  DB.tickets.push(t); m.estado='ocupada'; m.ticketId=t.id; save(); return t;
 }
 function nuevoTicketBarra(){
   var c=cajaAbierta();
@@ -666,19 +675,25 @@ function viewSala(){
   var ed=state.editPlano;
   var tabs=salas.map(function(s){return '<button class="tab'+(s.id===salaId?' active':'')+'" data-act="sala" data-id="'+s.id+'">'+esc(s.nombre)+'</button>';}).join('');
   var grid=mesas.map(function(m,idx){
-    var t=m.ticketId?getTicket(m.ticketId):null;
+    var raiz=m.grupo?mesaRaiz(m):m;
+    var t=raiz.ticketId?getTicket(raiz.ticketId):null;
+    var estado=(raiz.estado||'libre');
     var tot=t?totalLineas(t.lineas):0;
     var aviso=t&&t.avisado?'<span class="bell">🔔</span>':'';
-    var info=m.estado==='libre'?'<span class="plazas">'+m.plazas+' pax</span>':'<span class="tot">'+eur(tot)+'</span>';
+    var info=estado==='libre'?'<span class="plazas">'+m.plazas+' pax</span>':'<span class="tot">'+eur(tot)+'</span>';
     var sub=t&&t.comensales?'<span class="cms">👤'+t.comensales+'</span>':'';
     var time=t?'<span class="time">⏱ '+minsDesde(t.createdAt)+' min</span>':'';
     var x=(m.x==null?((idx%4)*150+24):m.x), y=(m.y==null?(Math.floor(idx/4)*132+24):m.y);
     var fd=formaDims(m.forma);
     var paseB=t?('<span class="pasebadge" style="background:'+(PASES[t.pase||0]||PASES[0]).c+'">'+(PASES[t.pase||0]||PASES[0]).n+'</span>'):'';
-    return '<button class="mesa '+m.estado+(t&&t.avisado?' avisa':'')+(ed?' editable':'')+' f-'+(m.forma||'cuadrada')+'" data-act="mesa" data-id="'+m.id+'" style="left:'+x+'px;top:'+y+'px;width:'+fd.w+'px;height:'+fd.h+'px;border-radius:'+fd.r+'">'+aviso+paseB+'<span class="dot"></span><span class="nombre">'+esc(m.nombre)+'</span>'+info+sub+time+'</button>';
+    return '<button class="mesa '+estado+(t&&t.avisado?' avisa':'')+(ed?' editable':'')+(m.grupo?' unida':'')+' f-'+(m.forma||'cuadrada')+'" data-act="mesa" data-id="'+m.id+'" style="left:'+x+'px;top:'+y+'px;width:'+fd.w+'px;height:'+fd.h+'px;border-radius:'+fd.r+'">'+aviso+paseB+'<span class="dot"></span><span class="nombre">'+esc(m.nombre)+'</span>'+info+sub+time+'</button>';
   }).join('');
   var salaObj=salas.filter(function(s){return s.id===salaId;})[0]||{}; var salaBg=salaObj.bg||'#ffffff';
-  var decorHtml=(DB.decor||[]).filter(function(d){return d.salaId===salaId;}).map(function(d){ var def=DECOR[d.tipo]||DECOR.planta; var w=d.w||def.w,h=d.h||def.h; return '<div class="decor d-'+d.tipo+(ed?' editable':'')+'" data-decor="'+d.id+'" style="left:'+(d.x||0)+'px;top:'+(d.y||0)+'px;width:'+w+'px;height:'+h+'px;background:'+(d.color||def.c)+'"><span class="dic">'+def.ic+'</span>'+((d.nombre||def.n)?'<span class="dlab">'+esc(d.nombre||def.n)+'</span>':'')+'</div>'; }).join('');
+  var decorList=(DB.decor||[]).filter(function(d){return d.salaId===salaId;});
+  var decorHtml=decorList.map(function(d){ var def=DECOR[d.tipo]||DECOR.planta; var w=d.w||def.w,h=d.h||def.h; return '<div class="decor d-'+d.tipo+(ed?' editable':'')+'" data-decor="'+d.id+'" style="left:'+(d.x||0)+'px;top:'+(d.y||0)+'px;width:'+w+'px;height:'+h+'px;background:'+(d.color||def.c)+'"><span class="dic">'+def.ic+'</span>'+((d.nombre||def.n)?'<span class="dlab">'+esc(d.nombre||def.n)+'</span>':'')+'</div>'; }).join('');
+  var contentW=700, contentH=520;
+  mesas.forEach(function(m,idx){ var mx=(m.x==null?((idx%4)*150+24):m.x), my=(m.y==null?(Math.floor(idx/4)*132+24):m.y); var fd=formaDims(m.forma); contentW=Math.max(contentW,mx+fd.w+30); contentH=Math.max(contentH,my+fd.h+30); });
+  decorList.forEach(function(d){ var def=DECOR[d.tipo]||DECOR.planta; contentW=Math.max(contentW,(d.x||0)+(d.w||def.w)+30); contentH=Math.max(contentH,(d.y||0)+(d.h||def.h)+30); });
   var editBtn='<button class="btn '+(ed?'green':'ghost')+'" data-act="toggleplano">'+(ed?'✓ Hecho':'✏️ Editar plano')+'</button>';
   return '<div class="topbar"><div class="ttl"><h1>'+esc(DB.restaurante||'Sala')+'</h1><span class="sub">'+libres+' / '+mesas.length+' mesas libres</span></div><div class="tabs">'+tabs+'</div>'
     +'<div class="right"><button class="btn ghost" data-act="disponibilidad">🚫 Disponibilidad</button>'+editBtn+'<button class="btn primary" data-act="barra">⚡ Venta rápida</button></div></div>'
@@ -712,6 +727,7 @@ function viewVenta(){
     if(l.descLinea) extra+='<div class="ldet" style="color:#e11d48">Dto. '+(l.descLinea.tipo==='pct'?(l.descLinea.valor+'%'):eur(l.descLinea.valor))+'</div>';
     if(l.comentario) extra+='<div class="ldet" style="color:#0891b2">📝 '+esc(l.comentario)+'</div>';
     return '<div class="linea'+lock+'"><span class="lic">'+(l.ic||'•')+'</span><div class="ln" data-act="linea" data-idx="'+i+'" style="cursor:pointer"><b>'+esc(l.nombre)+' '+k+'</b><span>'+eur(l.precio)+(l.enviado?' · en cocina':'')+'</span>'+det+extra+'</div>'
+      +'<button class="qtybtn coment'+(l.comentario?' on':'')+'" data-act="linea" data-idx="'+i+'" title="Comentario y opciones de la línea">💬</button>'
       +'<button class="qtybtn" data-act="menos" data-idx="'+i+'">−</button><span class="qty">'+l.cantidad+'</span>'
       +'<button class="qtybtn" data-act="mas" data-idx="'+i+'">+</button><span class="imp">'+eur(lineaImporte(l))+'</span></div>';
   }
@@ -931,6 +947,7 @@ function modalReserva(){
 
 /* ----- EVENTOS ----- */
 function onClick(e){
+  if(_suppressClick){ _suppressClick=false; return; }
   var navBtn=e.target.closest('.nav-item'); if(navBtn){ state.view=navBtn.dataset.view; state.ticketActivo=null; render(); return; }
   if(e.target.classList&&e.target.classList.contains('overlay')){ closeModal(); return; }
   var el=e.target.closest('[data-act]'); if(!el)return;
@@ -945,6 +962,7 @@ function onClick(e){
     case 'deldecor': { deleteDecor(el.dataset.id); pushPlanoMaster(); closeModal(); render(); break; }
     case 'savemesa': { updateMesa(el.dataset.id,{nombre:document.getElementById('me_n').value,forma:document.getElementById('me_f').value,plazas:parseInt(document.getElementById('me_p').value)||4}); pushPlanoMaster(); closeModal(); render(); break; }
     case 'delmesa': { var rdel=deleteMesa(el.dataset.id); if(rdel==='ocupada'){ alert('No se puede eliminar una mesa ocupada.'); } else { pushPlanoMaster(); closeModal(); render(); } break; }
+    case 'separarmesa': { var ms=getMesa(el.dataset.id); if(ms){ ms.grupo=undefined; save(); pushPlanoMaster(); } closeModal(); render(); break; }
     case 'pasenext': setPase(state.ticketActivo,1); render(); break;
     case 'paseprev': setPase(state.ticketActivo,-1); render(); break;
     case 'mesa': { if(state.editPlano)break; var m=getMesa(id); var t=abrirTicketMesa(m); state.ticketActivo=t.id; state.catSel=null; state.ordenActivo=null; render(); if(!t.comensales) modalComensales(); break; }
@@ -1089,21 +1107,47 @@ function confirmMenu(){
 }
 
 /* ----- Plano de sala: arrastrar mesas (mouse + táctil) ----- */
-var drag=null;
-function onPointerDown(e){ if(!state.editPlano)return; var el=e.target.closest('.mesa[data-id], .decor[data-decor]'); if(!el)return;
+var drag=null,_suppressClick=false;
+function onPointerDown(e){
+  if(state.view!=='sala')return;
+  var el=e.target.closest('.mesa[data-id], .decor[data-decor]'); if(!el)return;
   var plano=document.querySelector('.plano'); if(!plano)return;
   var pr=plano.getBoundingClientRect(), mr=el.getBoundingClientRect();
-  drag={kind:(el.dataset.decor?'decor':'mesa'),id:(el.dataset.decor||el.dataset.id),el:el,dx:e.clientX-mr.left,dy:e.clientY-mr.top,pr:pr,x0:e.clientX,y0:e.clientY,moved:false};
-  el.classList.add('dragging'); e.preventDefault(); }
+  var kind=(el.dataset.decor?'decor':'mesa');
+  if(!state.editPlano && kind==='decor')return; // en modo normal solo se mueven mesas
+  drag={kind:kind,id:(el.dataset.decor||el.dataset.id),el:el,dx:e.clientX-mr.left,dy:e.clientY-mr.top,pr:pr,x0:e.clientX,y0:e.clientY,moved:false,armed:false,timer:null};
+  if(state.editPlano){ drag.armed=true; el.classList.add('dragging'); e.preventDefault(); }
+  else { drag.timer=setTimeout(function(){ if(drag&&!drag.moved){ drag.armed=true; drag.el.classList.add('dragging'); } }, 380); }
+}
 function onPointerMove(e){ if(!drag)return;
-  if(Math.abs(e.clientX-drag.x0)>5||Math.abs(e.clientY-drag.y0)>5) drag.moved=true;
+  if(!drag.moved && (Math.abs(e.clientX-drag.x0)>6||Math.abs(e.clientY-drag.y0)>6)){
+    drag.moved=true;
+    if(!drag.armed){ if(drag.timer){clearTimeout(drag.timer);drag.timer=null;} drag=null; return; } // movimiento sin pulsación larga: dejar scroll normal
+  }
+  if(!drag.armed)return;
+  e.preventDefault();
   var x=Math.max(0,e.clientX-drag.pr.left-drag.dx), y=Math.max(0,e.clientY-drag.pr.top-drag.dy);
   drag.el.style.left=Math.round(x)+'px'; drag.el.style.top=Math.round(y)+'px'; }
 function onPointerUp(){ if(!drag)return;
-  var d=drag; drag=null; d.el.classList.remove('dragging');
-  if(!d.moved){ if(d.kind==='decor') modalDecorEditor(d.id); else modalMesaEditor(d.id); return; }
+  var d=drag; drag=null; if(d.timer)clearTimeout(d.timer);
+  if(d.el)d.el.classList.remove('dragging');
+  if(!d.armed)return; // fue un toque normal: que el click abra la mesa
+  _suppressClick=true;
+  if(!d.moved){ if(state.editPlano){ if(d.kind==='decor') modalDecorEditor(d.id); else modalMesaEditor(d.id); } return; }
   var x=parseInt(d.el.style.left)||0, y=parseInt(d.el.style.top)||0;
-  if(d.kind==='decor'){ updateDecor(d.id,{x:x,y:y}); } else { var m=getMesa(d.id); if(m){m.x=x;m.y=y;save();} }
+  if(d.kind==='decor'){ updateDecor(d.id,{x:x,y:y}); pushPlanoMaster(); return; }
+  var m=getMesa(d.id); if(!m)return; m.x=x; m.y=y; save();
+  // ¿soltada encima de otra mesa? -> unir
+  var fd=formaDims(m.forma), cx=x+fd.w/2, cy=y+fd.h/2;
+  var tgt=(DB.mesas||[]).filter(function(o){ if(o.id===m.id||o.salaId!==m.salaId)return false; var of=formaDims(o.forma); return cx>=o.x && cx<=o.x+of.w && cy>=o.y && cy<=o.y+of.h; })[0];
+  if(tgt){
+    var raiz=mesaRaiz(tgt);
+    if(raiz.id!==m.id && m.grupo!==raiz.id){
+      if(confirm('¿Unir '+m.nombre+' con '+raiz.nombre+'? Trabajarán como una sola mesa (misma cuenta).')){
+        m.grupo=raiz.id; var rf=formaDims(raiz.forma); m.x=raiz.x+rf.w-22; m.y=raiz.y+16; save();
+      }
+    }
+  }
   pushPlanoMaster(); }
 
 /* ----- Formas de mesa y editor de plano ----- */
@@ -1122,6 +1166,7 @@ function modalMesaEditor(id){
     +'<div class="field"><label>Nombre</label><input id="me_n" value="'+esc(m.nombre)+'"></div>'
     +'<div class="inline"><div class="field" style="flex:1"><label>Forma de la mesa</label><select id="me_f">'+opts+'</select></div>'
     +'<div class="field" style="width:96px"><label>Plazas</label><input id="me_p" type="number" value="'+(m.plazas||4)+'"></div></div>'
+    +(m.grupo?('<div class="field"><button class="btn ghost block" data-act="separarmesa" data-id="'+m.id+'">🔗 Separar de la mesa '+esc((getMesa(m.grupo)||{}).nombre||'')+'</button></div>'):'')
     +'</div><div class="foot"><button class="btn danger-ghost" data-act="delmesa" data-id="'+m.id+'" style="margin-right:auto">Eliminar</button>'
     +'<button class="btn ghost" data-act="closeModal">Cancelar</button><button class="btn primary" data-act="savemesa" data-id="'+m.id+'">Guardar</button></div></div>');
 }

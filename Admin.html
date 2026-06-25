@@ -780,22 +780,25 @@ function guardarAccion(id){
 /* ---- COPILOTO IA: análisis + propuestas aplicables ---- */
 function copilotoPropuestas(){
   var prods=(M.productos||[]).filter(function(p){return !p.esMenu;});
+  var v7=M.ventas7d||{};
   var props=[];
-  // 1) Precios con margen bajo (food cost alto)
+  // 1) Precios con margen bajo (food cost alto) — prioriza los más vendidos
   prods.forEach(function(p){
     if(p.coste!=null && p.precio!=null && p.precio>0){
       var fc=p.coste/p.precio; // food cost
       if(fc>0.40){
         var nuevo=Math.ceil((p.coste/0.38)*10)/10; // objetivo food cost 38%
         if(nuevo>p.precio){
-          props.push({ic:'📈',c:'#16a34a',t:'Sube el precio de '+esc(p.nombre),
-            d:'Food cost actual '+Math.round(fc*100)+'% (alto). Subiéndolo a '+nuevo.toFixed(2)+' € el food cost baja al 38% y el margen sube a '+Math.round((1-p.coste/nuevo)*100)+'%.',
-            imp:'+'+((nuevo-p.precio)).toFixed(2)+' € / unidad',
+          var vt=v7[p.id]||0, estrella=vt>=30;
+          props.push({ic:estrella?'⭐':'📈',c:'#16a34a',prio:estrella?2:1,t:(estrella?'Prioridad: sube ':'Sube el precio de ')+esc(p.nombre),
+            d:'Food cost '+Math.round(fc*100)+'% (alto) → a '+nuevo.toFixed(2)+' € baja al 38% y el margen sube a '+Math.round((1-p.coste/nuevo)*100)+'%.'+(estrella?(' Y es de tus MÁS vendidos ('+vt+' uds/sem): impacto alto.'):''),
+            imp:(estrella?'★ superventas · ':'')+'+'+((nuevo-p.precio)).toFixed(2)+' € / unidad',
             btn:'Aplicar precio '+nuevo.toFixed(2)+' €',act:'cop_precio',pid:p.id,val:nuevo});
         }
       }
     }
   });
+  props.sort(function(a,b){return (b.prio||0)-(a.prio||0);});
   // 2) Productos sin escandallo (no se puede optimizar margen)
   var sinCoste=prods.filter(function(p){return p.coste==null && p.precio!=null;});
   sinCoste.slice(0,4).forEach(function(p){
@@ -803,6 +806,20 @@ function copilotoPropuestas(){
       d:'Sin coste no puedo calcular su margen ni proponer precio. Define el coste de sus ingredientes y entrará en la optimización automática.',
       imp:'Desbloquea optimización de margen',btn:'Abrir escandallo',act:'cop_esc',pid:p.id});
   });
+  // 2b) Producto lento (poca rotación)
+  var lentos=prods.filter(function(p){return p.activo!==false && p.precio!=null && v7[p.id]!=null && v7[p.id]<=10;}).sort(function(a,b){return (v7[a.id]||0)-(v7[b.id]||0);});
+  lentos.slice(0,2).forEach(function(p){
+    props.push({ic:'🐌',c:'#e11d48',t:esc(p.nombre)+' se vende poco',
+      d:'Solo '+(v7[p.id]||0)+' uds en 7 días. Valora promocionarlo, cambiarlo de sitio en la carta o retirarlo.',
+      imp:'Limpia y enfoca la carta',btn:'',act:''});
+  });
+  // 2c) Producto estrella (info)
+  var top=prods.slice().sort(function(a,b){return (v7[b.id]||0)-(v7[a.id]||0);})[0];
+  if(top && (v7[top.id]||0)>0){
+    props.push({ic:'🏆',c:'#d97706',t:'Tu superventas: '+esc(top.nombre),
+      d:(v7[top.id])+' uds en 7 días. No te quedes sin stock en hora punta y dale visibilidad en la carta.',
+      imp:'Protege tu best-seller',btn:'',act:''});
+  }
   // 3) Demanda del día (reservas) -> tarifa de hora punta
   var hoy=hoyStr();
   var resHoy=(Sync.reservas?Sync.reservas():[]).filter(function(r){return r.fecha===hoy && r.estado!=='cancelada' && r.estado!=='noshow';});

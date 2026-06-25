@@ -206,8 +206,17 @@ function showMesas(){st.view='mesas';st.mesa=null;st.lineas=[];st.ordenActivo=nu
       return '<button class="'+cls+'" data-mesa="'+esc(m.nombre)+'" style="left:'+(m.x||0)+'px;top:'+(m.y||0)+'px;width:'+fd.w+'px;height:'+fd.h+'px;border-radius:'+fd.r+'">'+(o.avisa?'🔔':'')+'<span class="pnm">'+esc(m.nombre)+'</span><span class="ppax">'+(o.ocupada?'ocupada':(m.plazas||4)+' pax')+'</span></button>';}).join('');
     var bg=sa.bg||'#ffffff';
     app.innerHTML='<div class="app">'+top+'<div class="body"><div class="salatabs">'+tabs+'</div>'
-      +'<div class="planowrap" style="max-height:calc(100dvh - 170px)"><div class="plano" style="width:'+maxX+'px;height:'+maxY+'px;background:'+bg+'">'+dh+mh+'</div></div>'
-      +'<p class="h2" style="margin:12px 0 0">Toca una mesa para tomar la comanda</p></div></div>';
+      +'<div class="planowrap" style="max-height:calc(100dvh - 170px);overflow:hidden"><div class="planofit" style="width:'+maxX+'px;height:'+maxY+'px;transform-origin:top left"><div class="plano" style="width:'+maxX+'px;height:'+maxY+'px;background:'+bg+'">'+dh+mh+'</div></div></div>'
+      +'<p class="h2" style="margin:10px 0 0">Toca una mesa para tomar la comanda · pellizca para acercar</p></div></div>';
+    // Escalar el plano para que quepa en la pantalla del dispositivo (móvil/iPad)
+    setTimeout(function(){
+      var wrap=document.querySelector('.planowrap'), fit=document.querySelector('.planofit');
+      if(!wrap||!fit)return;
+      var s=Math.min(1,(wrap.clientWidth-2)/maxX);
+      fit.style.transform='scale('+s+')';
+      fit.style.width=(maxX*s)+'px'; fit.style.height=(maxY*s)+'px';
+      wrap.style.height=Math.min(wrap.clientHeight,maxY*s+4)+'px';
+    },30);
     return;
   }
   var _S=getSALAS();var _sa=_S[st.salaSel]||_S[0]||{mesas:[]};
