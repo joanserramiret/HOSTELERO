@@ -354,10 +354,9 @@ function seed(){
   setMods('Solomillo',[{n:'Punto',op:[{n:'Poco hecho'},{n:'Al punto'},{n:'Muy hecho'}]},{n:'Guarnición',op:[{n:'Patatas'},{n:'Ensalada'},{n:'Verduras',p:1.5}]}]);
   setMods('Ensalada Mixta',[{n:'Extras',tipo:'check',op:[{n:'Atún',p:1.5},{n:'Queso',p:1.0},{n:'Pollo',p:2.0},{n:'Huevo',p:.8}]}]);
   var menuDia={id:uid(),nombre:'Menú del Día',categoriaId:'c0',precio:13.9,ic:'🍽️',esMenu:true,activo:true,controlStock:false,stock:0,pasePorDefecto:'Primeros',
-    pasos:[ {n:'Primero',op:[{n:'Ensalada Mixta'},{n:'Gazpacho'},{n:'Ensaladilla'},{n:'Croquetas'}]},
-            {n:'Segundo',op:[{n:'Pollo de Corral'},{n:'Calamares'},{n:'Entrecot',p:3.0},{n:'Paella',p:2.0}]},
-            {n:'Postre o Café',op:[{n:'Flan'},{n:'Tarta de Queso'},{n:'Fruta'},{n:'Café'}]},
-            {n:'Bebida',op:[{n:'Agua'},{n:'Caña'},{n:'Copa de Vino'},{n:'Refresco'}]} ]};
+    pasos:[ {n:'Platos',elige:2,op:[{n:'Ensalada Mixta'},{n:'Gazpacho'},{n:'Ensaladilla'},{n:'Croquetas'},{n:'Pollo de Corral'},{n:'Calamares'},{n:'Entrecot',p:3.0},{n:'Paella',p:2.0}]},
+            {n:'Postre o Café',elige:1,op:[{n:'Flan'},{n:'Tarta de Queso'},{n:'Fruta'},{n:'Café'}]},
+            {n:'Bebida',elige:1,op:[{n:'Agua'},{n:'Caña'},{n:'Copa de Vino'},{n:'Refresco'}]} ]};
   var menuInf={id:uid(),nombre:'Menú Infantil',categoriaId:'c0',precio:8.5,ic:'🧒',esMenu:true,activo:true,controlStock:false,stock:0,pasePorDefecto:'Primeros',
     pasos:[ {n:'Plato',op:[{n:'Nuggets con patatas'},{n:'Macarrones'},{n:'Mini hamburguesa'}]},
             {n:'Postre',op:[{n:'Helado'},{n:'Natillas'},{n:'Fruta'}]},
@@ -482,7 +481,14 @@ function clienteDescuento(t){ if(!t||!t.clienteId)return 0; var c=getCliente(t.c
 function totalNeto(t){ return round2(totalLineas(t.lineas)-descuentoImporte(t)-promocionesTicket(t).total-clienteDescuento(t)); }
 function desgloseIVAmulti(lineas){ var def=ivaPct(); var g={}; (lineas||[]).forEach(function(l){ var p=getProducto(l.productoId); var tipo=(p&&p.iva!=null)?p.iva:def; g[tipo]=(g[tipo]||0)+l.precio*l.cantidad; }); return Object.keys(g).map(function(k){ var tipo=parseFloat(k),total=g[k],base=round2(total/(1+tipo/100)); return {tipo:tipo,base:base,cuota:round2(total-base)}; }).sort(function(a,b){return a.tipo-b.tipo;}); }
 function cajaAbierta(){ return DB.cajas.filter(function(c){return c.estado==='abierta';})[0]; }
-function abrirCaja(saldo){ if(cajaAbierta())return; DB.cajas.push({id:uid(),abiertaAt:Date.now(),saldoInicial:saldo,estado:'abierta'}); save(); }
+/* ---- Jornada: fecha fiscal (el día lo cierras tú; corte 06:00 para que la madrugada cuente como el día anterior) ---- */
+var CORTE_JORNADA=6;
+function fechaLocalStr(d){ return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+function fechaFiscal(){ var d=new Date(); if(d.getHours()<CORTE_JORNADA) d.setDate(d.getDate()-1); return fechaLocalStr(d); }
+function fmtFecha(s){ if(!s)return''; var p=String(s).split('-'); return p.length===3?(p[2]+'/'+p[1]+'/'+p[0]):String(s); }
+function abrirCaja(saldo,fecha){ if(cajaAbierta())return; DB.cajas.push({id:uid(),abiertaAt:Date.now(),saldoInicial:saldo,fecha:fecha||fechaFiscal(),estado:'abierta'}); save(); pubJornada(); }
+/* Publica el estado de la jornada al servidor para que la comandera/cocina lo conozcan */
+function pubJornada(){ try{ if(window.HOSTELERO_SYNC&&window.HOSTELERO_SYNC.setJornada){ var c=cajaAbierta(); window.HOSTELERO_SYNC.setJornada(c?{abierta:true,fecha:c.fecha,abiertaAt:c.abiertaAt}:{abierta:false,fecha:fechaFiscal(),cerradaAt:Date.now()}); } }catch(e){} }
 function cerrarCaja(contado){ var c=cajaAbierta(); if(!c)return; c.estado='cerrada'; c.cerradaAt=Date.now(); c.saldoFinalContado=contado; save(); }
 function getTicket(id){ return DB.tickets.filter(function(t){return t.id===id;})[0]; }
 function getMesa(id){ return DB.mesas.filter(function(m){return m.id===id;})[0]; }
@@ -829,16 +835,16 @@ function viewReservas(){
 function viewCaja(){
   var caja=cajaAbierta();
   if(!caja){
-    return '<div class="topbar"><div class="ttl"><h1>Caja</h1><span class="sub">Cerrada</span></div></div><div class="content"><div class="card pad" style="max-width:420px">'
-      +'<div class="section-title">Abrir caja</div><div class="field"><label>Saldo inicial en cajón (€)</label><input id="saldoIni" type="number" value="100"></div>'
-      +'<button class="btn green lg block" data-act="abrirCaja">Abrir caja</button></div></div>';
+    return '<div class="topbar"><div class="ttl"><h1>Caja</h1><span class="sub">Sin jornada abierta</span></div></div><div class="content"><div class="card pad" style="max-width:440px">'
+      +'<div class="section-title">No hay jornada abierta</div><p class="muted">Inicia la jornada para empezar a trabajar: confirma el día y el saldo inicial del cajón.</p>'
+      +'<button class="btn green lg block" data-act="irAbrirJornada">🟢 Iniciar jornada</button></div></div>';
   }
   var tk=DB.tickets.filter(function(t){return t.estado==='cobrado'&&t.cajaId===caja.id;});
   var efe=tk.reduce(function(s,t){return s+(t.cobradoEfectivo||0);},0);
   var tar=tk.reduce(function(s,t){return s+(t.cobradoTarjeta||0);},0);
   var prop=tk.reduce(function(s,t){return s+(t.propina||0);},0);
   var enCaja=round2(caja.saldoInicial+efe);
-  return '<div class="topbar"><div class="ttl"><h1>Caja</h1><span class="sub">Abierta</span></div></div><div class="content">'
+  return '<div class="topbar"><div class="ttl"><h1>Caja</h1><span class="sub">Jornada del '+fmtFecha(caja.fecha||fechaFiscal())+' · abierta</span></div></div><div class="content">'
     +'<div class="stat-grid">'
     +stat('Ventas turno',eur(efe+tar),'#4f46e5')+stat('💵 Efectivo',eur(efe),'#16a34a')+stat('💳 Tarjeta',eur(tar),'#7c3aed')
     +stat('🪙 Propinas',eur(prop),'#d97706')+stat('Tickets',tk.length,'#0891b2')+stat('Esperado en cajón',eur(enCaja),'#0ea5e9')+'</div>'
@@ -848,6 +854,27 @@ function viewCaja(){
     +'<button class="btn danger lg block" data-act="cerrarCaja">Cerrar caja</button></div></div>';
 }
 function stat(l,v,c){ return '<div class="card stat"><div class="l">'+l+'</div><div class="v" style="color:'+c+'">'+v+'</div></div>'; }
+/* ---- Control de jornada al empezar a trabajar ---- */
+function checkJornada(){
+  if(state.ticketActivo) return;
+  var c=cajaAbierta(), hoy=fechaFiscal();
+  if(!c){ modalAbrirJornada(hoy); return; }
+  if(!c.fecha){ c.fecha=hoy; save(); }
+  if(c.fecha!==hoy){ modalJornadaVieja(c,hoy); }
+}
+function modalAbrirJornada(hoy){
+  openModal('<div class="modal sm" data-stop><h2>🟢 Iniciar jornada</h2><div class="mbody">'
+    +'<p class="muted" style="margin:0 0 12px">Confirma el día de trabajo e introduce el saldo inicial del cajón para empezar.</p>'
+    +'<div class="field"><label>Día de la jornada</label><input id="j_fecha" type="date" value="'+hoy+'"></div>'
+    +'<div class="field"><label>Saldo inicial en cajón (€)</label><input id="j_saldo" type="number" value="100"></div>'
+    +'</div><div class="foot"><button class="btn green lg block" data-act="abrirJornada">Abrir jornada</button></div></div>', true);
+}
+function modalJornadaVieja(c,hoy){
+  openModal('<div class="modal sm" data-stop><h2>⚠️ Jornada sin cerrar</h2><div class="mbody">'
+    +'<p style="margin:0 0 8px">La jornada del <b>'+fmtFecha(c.fecha)+'</b> sigue abierta y hoy es <b>'+fmtFecha(hoy)+'</b>.</p>'
+    +'<p class="muted" style="margin:0">Lo correcto es hacer el cierre de esa jornada (cierre Z / arqueo) antes de empezar a trabajar hoy.</p>'
+    +'</div><div class="foot"><button class="btn ghost" data-act="closeModal">Entrar igualmente</button><button class="btn danger lg" data-act="cerrarJornadaIr">Cerrar jornada ahora</button></div></div>', true);
+}
 
 /* ----- INFORMES ----- */
 function rangoPeriodo(p){ var ini=new Date(); ini.setHours(0,0,0,0);
@@ -882,7 +909,7 @@ function viewInformes(){
 }
 
 /* ----- MODALES ----- */
-function openModal(html){ document.getElementById('modalRoot').innerHTML='<div class="overlay">'+html+'</div>'; }
+function openModal(html,sticky){ document.getElementById('modalRoot').innerHTML='<div class="overlay'+(sticky?' sticky':'')+'">'+html+'</div>'; }
 function closeModal(){ document.getElementById('modalRoot').innerHTML=''; }
 
 function modalComensales(){
@@ -946,7 +973,7 @@ function modalReserva(){
 function onClick(e){
   if(_suppressClick){ _suppressClick=false; return; }
   var navBtn=e.target.closest('.nav-item'); if(navBtn){ state.view=navBtn.dataset.view; state.ticketActivo=null; render(); return; }
-  if(e.target.classList&&e.target.classList.contains('overlay')){ closeModal(); return; }
+  if(e.target.classList&&e.target.classList.contains('overlay')&&!e.target.classList.contains('sticky')){ closeModal(); return; }
   var el=e.target.closest('[data-act]'); if(!el)return;
   var a=el.dataset.act, id=el.dataset.id;
   if(a==='closeModal'){ closeModal(); return; }
@@ -988,7 +1015,7 @@ function onClick(e){
     case 'togdisp': { var pid=el.dataset.id; window.HOSTELERO_SYNC.setAgotado(pid, !agotadoProd({id:pid})); setTimeout(function(){ if(document.getElementById('dispPanel'))modalDisponibilidad(); },150); break; }
     case 'cfgsel': { var cg=+el.dataset.g, co=+el.dataset.o; var grp=getProducto(state.cfg.pid).mods[cg]; if(grp.tipo==='check'){ var arr=state.cfg.sel[cg]; var ix=arr.indexOf(co); if(ix>=0)arr.splice(ix,1); else arr.push(co); } else { state.cfg.sel[cg]=co; } modalConfig(); break; }
     case 'addcfg': confirmConfig(); break;
-    case 'menusel': state.menu.sel[+el.dataset.g]=+el.dataset.o; modalMenu(); break;
+    case 'menusel': { var gi=+el.dataset.g, oi=+el.dataset.o; var mm=getProducto(state.menu.mid); var ps=mm.pasos[gi]; var elige=ps.elige||1; var arr=state.menu.sel[gi]||(state.menu.sel[gi]=[]); var ix=arr.indexOf(oi); if(ix>=0){ arr.splice(ix,1); } else if(elige===1){ state.menu.sel[gi]=[oi]; } else { if(arr.length>=elige) arr.shift(); arr.push(oi); } modalMenu(); break; }
     case 'addmenu': confirmMenu(); break;
     case 'mas': cambiarCantidad(state.ticketActivo,+el.dataset.idx,1); render(); break;
     case 'menos': cambiarCantidad(state.ticketActivo,+el.dataset.idx,-1); render(); break;
@@ -1024,7 +1051,10 @@ function onClick(e){
     case 'delp': if(confirm('¿Eliminar producto?')){ DB.productos=DB.productos.filter(function(x){return x.id!==id;}); save(); closeModal(); render(); } break;
     case 'reset': if(confirm('¿Restaurar el restaurante demo? Se perderán los cambios.')){ resetDemo(); state.ticketActivo=null; render(); } break;
     case 'abrirCaja': abrirCaja(parseFloat(document.getElementById('saldoIni').value)||0); render(); break;
-    case 'cerrarCaja': autorizar('caja',function(){ var c=document.getElementById('contado').value; if(confirm('¿Cerrar caja y emitir cierre Z?')){ var z=cerrarCajaZ(parseFloat(c)||0); if(z) imprimirZ(z); render(); } }); break;
+    case 'irAbrirJornada': modalAbrirJornada(fechaFiscal()); break;
+    case 'abrirJornada': { var js=parseFloat(document.getElementById('j_saldo').value)||0; var jf=document.getElementById('j_fecha').value||fechaFiscal(); abrirCaja(js,jf); closeModal(); render(); break; }
+    case 'cerrarJornadaIr': { closeModal(); state.view='caja'; state.ticketActivo=null; render(); break; }
+    case 'cerrarCaja': autorizar('caja',function(){ var c=document.getElementById('contado').value; if(confirm('¿Cerrar la jornada y emitir cierre Z?')){ var z=cerrarCajaZ(parseFloat(c)||0); pubJornada(); if(z) imprimirZ(z); render(); checkJornada(); } }); break;
     case 'nuevaR': modalReserva(); break;
     case 'saveR': saveReserva(el.dataset.fecha); break;
     case 'sentar': cambiarEstadoReserva(id,'sentada'); render(); break;
@@ -1056,13 +1086,13 @@ if(typeof document!=='undefined'){
   function boot(){ load(); if(typeof window!=='undefined'&&window.HOSTELERO_SYNC){ aplicarMaster(); var _agoSig=''; window.HOSTELERO_SYNC.onChange(function(){ var mc=aplicarMaster(); var sig=(window.HOSTELERO_SYNC.agotados?window.HOSTELERO_SYNC.agotados().join(','):''); var agoCambio=(sig!==_agoSig); _agoSig=sig; if(((mc&&!state.ticketActivo)||agoCambio)&&!state.editPlano) render(); }); } document.addEventListener('click',onClick); document.addEventListener('change',onChange);
     document.addEventListener('pointerdown',onPointerDown); document.addEventListener('pointermove',onPointerMove); document.addEventListener('pointerup',onPointerUp);
     window.addEventListener('resize',function(){ if(state.view==='sala'&&!state.ticketActivo) fitPlano(); });
-    render(); setInterval(function(){ if(state.view==='sala'&&!state.ticketActivo&&!state.editPlano&&!drag) render(); },20000); }
+    render(); checkJornada(); pubJornada(); setInterval(function(){ if(state.view==='sala'&&!state.ticketActivo&&!state.editPlano&&!drag) render(); },20000); }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
 }
 
 /* ----- Fase 2b: modales de modificadores y menús ----- */
 function openConfig(p){ state.cfg={pid:p.id, sel:p.mods.map(function(g){return g.tipo==='check'?[]:0;})}; modalConfig(); }
-function openMenu(p){ state.menu={mid:p.id, sel:p.pasos.map(function(){return 0;})}; modalMenu(); }
+function openMenu(p){ state.menu={mid:p.id, sel:(p.pasos||[]).map(function(){return [];})}; modalMenu(); }
 
 function modalConfig(){
   var p=getProducto(state.cfg.pid); if(!p)return; var supl=0;
@@ -1087,20 +1117,22 @@ function confirmConfig(){
 }
 
 function modalMenu(){
-  var m=getProducto(state.menu.mid); if(!m)return; var supl=0;
-  var steps=m.pasos.map(function(ps,i){
-    var sel=state.menu.sel[i];
-    var opts=ps.op.map(function(o,j){ if(j===sel) supl+=o.p||0;
-      return '<button class="opt'+(j===sel?' active':'')+'" data-act="menusel" data-g="'+i+'" data-o="'+j+'">'+esc(o.n)+(o.p?' +'+eur(o.p):'')+'</button>'; }).join('');
-    return '<div class="mgroup"><div class="mgl">'+(i+1)+'. '+esc(ps.n)+'</div><div class="opts">'+opts+'</div></div>';
+  var m=getProducto(state.menu.mid); if(!m)return; var supl=0; var faltan=0;
+  var steps=(m.pasos||[]).map(function(ps,i){
+    var elige=ps.elige||1; var sel=state.menu.sel[i]||(state.menu.sel[i]=[]);
+    if(sel.length<elige) faltan+=(elige-sel.length);
+    var opts=ps.op.map(function(o,j){ var act=sel.indexOf(j)>=0; if(act) supl+=(o.p||0);
+      return '<button class="opt'+(act?' active':'')+'" data-act="menusel" data-g="'+i+'" data-o="'+j+'">'+esc(o.n)+(o.p?' +'+eur(o.p):'')+'</button>'; }).join('');
+    var info=elige>1?('elige '+elige+' · '+sel.length+'/'+elige):'';
+    return '<div class="mgroup"><div class="mgl">'+(i+1)+'. '+esc(ps.n)+(info?' <span class="mghint">('+info+')</span>':'')+'</div><div class="opts">'+opts+'</div></div>';
   }).join('');
-  var precio=round2(m.precio+supl);
-  openModal('<div class="modal menuwiz" data-stop><h2>'+(m.ic||'')+' '+esc(m.nombre)+'</h2><div class="mbody"><div class="precio-prev">'+eur(precio)+'</div>'+steps+'</div>'
-    +'<div class="foot"><button class="btn ghost" data-act="closeModal">Cancelar</button><button class="btn primary" data-act="addmenu">Añadir menú · '+eur(precio)+'</button></div></div>');
+  var precio=round2(m.precio+supl); var listo=faltan===0;
+  openModal('<div class="modal menuwiz" data-stop><h2>'+(m.ic||'')+' '+esc(m.nombre)+'</h2><div class="mbody"><div class="precio-prev">'+eur(precio)+'</div>'+steps+(listo?'':'<p class="muted" style="text-align:center;margin:8px 0 0">Faltan '+faltan+' selección(es) por elegir</p>')+'</div>'
+    +'<div class="foot"><button class="btn ghost" data-act="closeModal">Cancelar</button><button class="btn primary'+(listo?'':' off')+'" '+(listo?'':'disabled')+' data-act="addmenu">Añadir menú · '+eur(precio)+'</button></div></div>');
 }
 function confirmMenu(){
   var m=getProducto(state.menu.mid); var supl=0; var subs=[];
-  m.pasos.forEach(function(ps,i){ var o=ps.op[state.menu.sel[i]]; supl+=o.p||0; subs.push(ps.n+': '+o.n+(o.p?' (+'+eur(o.p)+')':'')); });
+  (m.pasos||[]).forEach(function(ps,i){ (state.menu.sel[i]||[]).forEach(function(j){ var o=ps.op[j]; if(!o)return; supl+=(o.p||0); subs.push(ps.n+': '+o.n+(o.p?' (+'+eur(o.p)+')':'')); }); });
   addMenu(state.ticketActivo,m,subs,m.precio+supl); closeModal(); render();
 }
 

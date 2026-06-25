@@ -10,6 +10,51 @@
     document.head.appendChild(link);
   } catch (e) {}
 
+  // ---- Identidad por app: nombre, descripción y color (para «Añadir a pantalla de inicio») ----
+  function appInfo() {
+    var POR_PUERTO = {
+      '7871': { name: 'HOSTELERO TPV',       short: 'TPV',       desc: 'Terminal de venta — comandas y cobro', theme: '#4f46e5' },
+      '7872': { name: 'HOSTELERO Comandera', short: 'Comandera', desc: 'Toma de comandas en sala',          theme: '#0f766e' },
+      '7873': { name: 'HOSTELERO Cocina',    short: 'Cocina',    desc: 'Pantalla de cocina (KDS)',           theme: '#0f172a' },
+      '7874': { name: 'HOSTELERO Admin',     short: 'Admin',     desc: 'Administración y configuración',      theme: '#4f46e5' },
+      '7875': { name: 'Carta · HOSTELERO',   short: 'Carta',     desc: 'Carta digital del restaurante',      theme: '#b4532a' }
+    };
+    if (POR_PUERTO[location.port]) return POR_PUERTO[location.port];
+    var p = ((location.pathname || '') + ' ' + (document.title || '')).toLowerCase();
+    if (p.indexOf('tpv') >= 0)        return POR_PUERTO['7871'];
+    if (p.indexOf('comandera') >= 0)  return POR_PUERTO['7872'];
+    if (p.indexOf('cocina') >= 0 || p.indexOf('kds') >= 0) return POR_PUERTO['7873'];
+    if (p.indexOf('admin') >= 0)      return POR_PUERTO['7874'];
+    if (p.indexOf('carta') >= 0)      return POR_PUERTO['7875'];
+    return { name: 'HOSTELERO · IA POS', short: 'HOSTELERO', desc: 'El TPV que se piensa solo', theme: '#0F172A' };
+  }
+  try {
+    var A = appInfo();
+    function meta(name, content, useProp) { var m = document.createElement('meta'); m.setAttribute(useProp ? 'property' : 'name', name); m.content = content; document.head.appendChild(m); }
+    meta('application-name', A.short);
+    meta('apple-mobile-web-app-title', A.short);
+    meta('apple-mobile-web-app-capable', 'yes');
+    meta('mobile-web-app-capable', 'yes');
+    meta('apple-mobile-web-app-status-bar-style', 'black-translucent');
+    meta('theme-color', A.theme);
+    meta('description', A.desc);
+    // Icono de pantalla de inicio (iOS usa PNG)
+    var at = document.createElement('link'); at.rel = 'apple-touch-icon'; at.setAttribute('sizes', '180x180'); at.href = 'icon-180.png'; document.head.appendChild(at);
+    var ic = document.createElement('link'); ic.rel = 'icon'; ic.type = 'image/png'; ic.setAttribute('sizes', '192x192'); ic.href = 'icon-192.png'; document.head.appendChild(ic);
+    // Manifest dinámico (Android/Chrome)
+    var manifest = {
+      name: A.name, short_name: A.short, description: A.desc,
+      start_url: location.pathname.split('/').pop() || '.', scope: './', display: 'standalone',
+      background_color: '#0F172A', theme_color: A.theme,
+      icons: [
+        { src: 'icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+        { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+      ]
+    };
+    var blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+    var ml = document.createElement('link'); ml.rel = 'manifest'; ml.href = URL.createObjectURL(blob); document.head.appendChild(ml);
+  } catch (e) {}
+
   // Splash (solo una vez por carga)
   try {
     var css = '@keyframes hsl-pop{0%{transform:scale(.86);opacity:0}60%{opacity:1}100%{transform:scale(1);opacity:1}}'

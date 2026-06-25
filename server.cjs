@@ -77,14 +77,22 @@ function masterSeed() {
   cats.unshift({ id: 'c0', nombre: 'Menús', color: '#4f46e5', ic: '🍽️', orden: 0, pase: 'Primeros' });
   prods.unshift(
     { id:'menu1', nombre:'Menú del Día', categoriaId:'c0', precio:13.9, ic:'🍽️', pasePorDefecto:'Primeros', activo:true, esMenu:true, pasos:[
-      {n:'Primero',op:[{n:'Ensalada Mixta'},{n:'Gazpacho'},{n:'Croquetas'}]},
-      {n:'Segundo',op:[{n:'Pollo'},{n:'Calamares'},{n:'Entrecot',p:3}]},
-      {n:'Postre',op:[{n:'Flan'},{n:'Tarta de Queso'},{n:'Fruta'}]},
-      {n:'Bebida',op:[{n:'Agua'},{n:'Caña'},{n:'Refresco'}]} ]},
+      {n:'Platos', elige:2, op:[{n:'Ensalada Mixta'},{n:'Gazpacho'},{n:'Croquetas'},{n:'Pollo'},{n:'Calamares'},{n:'Entrecot',p:3}]},
+      {n:'Postre o Café', elige:1, op:[{n:'Flan'},{n:'Tarta de Queso'},{n:'Fruta'},{n:'Café'}]},
+      {n:'Bebida', elige:1, op:[{n:'Agua'},{n:'Caña'},{n:'Copa de Vino'},{n:'Refresco'}]} ]},
     { id:'menu2', nombre:'Menú Infantil', categoriaId:'c0', precio:8.5, ic:'🧒', pasePorDefecto:'Primeros', activo:true, esMenu:true, pasos:[
-      {n:'Plato',op:[{n:'Nuggets'},{n:'Macarrones'}]},
-      {n:'Postre',op:[{n:'Helado'},{n:'Fruta'}]},
-      {n:'Bebida',op:[{n:'Agua'},{n:'Zumo'}]} ]}
+      {n:'Plato', elige:1, op:[{n:'Nuggets'},{n:'Macarrones'}]},
+      {n:'Postre', elige:1, op:[{n:'Helado'},{n:'Fruta'}]},
+      {n:'Bebida', elige:1, op:[{n:'Agua'},{n:'Zumo'}]} ]},
+    { id:'menu3', nombre:'Menú Degustación', categoriaId:'c0', precio:48, ic:'⭐', pasePorDefecto:'Primeros', activo:true, esMenu:true, pasos:[
+      {n:'Aperitivo', elige:1, op:[{n:'Croqueta de jamón'},{n:'Gilda'}]},
+      {n:'Entrante frío', elige:1, op:[{n:'Tartar de atún'},{n:'Steak tartar'}]},
+      {n:'Entrante caliente', elige:1, op:[{n:'Croquetas cremosas'},{n:'Alcachofas'}]},
+      {n:'Pescado', elige:1, op:[{n:'Merluza'},{n:'Bacalao'}]},
+      {n:'Carne', elige:1, op:[{n:'Presa ibérica'},{n:'Carrillera'}]},
+      {n:'Pre-postre', elige:1, op:[{n:'Sorbete de limón'}]},
+      {n:'Postre', elige:1, op:[{n:'Coulant'},{n:'Tarta de queso'}]},
+      {n:'Maridaje (opcional)', elige:1, op:[{n:'Sin maridaje'},{n:'Maridaje de vinos',p:18}]} ]}
   );
   var salas = [
     { id: 's1', nombre: 'Comedor',   bg: '#fdf6ec' },
@@ -169,7 +177,7 @@ function masterSeed() {
     { id:'ar2', label:'Invitación', ic:'🎁', color:'#d97706', tipo:'invitacion' },
     { id:'ar3', label:'Happy Hour', ic:'⚡', color:'#7c3aed', tipo:'tarifa', param:'tf2' }
   ];
-  return { version: 19, categorias: cats, productos: prods, salas: salas, mesas: mesas, decor: decor, promociones: promociones, clientes: clientes, datafonos: datafonos, comentarios: comentarios, tarifas: tarifas, accionesRapidas: accionesRapidas, ventas7d: ventas7d, usuarios: usuarios, impresoras: [], config: config };
+  return { version: 20, categorias: cats, productos: prods, salas: salas, mesas: mesas, decor: decor, promociones: promociones, clientes: clientes, datafonos: datafonos, comentarios: comentarios, tarifas: tarifas, accionesRapidas: accionesRapidas, ventas7d: ventas7d, usuarios: usuarios, impresoras: [], config: config };
 }
 
 // Reservas de demostración (hoy)
@@ -269,6 +277,7 @@ function aplicar(accion, d) {
       else { r.id = 'rsv' + uid(); r.creada = Date.now(); state.reservas.push(r); }
     }
   } else if (accion === '/api/reserva-borrar') { if (d.id) state.reservas = (state.reservas || []).filter(function (x) { return x.id !== d.id; });
+  } else if (accion === '/api/jornada') { state.jornada = d.jornada || null;
   } else if (accion === '/api/print-test') { try { imprimirEn(d.ip, d.puerto, escposComanda({ mesa: 'PRUEBA', camarero: 'HOSTELERO', lineas: [{ cantidad: 1, nombre: 'Impresora OK' }] }, d.ancho || 42)); } catch (e) {}
   } else if (accion === '/api/datafono') {
     var dfs = (state.master && state.master.datafonos) || [];

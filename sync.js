@@ -61,7 +61,9 @@
     setAgotado: function (id, val) { if (modo === 'servidor') return post('/api/agotado', { id: id, agotado: !!val }); if (!state.agotados) state.agotados = []; var i = state.agotados.indexOf(id); if (val && i < 0) state.agotados.push(id); else if (!val && i >= 0) state.agotados.splice(i, 1); commitLocal(); },
     reservas: function () { return state.reservas || []; },
     guardarReserva: function (r) { if (modo === 'servidor') return post('/api/reserva', { reserva: r }); if (!state.reservas) state.reservas = []; if (r.id) { var k = -1; state.reservas.forEach(function (x, i) { if (x.id === r.id) k = i; }); if (k >= 0) state.reservas[k] = r; else state.reservas.push(r); } else { r.id = 'rsv' + uid(); r.creada = Date.now(); state.reservas.push(r); } commitLocal(); },
-    borrarReserva: function (id) { if (modo === 'servidor') return post('/api/reserva-borrar', { id: id }); state.reservas = (state.reservas || []).filter(function (x) { return x.id !== id; }); commitLocal(); }
+    borrarReserva: function (id) { if (modo === 'servidor') return post('/api/reserva-borrar', { id: id }); state.reservas = (state.reservas || []).filter(function (x) { return x.id !== id; }); commitLocal(); },
+    jornada: function () { return state.jornada || null; },
+    setJornada: function (j) { if (modo === 'servidor') return post('/api/jornada', { jornada: j }); state.jornada = j; commitLocal(); }
   };
 
   if (esServidor) initServidor(); else initLocal();

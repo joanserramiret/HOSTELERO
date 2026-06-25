@@ -167,6 +167,24 @@ var sel=null,pin='',avisosVistos={};
 
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 function toast(m,cls){var r=document.getElementById('toast');var d=document.createElement('div');d.className='toast '+(cls||'');d.innerHTML=m;r.appendChild(d);setTimeout(function(){d.remove();},cls==='av'?4500:2400);}
+/* Aviso de jornada sin cerrar (lo abre/cierra el TPV; aquí solo se recuerda) */
+function fechaFiscalC(){var d=new Date();if(d.getHours()<6)d.setDate(d.getDate()-1);return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
+function fmtFechaC(s){if(!s)return'';var p=String(s).split('-');return p.length===3?(p[2]+'/'+p[1]+'/'+p[0]):String(s);}
+var _jorAviso=false;
+function avisoJornada(){
+  if(_jorAviso)return;
+  if(!(Auth.sesion&&Auth.sesion()))return;
+  var j=null;try{j=Sync.jornada&&Sync.jornada();}catch(e){}
+  if(!(j&&j.abierta&&j.fecha&&j.fecha!==fechaFiscalC()))return;
+  _jorAviso=true;
+  var ov=document.createElement('div');ov.className='overlay';
+  ov.innerHTML='<div class="sheet"><h3>⚠️ Jornada sin cerrar</h3>'
+    +'<p style="color:#cbd5e1;font-size:14px;margin:0 0 6px">La jornada del <b>'+fmtFechaC(j.fecha)+'</b> sigue abierta y hoy es <b>'+fmtFechaC(fechaFiscalC())+'</b>.</p>'
+    +'<p style="color:#94a3b8;font-size:13px;margin:0 0 14px">Recordad hacer el <b>cierre de caja en el TPV</b> antes de seguir trabajando.</p>'
+    +'<button class="opt" data-cerrar style="justify-content:center">Entendido</button></div>';
+  ov.addEventListener('click',function(e){if(e.target===ov||e.target.closest('[data-cerrar]'))ov.remove();});
+  document.body.appendChild(ov);
+}
 function round2(n){return Math.round((n+Number.EPSILON)*100)/100;}
 function eur(n){return (n==null?0:n).toFixed(2)+' €';}
 function lineImp(l){var base=l.precio*l.cantidad;if(l.descLinea){if(l.descLinea.tipo==='pct')base-=base*(l.descLinea.valor||0)/100;else if(l.descLinea.tipo==='eur')base-=Math.min(base,l.descLinea.valor||0);}return round2(Math.max(0,base));}
@@ -342,6 +360,7 @@ function onState(){
       avisosVistos[c.id]=1; toast('🔔 Mesa '+esc(c.mesa)+' lista para recoger','av');
     }
   });
+  avisoJornada();
   if(st.view==='mesas') showMesas();
   else if(st.view==='comanda') showComanda();
 }
@@ -437,7 +456,7 @@ document.addEventListener('click',function(e){
     else if(go==='enviar')enviar();
     return;}
 });
-if(Auth.sesion()&&Auth.puedeAbrir(Auth.sesion().rol,'movil')) showMesas(); else showLogin();
+if(Auth.sesion()&&Auth.puedeAbrir(Auth.sesion().rol,'movil')){ showMesas(); avisoJornada(); } else showLogin();
 </script>
 </body>
 </html>

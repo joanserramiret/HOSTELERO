@@ -275,11 +275,13 @@ function openMods(pid,field){
 function readMods(){
   document.querySelectorAll('.gname').forEach(function(el){ if(editMods[+el.dataset.g]) editMods[+el.dataset.g].n=el.value; });
   document.querySelectorAll('.gtipo').forEach(function(el){ if(editMods[+el.dataset.g]) editMods[+el.dataset.g].tipo=el.value; });
+  document.querySelectorAll('.gelige').forEach(function(el){ if(editMods[+el.dataset.g]) editMods[+el.dataset.g].elige=Math.max(1,parseInt(el.value,10)||1); });
   document.querySelectorAll('.oname').forEach(function(el){ var g=editMods[+el.dataset.g]; if(g&&g.op[+el.dataset.o]) g.op[+el.dataset.o].n=el.value; });
   document.querySelectorAll('.oprice').forEach(function(el){ var g=editMods[+el.dataset.g]; if(g&&g.op[+el.dataset.o]) g.op[+el.dataset.o].p=parseFloat(el.value)||0; });
 }
 function modalMods(){
   modalOpen=true;
+  var esPaso=editModsField==='pasos';
   var groups=editMods.map(function(g,gi){
     var ops=(g.op||[]).map(function(o,oi){
       return '<div style="display:flex;gap:6px;margin:4px 0"><input class="oname" data-g="'+gi+'" data-o="'+oi+'" value="'+esc(o.n||'')+'" placeholder="Opción" style="flex:1;padding:7px;border:1px solid var(--line);border-radius:8px">'
@@ -287,14 +289,15 @@ function modalMods(){
         +'<button class="btn ghost sm" data-delo="'+gi+'-'+oi+'">✕</button></div>';
     }).join('');
     return '<div style="border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px">'
-      +'<div style="display:flex;gap:6px;margin-bottom:8px"><input class="gname" data-g="'+gi+'" value="'+esc(g.n||'')+'" placeholder="Grupo (ej. Punto, Guarnición, Extras)" style="flex:1;padding:8px;border:1px solid var(--line);border-radius:8px;font-weight:700">'
-      +'<select class="gtipo" data-g="'+gi+'" style="padding:8px;border:1px solid var(--line);border-radius:8px"><option value="radio"'+(g.tipo!=='check'?' selected':'')+'>Una opción</option><option value="check"'+(g.tipo==='check'?' selected':'')+'>Varias (extras)</option></select>'
+      +'<div style="display:flex;gap:6px;margin-bottom:8px"><input class="gname" data-g="'+gi+'" value="'+esc(g.n||'')+'" placeholder="'+(esPaso?'Sección (ej. Primero, Segundo, Postre…)':'Grupo (ej. Punto, Guarnición, Extras)')+'" style="flex:1;padding:8px;border:1px solid var(--line);border-radius:8px;font-weight:700">'
+      +(esPaso
+        ? '<label style="display:flex;align-items:center;gap:5px;font-size:13px;color:var(--soft);white-space:nowrap">elige <input class="gelige" data-g="'+gi+'" type="number" min="1" value="'+(g.elige||1)+'" style="width:58px;padding:8px;border:1px solid var(--line);border-radius:8px"></label>'
+        : '<select class="gtipo" data-g="'+gi+'" style="padding:8px;border:1px solid var(--line);border-radius:8px"><option value="radio"'+(g.tipo!=='check'?' selected':'')+'>Una opción</option><option value="check"'+(g.tipo==='check'?' selected':'')+'>Varias (extras)</option></select>')
       +'<button class="btn red sm" data-delg="'+gi+'">🗑</button></div>'
-      +ops+'<button class="btn ghost sm" data-addo="'+gi+'">+ opción</button></div>';
+      +ops+'<button class="btn ghost sm" data-addo="'+gi+'">+ '+(esPaso?'plato':'opción')+'</button></div>';
   }).join('');
-  var esPaso=editModsField==='pasos';
-  ov('<h3>'+(esPaso?'Pasos del menú':'Modificadores')+'</h3><div class="mb" style="max-height:62vh;overflow:auto">'+(groups||'<p style="color:var(--soft)">'+(esPaso?'Sin pasos. Añade un paso (Primero, Segundo, Postre…).':'Sin modificadores. Añade un grupo (Punto, Guarnición, Extras…).')+'</p>')
-    +'<button class="btn ghost" data-addg style="margin-top:6px">+ '+(esPaso?'Paso del menú':'Grupo de modificadores')+'</button></div>'
+  ov('<h3>'+(esPaso?'Secciones del menú':'Modificadores')+'</h3><div class="mb" style="max-height:62vh;overflow:auto">'+(esPaso?'<p style="color:var(--soft);margin:0 0 10px;font-size:13px">Cada sección es un grupo de platos y eliges cuántos toma el cliente. Para que un primero pueda ir de segundo, junta primeros y segundos en una sección «Platos» con <b>elige 2</b>. Añade tantas secciones como quieras (menús de degustación).</p>':'')+(groups||'<p style="color:var(--soft)">'+(esPaso?'Sin secciones. Añade una sección (Primero, Segundo, Postre…).':'Sin modificadores. Añade un grupo (Punto, Guarnición, Extras…).')+'</p>')
+    +'<button class="btn ghost" data-addg style="margin-top:6px">+ '+(esPaso?'Sección':'Grupo de modificadores')+'</button></div>'
     +'<div class="foot"><button class="btn ghost" data-act="cerrar">Cancelar</button><button class="btn" data-act="savemods">Guardar</button></div>');
 }
 function guardarMods(){
