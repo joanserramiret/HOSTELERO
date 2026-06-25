@@ -170,6 +170,21 @@ function toast(m,cls){var r=document.getElementById('toast');var d=document.crea
 /* Aviso de jornada sin cerrar (lo abre/cierra el TPV; aquí solo se recuerda) */
 function fechaFiscalC(){var d=new Date();if(d.getHours()<6)d.setDate(d.getDate()-1);return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
 function fmtFechaC(s){if(!s)return'';var p=String(s).split('-');return p.length===3?(p[2]+'/'+p[1]+'/'+p[0]):String(s);}
+var EST=window.HOSTELERO_ESTACIONES;
+function estCom(){ return EST?EST.actual('comandera'):null; }
+function estacionComOk(){
+  if(!EST) return true;
+  var url=EST.fromUrl(); if(url) EST.set('comandera',url);
+  var hay=EST.lista('comandera').length>0, saved=EST.get('comandera');
+  if(hay && !saved){ showEstacionCom(); return false; }
+  if(saved && saved!=='__all' && !EST.actual('comandera') && hay){ showEstacionCom(); return false; }
+  return true;
+}
+function showEstacionCom(){
+  var lista=EST?EST.lista('comandera'):[];
+  var cards=lista.map(function(s){return '<button class="u" data-comest="'+esc(s.id)+'" style="min-width:140px"><span class="av" style="background:#0f766e">📱</span>'+esc(s.nombre)+'</button>';}).join('');
+  app.innerHTML='<div class="center"><div class="lcard"><h2>📱 ¿Qué comandera es esta?</h2><p>Se recordará en este dispositivo</p><div class="users">'+(cards||'<p style="color:var(--soft)">No hay comanderas. Créalas en Administración → Estaciones.</p>')+'</div><button class="link" data-go="logout" style="margin-top:12px">← Salir</button></div></div>';
+}
 var _jorAviso=false;
 function avisoJornada(){
   if(_jorAviso)return;
@@ -208,12 +223,13 @@ function showPin(u){sel=u;pin='';var ri=Auth.rolInfo(u.rol);
 }
 function dots(){var d=document.getElementById('dots');if(d){var s='';for(var i=0;i<4;i++)s+='<span class="d'+(i<pin.length?' on':'')+'"></span>';d.innerHTML=s;}}
 function pk(k){if(k==='atras')return showLogin();if(k==='back'){pin=pin.slice(0,-1);return dots();}if(k==='ok')return tryPin();if(pin.length<4){pin+=k;dots();if(pin.length===4)setTimeout(tryPin,100);}}
-function tryPin(){var u=Auth.loginPin(sel.id,pin);if(u){if(Auth.puedeAbrir(u.rol,'movil'))showMesas();else{toast('Sin acceso a comandera');Auth.logout();showLogin();}}else{pin='';dots();toast('PIN incorrecto');}}
+function tryPin(){var u=Auth.loginPin(sel.id,pin);if(u){if(Auth.puedeAbrir(u.rol,'movil')){ if(estacionComOk()) showMesas(); }else{toast('Sin acceso a comandera');Auth.logout();showLogin();}}else{pin='';dots();toast('PIN incorrecto');}}
 
 /* mesas */
 function showMesas(){st.view='mesas';st.mesa=null;st.lineas=[];st.ordenActivo=null;
   var P=getPLANO();
-  var top='<div class="top"><h1>📋 '+esc(me().nombre)+'</h1><div class="right"><button class="back" data-go="logout">Salir</button></div></div>';
+  var _ec=estCom(); var _ecn=_ec?(' · '+esc(_ec.nombre)):'';
+  var top='<div class="top"><h1>📋 '+esc(me().nombre)+'<span style="font-size:12px;color:var(--soft);font-weight:600">'+_ecn+'</span></h1><div class="right">'+((EST&&EST.lista('comandera').length)?'<button class="back" data-go="cambiarcom" title="Cambiar comandera">🖥️</button>':'')+'<button class="back" data-go="logout">Salir</button></div></div>';
   if(P){
     var salas=P.salas;var sa=salas[st.salaSel]||salas[0];var sid=sa.id;
     var tabs=salas.map(function(s,i){return '<button class="salatab'+(i===st.salaSel?' active':'')+'" data-sala="'+i+'">'+esc(s.nombre)+'</button>';}).join('');
@@ -347,7 +363,9 @@ function lineaSheet(idx){
 }
 function enviar(){
   if(!st.lineas.length)return;
-  Sync.enviarComanda({mesa:st.mesa,camarero:me().nombre,lineas:st.lineas.map(function(l){return {nombre:l.nombre,ic:l.ic,cantidad:l.cantidad,orden:l.orden,precio:l.precio,comentario:l.comentario,descLinea:l.descLinea};})});
+  var _prods=(Sync.master().productos||[]);
+  function _prepDe(id){ var p=_prods.filter(function(x){return x.id===id;})[0]; return (p&&p.preparacion)||undefined; }
+  Sync.enviarComanda({mesa:st.mesa,camarero:me().nombre,lineas:st.lineas.map(function(l){return {nombre:l.nombre,ic:l.ic,cantidad:l.cantidad,orden:l.orden,preparacion:_prepDe(l.productId),precio:l.precio,comentario:l.comentario,descLinea:l.descLinea};})});
   toast('✅ Comanda enviada a cocina');
   showMesas();
 }
@@ -438,6 +456,7 @@ document.addEventListener('pointercancel',cUp);
 
 document.addEventListener('click',function(e){
   if(pSuppress){pSuppress=false;e.preventDefault();e.stopPropagation();return;}
+  var ce=e.target.closest('[data-comest]');if(ce){ if(EST)EST.set('comandera',ce.dataset.comest); if(estacionComOk()){ showMesas(); avisoJornada(); } return; }
   var u=e.target.closest('.u');if(u){var us=Auth.usuarios().filter(function(x){return x.id===u.dataset.id;})[0];if(us)showPin(us);return;}
   var k=e.target.closest('[data-k]');if(k){pk(k.dataset.k);return;}
   var sa=e.target.closest('[data-sala]');if(sa){st.salaSel=+sa.dataset.sala;showMesas();return;}
@@ -449,6 +468,7 @@ document.addEventListener('click',function(e){
   var mp=e.target.closest('[data-mas]');if(mp){st.lineas[+mp.dataset.mas].cantidad++;showComanda();return;}
   var g=e.target.closest('[data-go]');if(g){var go=g.dataset.go;
     if(go==='logout'){Auth.logout();showLogin();}
+    else if(go==='cambiarcom'){ if(EST)EST.clear('comandera'); showEstacionCom(); }
     else if(go==='mesas')showMesas();
     else if(go==='disp')dispSheet();
     else if(go==='orden123')modal123();

@@ -177,7 +177,27 @@ function masterSeed() {
     { id:'ar2', label:'Invitación', ic:'🎁', color:'#d97706', tipo:'invitacion' },
     { id:'ar3', label:'Happy Hour', ic:'⚡', color:'#7c3aed', tipo:'tarifa', param:'tf2' }
   ];
-  return { version: 20, categorias: cats, productos: prods, salas: salas, mesas: mesas, decor: decor, promociones: promociones, clientes: clientes, datafonos: datafonos, comentarios: comentarios, tarifas: tarifas, accionesRapidas: accionesRapidas, ventas7d: ventas7d, usuarios: usuarios, impresoras: [], config: config };
+  var preparaciones = [
+    { id:'prep-cocina', nombre:'Cocina', color:'#2563eb' },
+    { id:'prep-barra', nombre:'Barra', color:'#0ea5e9' },
+    { id:'prep-plancha', nombre:'Plancha', color:'#d97706' },
+    { id:'prep-postres', nombre:'Postres', color:'#db2777' }
+  ];
+  prods.forEach(function(pp){ if(!pp.preparacion){ pp.preparacion = (pp.categoriaId==='c1'||pp.categoriaId==='c2')?'prep-barra' : (pp.categoriaId==='c5')?'prep-postres' : 'prep-cocina'; } });
+  var estaciones = [
+    { id:'kds-cocina', tipo:'kds', nombre:'Cocina caliente', activa:true, ordenes:['Primeros','Segundos','Terceros','Cuartos'], preparaciones:['prep-cocina','prep-plancha'], avisarCamareros:true, acciones:['todolisto','disponibilidad'], columnas:0 },
+    { id:'kds-barra', tipo:'kds', nombre:'Barra', activa:true, ordenes:[], preparaciones:['prep-barra'], avisarCamareros:false, acciones:['todolisto'], columnas:0 },
+    { id:'tpv-barra', tipo:'tpv', nombre:'TPV Barra', activa:true },
+    { id:'tpv-terraza', tipo:'tpv', nombre:'TPV Terraza', activa:true },
+    { id:'com-sala', tipo:'comandera', nombre:'Comandera Sala', activa:true },
+    { id:'com-terraza', tipo:'comandera', nombre:'Comandera Terraza', activa:true }
+  ];
+  var impresoras = [
+    { id:'imp-caja', tipo:'documentos', nombre:'Caja (TPV)', windows:'Caja-TPV', copias:1 },
+    { id:'imp-cocina', tipo:'cocina', nombre:'Cocina', windows:'Cocina', copias:1, preparaciones:['prep-cocina','prep-plancha'], ordenes:[] },
+    { id:'imp-barra', tipo:'cocina', nombre:'Barra', windows:'Barra', copias:1, preparaciones:['prep-barra'], ordenes:[] }
+  ];
+  return { version: 22, categorias: cats, productos: prods, salas: salas, mesas: mesas, decor: decor, promociones: promociones, clientes: clientes, datafonos: datafonos, comentarios: comentarios, tarifas: tarifas, accionesRapidas: accionesRapidas, ventas7d: ventas7d, usuarios: usuarios, impresoras: impresoras, preparaciones: preparaciones, estaciones: estaciones, config: config };
 }
 
 // Reservas de demostración (hoy)
@@ -247,11 +267,17 @@ function imprimirEn(ip, puerto, buf){
 }
 function imprimirComanda(c){
   var imps = (state.master && state.master.impresoras) || [];
-  imps.filter(function(p){ return p.activa !== false && p.zona !== 'caja'; }).forEach(function(p){
-    var lineas = c.lineas || [];
-    if(p.zona && lineas.some(function(l){return l.zona;})) lineas = lineas.filter(function(l){ return (l.zona||'cocina')===p.zona; });
+  // Solo impresoras de cocina con IP (ESC/POS). Las mapeadas por nombre de Windows requieren el agente local.
+  imps.filter(function(p){ return p.activa !== false && (p.tipo||'cocina')==='cocina' && p.ip; }).forEach(function(p){
+    var lineas = (c.lineas || []).filter(function(l){
+      if(l.estado==='servido') return false;
+      if(p.preparaciones && p.preparaciones.length && p.preparaciones.indexOf(l.preparacion)<0) return false;
+      if(p.ordenes && p.ordenes.length && p.ordenes.indexOf(l.orden||'Primeros')<0) return false;
+      return true;
+    });
     if(!lineas.length) return;
-    imprimirEn(p.ip, p.puerto, escposComanda({mesa:c.mesa,camarero:c.camarero,createdAt:c.createdAt,lineas:lineas}, p.ancho||42));
+    var copias = p.copias || 1;
+    for(var i=0;i<copias;i++){ imprimirEn(p.ip, p.puerto, escposComanda({mesa:c.mesa,camarero:c.camarero,createdAt:c.createdAt,lineas:lineas}, p.ancho||42)); }
   });
 }
 function aplicar(accion, d) {

@@ -80,6 +80,8 @@ var app=document.getElementById('app');
 var ORD={Bebidas:'#0ea5e9',Entrantes:'#16a34a',Primeros:'#2563eb',Segundos:'#7c3aed',Terceros:'#0891b2',Cuartos:'#9333ea',Postres:'#db2777'};
 var ORDLIST=['Bebidas','Entrantes','Primeros','Segundos','Terceros','Cuartos','Postres'];
 var sel=null,pin='';
+var estKDS=null,kdsStarted=false;
+var EST=window.HOSTELERO_ESTACIONES;
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 function toast(m){var r=document.getElementById('toast');var d=document.createElement('div');d.className='toast';d.textContent=m;r.appendChild(d);setTimeout(function(){d.remove();},2600);}
 function ini(n){return (n||'?').charAt(0).toUpperCase();}
@@ -102,11 +104,35 @@ function dots(){var d=document.getElementById('dots');if(d){var s='';for(var i=0
 function pk(k){if(k==='atras')return showLogin();if(k==='back'){pin=pin.slice(0,-1);return dots();}if(k==='ok')return tryPin();if(pin.length<4){pin+=k;dots();if(pin.length===4)setTimeout(tryPin,100);}}
 function tryPin(){var u=Auth.loginPin(sel.id,pin);if(u){if(Auth.puedeAbrir(u.rol,'cocina'))start();else{toast('Tu rol no accede a cocina');Auth.logout();showLogin();}}else{pin='';dots();toast('PIN incorrecto');}}
 
+/* ---- Estación / monitor ---- */
+function resolveEst(){ var saved=EST?EST.get('kds'):''; estKDS=(saved&&saved!=='__all'&&EST)?EST.actual('kds'):null; }
+function showEstacionKDS(){
+  var lista=EST?EST.lista('kds'):[];
+  var cards=lista.map(function(s){ var o=(s.ordenes&&s.ordenes.length)?s.ordenes.join(', '):'Todas las órdenes';
+    return '<button class="u" data-est="'+s.id+'" style="min-width:150px"><span class="av" style="background:#5b6cff">🖥️</span>'+esc(s.nombre)+'<span style="font-size:11px;color:#8c97ab;font-weight:600">'+esc(o)+'</span></button>'; }).join('');
+  app.innerHTML='<div class="login"><div class="lcard" style="max-width:600px"><h2>🖥️ Elige el monitor</h2><p>Este dispositivo funcionará como el monitor seleccionado</p>'
+    +'<div class="users">'+cards+'<button class="u" data-est="__all" style="min-width:150px"><span class="av" style="background:#334155">📋</span>Todas las comandas<span style="font-size:11px;color:#8c97ab;font-weight:600">sin filtro</span></button></div>'
+    +(lista.length?'':'<p style="margin-top:10px">Crea monitores en Administración → Estaciones.</p>')
+    +'<button class="link" data-act="logout">← Salir</button></div></div>';
+}
 /* ---- KDS ---- */
-function start(){ Sync.onChange(render); render(); }
+function start(){
+  if(EST){ var url=EST.fromUrl(); if(url) EST.set('kds',url); }
+  resolveEst();
+  var hay=EST?EST.lista('kds').length>0:false; var saved=EST?EST.get('kds'):'';
+  if(hay && !saved){ showEstacionKDS(); return; }
+  if(saved && saved!=='__all' && !estKDS){ showEstacionKDS(); return; }
+  if(!kdsStarted){ Sync.onChange(render); kdsStarted=true; }
+  render();
+}
 function render(){
   if(!Auth.sesion())return;
-  var coms=Sync.comandas();
+  var ordSet=(estKDS&&estKDS.ordenes&&estKDS.ordenes.length)?estKDS.ordenes:null;
+  var prepSet=(estKDS&&estKDS.preparaciones&&estKDS.preparaciones.length)?estKDS.preparaciones:null;
+  var avisarOn=!estKDS||estKDS.avisarCamareros!==false;
+  var acc=(estKDS&&estKDS.acciones)?estKDS.acciones:['disponibilidad','todolisto'];
+  function pasaLin(l){ if(l.estado==='servido'||l.servido)return false; if(ordSet&&ordSet.indexOf(l.orden||'Primeros')<0)return false; if(prepSet&&prepSet.indexOf(l.preparacion)<0)return false; return true; }
+  var coms=Sync.comandas().map(function(c){ var lf=c.lineas.filter(pasaLin); return lf.length===c.lineas.length?c:Object.assign({},c,{lineas:lf}); }).filter(function(c){return c.lineas.length>0;});
   var cards=coms.length?coms.map(function(c){
     var mins=Math.floor((Date.now()-(c.createdAt||Date.now()))/60000);
     var urg=mins>=12?' urg':(mins>=7?' aviso':'');
@@ -114,7 +140,7 @@ function render(){
     var lis=ls.map(function(l){
       var btn=l.estado==='pendiente'?'<button class="kbtn prep" data-act="prep" data-id="'+c.id+'" data-kid="'+l.kid+'">Empezar</button>'
         :l.estado==='preparando'?'<button class="kbtn listo" data-act="listo" data-id="'+c.id+'" data-kid="'+l.kid+'">Listo ✓</button>'
-        :'<span class="tag">✓ Listo</span>';
+        :'<button class="kbtn" style="background:#475569;color:#fff" data-act="servido" data-id="'+c.id+'" data-kid="'+l.kid+'" title="Marcar servida (se quita de la pantalla)">Servido ✓</button>';
       var det='';
       if(l.subs&&l.subs.length)det='<div class="kdet">'+l.subs.map(esc).join('<br>')+'</div>';
       else if(l.mods&&l.mods.length)det='<div class="kdet">'+l.mods.map(function(m){return esc(m.n);}).join(' · ')+'</div>';
@@ -123,24 +149,35 @@ function render(){
       return '<div class="kline '+(l.estado||'')+'"><span class="kq">'+l.cantidad+'×</span><span class="kn">'+ob+(l.ic||'')+' '+esc(l.nombre)+det+'</span>'+btn+'</div>';
     }).join('');
     var todoListo=c.lineas.length&&c.lineas.every(function(l){return l.estado==='listo';});
-    var foot=todoListo?(c.avisado?'<button class="btn recoger" data-act="recoger" data-id="'+c.id+'">📤 Recogido</button>':'<button class="btn avisar" data-act="avisar" data-id="'+c.id+'">🔔 Avisar camarero</button>'):'';
+    var foot='';
+    if(todoListo){ foot=(avisarOn&&!c.avisado)?'<button class="btn avisar" data-act="avisar" data-id="'+c.id+'">🔔 Avisar camarero</button>':'<button class="btn recoger" data-act="recoger" data-id="'+c.id+'">📤 '+(c.avisado?'Recogido':'Hecho')+'</button>'; }
+    else if(acc.indexOf('todolisto')>=0){ foot='<button class="btn recoger" data-act="todolisto" data-id="'+c.id+'">✓ Todo listo</button>'; }
     return '<div class="card'+urg+(c.avisado?' aviso':'')+'"><div class="chead"><span class="m">'+esc(c.mesa||'—')+'</span><span class="cam">'+esc(c.camarero||'')+'</span><span class="t">⏱ '+mins+'′</span></div>'+lis+(foot?'<div class="cfoot">'+foot+'</div>':'')+'</div>';
   }).join(''):'<div class="empty"><div class="e">👨‍🍳</div>Sin comandas. Esperando pedidos…</div>';
   var modo=Sync.modo();var mc=modo==='servidor'?'#19b562':'#e0a020';
-  app.innerHTML='<div class="app"><div class="top"><h1>👨‍🍳 Cocina</h1><span class="sub">'+coms.length+' comandas activas</span>'
-    +'<div class="right"><span class="sub"><span class="dotmodo" style="background:'+mc+'"></span>'+(modo==='servidor'?'En red (tiempo real)':'Local')+'</span><button class="btn ghost" data-act="disp">🚫 Disponibilidad</button><button class="btn ghost" data-act="logout">Salir</button></div></div>'
-    +'<div class="grid">'+cards+'</div></div>';
+  var nombreMon=estKDS?estKDS.nombre:((EST&&EST.get('kds')==='__all')?'Todas las comandas':'Cocina');
+  var hayMon=EST?EST.lista('kds').length>0:false;
+  var dispBtn=(acc.indexOf('disponibilidad')>=0)?'<button class="btn ghost" data-act="disp">🚫 Disponibilidad</button>':'';
+  var cambiarBtn=hayMon?'<button class="btn ghost" data-act="cambiarMonitor" title="Cambiar de monitor">🖥️ Cambiar</button>':'';
+  var colStyle=(estKDS&&estKDS.columnas)?' style="grid-template-columns:repeat('+estKDS.columnas+',minmax(0,1fr))"':'';
+  app.innerHTML='<div class="app"><div class="top"><h1>👨‍🍳 '+esc(nombreMon)+'</h1><span class="sub">'+coms.length+' comandas'+(ordSet?' · '+esc(ordSet.join(', ')):'')+'</span>'
+    +'<div class="right"><span class="sub"><span class="dotmodo" style="background:'+mc+'"></span>'+(modo==='servidor'?'En red (tiempo real)':'Local')+'</span>'+cambiarBtn+dispBtn+'<button class="btn ghost" data-act="logout">Salir</button></div></div>'
+    +'<div class="grid"'+colStyle+'>'+cards+'</div></div>';
 }
 document.addEventListener('click',function(e){
+  var es=e.target.closest('[data-est]');if(es){ if(EST)EST.set('kds',es.dataset.est); start(); return; }
   var u=e.target.closest('.u');if(u){var us=Auth.usuarios().filter(function(x){return x.id===u.dataset.id;})[0];if(us)showPin(us);return;}
   var k=e.target.closest('[data-k]');if(k){pk(k.dataset.k);return;}
   var a=e.target.closest('[data-act]');if(!a)return;
   var act=a.dataset.act;
   if(act==='prep')Sync.setLinea(a.dataset.id,a.dataset.kid,'preparando');
   else if(act==='listo')Sync.setLinea(a.dataset.id,a.dataset.kid,'listo');
+  else if(act==='servido')Sync.setLinea(a.dataset.id,a.dataset.kid,'servido');
+  else if(act==='todolisto'){ var cc=Sync.comandas().filter(function(x){return x.id===a.dataset.id;})[0]; if(cc){ var os=(estKDS&&estKDS.ordenes&&estKDS.ordenes.length)?estKDS.ordenes:null; cc.lineas.forEach(function(l){ if((!os||os.indexOf(l.orden||'Primeros')>=0)&&l.estado!=='listo') Sync.setLinea(cc.id,l.kid,'listo'); }); } }
   else if(act==='avisar'){Sync.avisar(a.dataset.id);toast('🔔 Aviso enviado');}
   else if(act==='recoger')Sync.recoger(a.dataset.id);
   else if(act==='disp')dispSheet();
+  else if(act==='cambiarMonitor'){ if(EST)EST.clear('kds'); showEstacionKDS(); }
   else if(act==='logout'){Auth.logout();showLogin();}
 });
 function dispSheet(){

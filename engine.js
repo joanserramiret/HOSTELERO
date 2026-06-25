@@ -170,7 +170,28 @@
     }
   };
 
+  // ---- Estaciones / dispositivos (TPV, comandera, KDS) ----
+  var Estaciones = {
+    lista: function (tipo) {
+      try {
+        var S = (typeof window !== 'undefined') && window.HOSTELERO_SYNC;
+        var m = (S && S.master) ? S.master() : null;
+        var e = (m && m.estaciones) || [];
+        return e.filter(function (x) { return x.tipo === tipo && x.activa !== false; });
+      } catch (er) { return []; }
+    },
+    fromUrl: function () { try { var m = (typeof location !== 'undefined') && location.search.match(/[?&]id=([^&]+)/); return m ? decodeURIComponent(m[1]) : ''; } catch (er) { return ''; } },
+    get: function (tipo) { try { return localStorage.getItem('hostelero_estacion_' + tipo) || ''; } catch (er) { return ''; } },
+    set: function (tipo, id) { try { localStorage.setItem('hostelero_estacion_' + tipo, id); } catch (er) {} },
+    clear: function (tipo) { try { localStorage.removeItem('hostelero_estacion_' + tipo); } catch (er) {} },
+    actual: function (tipo) {
+      var id = this.get(tipo); if (!id || id === '__all') return null;
+      var l = this.lista(tipo); return l.filter(function (x) { return x.id === id; })[0] || null;
+    }
+  };
+
   global.HOSTELERO_AUTH = Auth;
   global.HOSTELERO_FICHAJE = Fichaje;
-  if (typeof module !== 'undefined' && module.exports) module.exports = { Auth: Auth, Fichaje: Fichaje };
+  global.HOSTELERO_ESTACIONES = Estaciones;
+  if (typeof module !== 'undefined' && module.exports) module.exports = { Auth: Auth, Fichaje: Fichaje, Estaciones: Estaciones };
 })(typeof window !== 'undefined' ? window : globalThis);

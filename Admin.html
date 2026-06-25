@@ -70,10 +70,51 @@ tbody tr:hover{background:var(--panel2)}
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:80;display:flex;flex-direction:column;gap:8px;align-items:center}
 .toast{background:#0f172a;color:#fff;padding:12px 20px;border-radius:12px;font-weight:700;box-shadow:var(--shadow)}
 .toast.ok{background:var(--green)}
+.bchk{width:18px;height:18px;cursor:pointer;vertical-align:middle}
+.content th{cursor:pointer;user-select:none;-webkit-user-select:none}
+.content th[data-dir=asc]::after{content:' ▲';color:var(--primary);font-size:10px}
+.content th[data-dir=desc]::after{content:' ▼';color:var(--primary);font-size:10px}
+#bulkbar{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:75;background:#0f172a;color:#fff;border-radius:14px;box-shadow:0 16px 40px rgba(0,0,0,.35);display:none;align-items:center;gap:8px;padding:10px 12px;flex-wrap:wrap;max-width:calc(100vw - 24px)}
+#bulkbar.on{display:flex}
+#bulkbar .cnt{font-weight:800;font-size:13px;padding:0 6px;white-space:nowrap}
+#bulkbar button{padding:9px 12px;border-radius:10px;font-weight:700;font-size:13px;background:#1e293b;color:#fff;border:1px solid #334155;white-space:nowrap}
+#bulkbar button.red{background:var(--red);border-color:var(--red)}
+#bulkbar button.x{background:transparent;border:none;color:#94a3b8;padding:6px 10px}
+/* ---- Responsive (móvil / tablet) ---- */
+@media (max-width:860px){
+  html,body{height:auto}
+  .app{flex-direction:column;height:auto;min-height:100vh}
+  .side{width:100%;flex-direction:row;align-items:center;gap:8px;padding:7px 9px;position:sticky;top:0;z-index:30}
+  .side .brand,.side .sp,.side .me{display:none}
+  .nav{flex-direction:row;flex:1;overflow-x:auto;gap:6px;padding-bottom:2px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .nav::-webkit-scrollbar{display:none}
+  .nav button{flex:0 0 auto;padding:9px 13px;font-size:13px;white-space:nowrap}
+  .side .out{flex:0 0 auto;padding:9px 12px;font-size:13px;white-space:nowrap}
+  .main{overflow:visible}
+  .top{height:auto;min-height:52px;padding:10px 14px;flex-wrap:wrap}
+  .top h1{font-size:17px}
+  .top .modo{font-size:11px}
+  .content{padding:12px;overflow:visible}
+  .bar{flex-wrap:wrap;margin-bottom:12px}
+  .bar h2{font-size:16px}
+  .bar .r{margin-left:0;width:100%;flex-wrap:wrap}
+  .bar .r .btn{flex:1 1 auto;text-align:center}
+  .card{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{min-width:540px}
+  th,td{padding:9px 10px;font-size:13px}
+  .row{flex-direction:column;gap:0}
+  input,select,.field input,.field select{font-size:16px}
+  .overlay{padding:0;align-items:flex-end}
+  .modal{max-width:none;max-height:94vh;border-radius:18px 18px 0 0}
+  .mb{padding:16px}
+  .foot{flex-wrap:wrap;padding:14px 16px}
+  .foot .btn{flex:1 1 auto;text-align:center}
+}
 </style>
 </head>
 <body>
 <div id="app"></div>
+<div id="bulkbar"></div>
 <div id="toast"></div>
 <script src="engine.js"></script>
 <script src="sync.js"></script>
@@ -113,21 +154,23 @@ function login(){
 function render(){
   if(!sesion)return showLogin();
   if(!M) M=clone(Sync.master());
+  if(bulk.tab!==tab){ bulk.tab=tab; bulk.ids=[]; }
   var modo=Sync.modo();
-  var navs=[['copiloto','🤖 Maître IA'],['config','⚙️ Configuración'],['carta','🍽️ Carta'],['acciones','⚡ Acciones'],['tarifas','💲 Tarifas'],['comentarios','📝 Comentarios'],['promos','🎯 Promociones'],['reservas','📅 Reservas'],['clientes','🧾 Clientes'],['mesas','🪑 Mesas y salas'],['empleados','👤 Empleados'],['impresoras','🖨️ Impresoras'],['fichaje','🕒 Fichajes']];
+  var navs=[['copiloto','🤖 Maître IA'],['config','⚙️ Configuración'],['carta','🍽️ Carta'],['acciones','⚡ Acciones'],['tarifas','💲 Tarifas'],['comentarios','📝 Comentarios'],['promos','🎯 Promociones'],['reservas','📅 Reservas'],['clientes','🧾 Clientes'],['mesas','🪑 Mesas y salas'],['estaciones','🖥️ Estaciones'],['empleados','👤 Empleados'],['impresoras','🖨️ Impresoras'],['fichaje','🕒 Fichajes']];
   var nav=navs.map(function(n){return '<button class="'+(tab===n[0]?'active':'')+'" data-tab="'+n[0]+'">'+n[1]+'</button>';}).join('');
-  var body= tab==='copiloto'?viewCopiloto() : tab==='config'?viewConfig() : tab==='carta'?viewCarta() : tab==='acciones'?viewAcciones() : tab==='tarifas'?viewTarifas() : tab==='comentarios'?viewComentarios() : tab==='promos'?viewPromos() : tab==='reservas'?viewReservas() : tab==='clientes'?viewClientes() : tab==='mesas'?viewMesas() : tab==='empleados'?viewEmpleados() : tab==='impresoras'?viewImpresoras() : viewFichaje();
+  var body= tab==='copiloto'?viewCopiloto() : tab==='config'?viewConfig() : tab==='carta'?viewCarta() : tab==='acciones'?viewAcciones() : tab==='tarifas'?viewTarifas() : tab==='comentarios'?viewComentarios() : tab==='promos'?viewPromos() : tab==='reservas'?viewReservas() : tab==='clientes'?viewClientes() : tab==='mesas'?viewMesas() : tab==='estaciones'?viewEstaciones() : tab==='empleados'?viewEmpleados() : tab==='impresoras'?viewImpresoras() : viewFichaje();
   app.innerHTML='<div class="app"><aside class="side"><div class="brand">HOSTELERO<small>ADMINISTRACIÓN</small></div>'
     +'<div class="nav">'+nav+'</div><div class="sp"></div><div class="me">'+esc(sesion.nombre)+' · '+esc(Auth.rolInfo(sesion.rol).nombre)+'</div><button class="out" data-act="logout">Cerrar sesión</button></aside>'
-    +'<div class="main"><div class="top"><h1>'+({copiloto:'Maître IA',config:'Configuración',carta:'Carta',acciones:'Acciones rápidas',tarifas:'Tarifas',comentarios:'Comentarios',promos:'Promociones',reservas:'Reservas',clientes:'Clientes',mesas:'Mesas y salas',empleados:'Empleados',impresoras:'Impresoras',fichaje:'Registro de jornada'}[tab])+'</h1>'
+    +'<div class="main"><div class="top"><h1>'+({copiloto:'Maître IA',config:'Configuración',carta:'Carta',acciones:'Acciones rápidas',tarifas:'Tarifas',comentarios:'Comentarios',promos:'Promociones',reservas:'Reservas',clientes:'Clientes',mesas:'Mesas y salas',estaciones:'Estaciones / dispositivos',empleados:'Empleados',impresoras:'Impresoras',fichaje:'Registro de jornada'}[tab])+'</h1>'
     +'<span class="modo"><span class="dot" style="background:'+(modo==='servidor'?'#16a34a':'#d97706')+'"></span>'+(modo==='servidor'?'En red (servidor)':'Local')+'</span></div>'
     +'<div class="content">'+body+'</div></div></div>';
+  updateBulkBar();
 }
 
 /* ---- CARTA ---- */
 function viewCarta(){
   var cats=(M.categorias||[]).slice().sort(function(a,b){return a.orden-b.orden;});
-  var html='<div class="bar"><h2>Productos</h2><div class="r"><button class="btn ghost" data-act="nuevacat">+ Categoría</button><button class="btn" data-act="nuevoprod">+ Producto</button></div></div>';
+  var html='<div class="bar"><h2>Productos</h2><div class="r">'+bulkSelAllBtn()+'<button class="btn ghost" data-act="nuevacat">+ Categoría</button><button class="btn" data-act="nuevoprod">+ Producto</button></div></div>';
   var catName=function(id){var x=cats.filter(function(k){return k.id===id;})[0];return x?x.nombre:'';};
   // ordena: familias principales y debajo sus subfamilias
   var orden=[]; cats.filter(function(c){return !c.padreId;}).forEach(function(p){ orden.push(p); cats.filter(function(s){return s.padreId===p.id;}).forEach(function(s){orden.push(s);}); });
@@ -136,13 +179,13 @@ function viewCarta(){
     var prods=(M.productos||[]).filter(function(p){return p.categoriaId===c.id;});
     var ruta=c.padreId?('<span style="opacity:.8">'+esc(catName(c.padreId))+' › </span>'):'';
     html+='<div class="catgrp" style="background:'+c.color+(c.padreId?';margin-left:18px':'')+'">'+ruta+(c.ic||'')+' '+esc(c.nombre)+' · pase: '+esc(c.pase||'Primeros')+' <button class="btn ghost sm" data-editcat="'+c.id+'" style="float:right;margin-top:-2px">✎ Familia</button></div>';
-    html+='<div class="card"><table><thead><tr><th>Producto</th><th>Precio</th><th>Coste / margen</th><th>Pase</th><th>Estado</th><th></th></tr></thead><tbody>';
-    if(!prods.length) html+='<tr><td colspan="6" style="color:var(--soft)">Sin productos en esta categoría.</td></tr>';
+    html+='<div class="card"><table><thead><tr><th style="width:34px"></th><th>Producto</th><th>Precio</th><th>Coste / margen</th><th>Pase</th><th>Estado</th><th></th></tr></thead><tbody>';
+    if(!prods.length) html+='<tr><td colspan="7" style="color:var(--soft)">Sin productos en esta categoría.</td></tr>';
     prods.forEach(function(p){
       var pcell=(p.precio==null)?'<span style="color:var(--soft)">pregunta</span>':p.precio.toFixed(2)+' €';
       var mcell='<span style="color:var(--soft)">—</span>';
       if(p.coste!=null){ var mg=(p.precio!=null&&p.precio>0)?(' · '+Math.round((p.precio-p.coste)/p.precio*100)+'%'):''; mcell=p.coste.toFixed(2)+' €'+mg; }
-      html+='<tr><td><span class="tic">'+(p.ic||'')+'</span> <b>'+esc(p.nombre)+'</b></td><td>'+pcell+'</td><td>'+mcell+'</td>'
+      html+='<tr><td>'+bulkChk(p.id)+'</td><td><span class="tic">'+(p.ic||'')+'</span> <b>'+esc(p.nombre)+'</b></td><td>'+pcell+'</td><td>'+mcell+'</td>'
         +'<td>'+esc(p.pasePorDefecto||'Primeros')+'</td>'
         +'<td><span class="badge" style="background:'+(p.activo?'#dcfce7':'#fee2e2')+';color:'+(p.activo?'#15803d':'#e11d48')+'">'+(p.activo?'Activo':'Inactivo')+'</span></td>'
         +'<td style="text-align:right">'+(p.esMenu?'<button class="btn ghost sm" data-pasos="'+p.id+'">Pasos</button> ':'<button class="btn ghost sm" data-mods="'+p.id+'">Mods</button> ')+(p.esMenu?'':'<button class="btn ghost sm" data-esc="'+p.id+'" title="Escandallo / receta">🧮 Escandallo</button> ')+'<button class="btn ghost sm" data-copyp="'+p.id+'" title="Crear uno nuevo a partir de este">⧉ Copiar</button> <button class="btn ghost sm" data-editp="'+p.id+'">Editar</button></td></tr>';
@@ -155,6 +198,7 @@ function modalProd(p,copia){
   modalOpen=true; if(!copia) window._copySrc=null;
   var cats=(M.categorias||[]).map(function(c){return '<option value="'+c.id+'"'+(p&&p.categoriaId===c.id?' selected':'')+'>'+esc(c.nombre)+'</option>';}).join('');
   var pases=ORDLIST.map(function(o){return '<option'+((p?(p.pasePorDefecto||'Primeros'):'Primeros')===o?' selected':'')+'>'+o+'</option>';}).join('');
+  var preps='<option value="">— Sin preparación —</option>'+(M.preparaciones||[]).map(function(pr){return '<option value="'+pr.id+'"'+(p&&p.preparacion===pr.id?' selected':'')+'>'+esc(pr.nombre)+'</option>';}).join('');
   function nv(x){return (x==null||x==='')?'':x;}
   ov('<h3>'+(copia?'Nuevo producto (copia de '+esc(p.nombre)+')':(p?'Editar producto':'Nuevo producto'))+'</h3><div class="mb" style="max-height:72vh;overflow:auto">'
     +'<div class="row"><div class="field" style="max-width:84px"><label>Icono</label><input id="f_ic" value="'+esc(p?p.ic:'🍽️')+'"></div>'
@@ -175,7 +219,8 @@ function modalProd(p,copia){
     +'<div class="row"><div class="field"><label>Precio principal</label><input id="f_pr" type="number" step="0.10" value="'+(p&&p.precio!=null?p.precio:'')+'"></div>'
     +'<div class="field"><label>Precio como añadido</label><input id="f_pra" type="number" step="0.10" value="'+(p&&p.precioAnadido!=null?p.precioAnadido:'')+'"></div>'
     +'<div class="field"><label>Suplemento en menú</label><input id="f_prs" type="number" step="0.10" value="'+(p&&p.precioSupl!=null?p.precioSupl:'')+'"></div></div>'
-    +'<div class="row"><div class="field"><label>Pase por defecto</label><select id="f_pase">'+pases+'</select></div>'
+    +'<div class="row"><div class="field"><label>Pase por defecto (orden, cambiable con 123)</label><select id="f_pase">'+pases+'</select></div>'
+    +'<div class="field"><label>Preparación (a qué cocina/barra va)</label><select id="f_prep">'+preps+'</select></div>'
     +'<div class="field" style="max-width:150px"><label>IVA</label><select id="f_iva"><option value="">Por defecto</option><option value="10"'+(p&&p.iva===10?' selected':'')+'>10%</option><option value="21"'+(p&&p.iva===21?' selected':'')+'>21%</option><option value="4"'+(p&&p.iva===4?' selected':'')+'>4%</option></select></div>'
     +'<div class="field" style="max-width:140px"><label>Disponibilidad</label><input id="f_disp" type="number" value="'+(p&&p.disponibilidad!=null?p.disponibilidad:'')+'" placeholder="∞"></div>'
     +'<div class="field" style="max-width:150px"><label>Coste / escandallo (€)</label><input id="f_coste" type="number" step="0.01" value="'+(p&&p.coste!=null?p.coste:'')+'" placeholder="—"></div></div>'
@@ -216,11 +261,11 @@ function modalCat(c){
 /* ---- MESAS ---- */
 function viewMesas(){
   var salas=M.salas||[];
-  var html='<div class="bar"><h2>Salas y mesas</h2><div class="r"><button class="btn" data-act="nuevamesa">+ Mesa</button></div></div>';
+  var html='<div class="bar"><h2>Salas y mesas</h2><div class="r">'+bulkSelAllBtn()+'<button class="btn" data-act="nuevamesa">+ Mesa</button></div></div>';
   salas.forEach(function(s){
     var ms=(M.mesas||[]).filter(function(m){return m.salaId===s.id;});
     html+='<div class="card" style="margin-bottom:16px;padding:16px"><b style="font-size:16px">'+esc(s.nombre)+'</b> <span style="color:var(--soft)">· '+ms.length+' mesas</span><div class="mesas-prev">';
-    ms.forEach(function(m){ html+='<button class="mp" data-editm="'+m.id+'">'+esc(m.nombre)+' · '+esc(m.forma||'cuadrada')+' · '+(m.plazas||4)+'p</button>'; });
+    ms.forEach(function(m){ html+='<span style="display:inline-flex;align-items:center;gap:5px">'+bulkChk(m.id)+'<button class="mp" data-editm="'+m.id+'">'+esc(m.nombre)+' · '+esc(m.forma||'cuadrada')+' · '+(m.plazas||4)+'p</button></span>'; });
     html+='</div></div>';
   });
   return html;
@@ -241,10 +286,10 @@ function modalMesa(m){
 /* ---- EMPLEADOS (engine local) ---- */
 function viewEmpleados(){
   var us=M.usuarios||[];
-  var html='<div class="bar"><h2>Empleados y PIN</h2><div class="r"><button class="btn" data-act="nuevoemp">+ Empleado</button></div></div>'
-    +'<div class="card"><table><thead><tr><th>Empleado</th><th>Rol</th><th>PIN</th><th>Estado</th><th></th></tr></thead><tbody>';
+  var html='<div class="bar"><h2>Empleados y PIN</h2><div class="r">'+bulkSelAllBtn()+'<button class="btn" data-act="nuevoemp">+ Empleado</button></div></div>'
+    +'<div class="card"><table><thead><tr><th style="width:34px"></th><th>Empleado</th><th>Rol</th><th>PIN</th><th>Estado</th><th></th></tr></thead><tbody>';
   us.forEach(function(u){var ri=Auth.rolInfo(u.rol);
-    html+='<tr><td><span class="avatar" style="background:'+(u.color||ri.color)+'">'+ini(u.nombre)+'</span> <b>'+esc(u.nombre)+'</b></td>'
+    html+='<tr><td>'+bulkChk(u.id)+'</td><td><span class="avatar" style="background:'+(u.color||ri.color)+'">'+ini(u.nombre)+'</span> <b>'+esc(u.nombre)+'</b></td>'
       +'<td><span class="badge" style="background:'+ri.color+'22;color:'+ri.color+'">'+esc(ri.nombre)+'</span></td>'
       +'<td>'+esc(u.pin||'')+'</td><td><span class="badge" style="background:'+(u.activo?'#dcfce7':'#fee2e2')+';color:'+(u.activo?'#15803d':'#e11d48')+'">'+(u.activo?'Activo':'Baja')+'</span></td>'
       +'<td style="text-align:right"><button class="btn ghost sm" data-edite="'+u.id+'">Editar</button></td></tr>';
@@ -256,15 +301,195 @@ function modalEmp(u){
   modalOpen=true;
   var roles=Object.keys(Auth.ROLES).map(function(r){return '<option value="'+r+'"'+(u&&u.rol===r?' selected':'')+'>'+esc(Auth.ROLES[r].nombre)+'</option>';}).join('');
   ov('<h3>'+(u?'Editar empleado':'Nuevo empleado')+'</h3><div class="mb">'
-    +'<div class="field"><label>Nombre</label><input id="e_n" value="'+esc(u?u.nombre:'')+'"></div>'
-    +'<div class="row"><div class="field"><label>Rol</label><select id="e_r">'+roles+'</select></div>'
-    +'<div class="field"><label>PIN (4 díg.)</label><input id="e_pin" value="'+esc(u?u.pin:'')+'" maxlength="6"></div></div>'
-    +'<div class="row"><div class="field"><label>Color</label><input id="e_col" type="color" value="'+(u&&u.color?u.color:'#16a34a')+'"></div>'
-    +'<div class="field"><label>Usuario (admin)</label><input id="e_u" value="'+esc(u?(u.usuario||''):'')+'" placeholder="solo admin/encargado"></div></div>'
-    +'<div class="field"><label>Contraseña (admin)</label><input id="e_pw" value="'+esc(u?(u.password||''):'')+'" placeholder="solo admin/encargado"></div>'
+    +'<div class="row"><div class="field"><label>Nombre</label><input id="e_n" value="'+esc(u?u.nombre:'')+'"></div>'
+    +'<div class="field" style="max-width:90px"><label>Color</label><input id="e_col" type="color" value="'+(u&&u.color?u.color:'#16a34a')+'"></div></div>'
+    +'<div class="field"><label>Rol</label><select id="e_r">'+roles+'</select></div>'
+    +'<div style="margin:8px 0 8px;font-weight:800;font-size:12px;color:var(--soft);text-transform:uppercase;letter-spacing:.4px">Acceso a TPV · Comandera · Cocina</div>'
+    +'<div class="field"><label>PIN (4–6 dígitos)</label><input id="e_pin" inputmode="numeric" value="'+esc(u?u.pin:'')+'" maxlength="6" placeholder="p. ej. 1234"></div>'
+    +'<div style="margin:12px 0 8px;font-weight:800;font-size:12px;color:var(--soft);text-transform:uppercase;letter-spacing:.4px">Acceso a Administración <span style="font-weight:600;text-transform:none">(solo admin / encargado)</span></div>'
+    +'<div class="row"><div class="field"><label>Usuario</label><input id="e_u" autocomplete="off" value="'+esc(u?(u.usuario||''):'')+'" placeholder="p. ej. encargado"></div>'
+    +'<div class="field"><label>Contraseña</label><div style="display:flex;gap:6px"><input id="e_pw" type="password" autocomplete="new-password" value="'+esc(u?(u.password||''):'')+'" placeholder="contraseña" style="flex:1"><button type="button" class="btn ghost sm" onclick="togglePw(this)">👁</button></div></div></div>'
     +'<label class="chk"><input type="checkbox" id="e_a" '+(!u||u.activo?'checked':'')+'> Activo</label>'
     +'</div><div class="foot">'+(u?'<button class="btn red" data-dele="'+u.id+'" style="margin-right:auto">Dar de baja</button>':'')
     +'<button class="btn ghost" data-act="cerrar">Cancelar</button><button class="btn" data-act="saveemp" data-id="'+(u?u.id:'')+'">Guardar</button></div>');
+}
+function togglePw(btn){ var i=btn.parentNode.querySelector('input'); if(i){ i.type=(i.type==='password'?'text':'password'); btn.textContent=(i.type==='password'?'👁':'🙈'); } }
+
+/* ---- ESTACIONES / DISPOSITIVOS ---- */
+function viewEstaciones(){
+  var es=M.estaciones||[];
+  var TIPOS=[['kds','🖥️ Monitores de cocina (KDS)'],['tpv','💶 Terminales TPV'],['comandera','📱 Comanderas']];
+  var html='<div class="bar"><h2>Estaciones / dispositivos</h2><div class="r">'+bulkSelAllBtn()+'<button class="btn" data-act="nuevaest">+ Estación</button></div></div>'
+    +'<p style="color:var(--soft);font-size:13px;margin:-6px 0 14px">Crea configuraciones con su ID. Cada monitor / TPV / comandera elige cuál usar al abrirse (o ábrelo directo con <code>?id=…</code>).</p>';
+  TIPOS.forEach(function(t){
+    var list=es.filter(function(x){return x.tipo===t[0];});
+    html+='<div class="catgrp" style="background:#334155">'+t[1]+'</div><div class="card"><table><thead><tr><th style="width:34px"></th><th>Nombre</th><th>ID</th><th>Configuración</th><th></th></tr></thead><tbody>';
+    if(!list.length) html+='<tr><td colspan="5" style="color:var(--soft)">Sin estaciones de este tipo.</td></tr>';
+    list.forEach(function(s){
+      var cfg = t[0]==='kds' ? ((s.ordenes&&s.ordenes.length?s.ordenes.join(', '):'Todas las órdenes')+' · '+(s.avisarCamareros!==false?'avisa camareros':'sin aviso')) : 'Estándar';
+      html+='<tr><td>'+bulkChk(s.id)+'</td><td><b>'+esc(s.nombre)+'</b>'+(s.activa===false?' <span class="badge" style="background:#fee2e2;color:#e11d48">inactiva</span>':'')+'</td>'
+        +'<td><code style="font-size:12px;color:var(--soft)">'+esc(s.id)+'</code></td>'
+        +'<td style="font-size:13px;color:var(--soft)">'+esc(cfg)+'</td>'
+        +'<td style="text-align:right"><button class="btn ghost sm" data-edit-est="'+esc(s.id)+'">Editar</button></td></tr>';
+    });
+    html+='</tbody></table></div>';
+  });
+  return html;
+}
+function modalEstacion(s){
+  modalOpen=true;
+  var tipo=s?s.tipo:'kds';
+  var tipos=[['kds','Monitor de cocina (KDS)'],['tpv','Terminal TPV'],['comandera','Comandera']].map(function(t){return '<option value="'+t[0]+'"'+(tipo===t[0]?' selected':'')+'>'+t[1]+'</option>';}).join('');
+  var ords=ORDLIST.map(function(o){var on=s&&s.ordenes&&s.ordenes.indexOf(o)>=0; return '<label class="chk" style="margin:0 12px 6px 0"><input type="checkbox" class="est_ord" value="'+o+'" '+(on?'checked':'')+'> '+o+'</label>';}).join('');
+  var ACC=[['todolisto','Marcar comanda lista de golpe'],['disponibilidad','Botón de disponibilidad (86)']];
+  var accs=ACC.map(function(a){var on=!s||!s.acciones||s.acciones.indexOf(a[0])>=0; return '<label class="chk" style="margin:0 12px 6px 0"><input type="checkbox" class="est_acc" value="'+a[0]+'" '+(on?'checked':'')+'> '+a[1]+'</label>';}).join('');
+  var preps=(M.preparaciones||[]).map(function(pr){var on=s&&s.preparaciones&&s.preparaciones.indexOf(pr.id)>=0; return '<label class="chk" style="margin:0 12px 6px 0"><input type="checkbox" class="est_prep" value="'+pr.id+'" '+(on?'checked':'')+'> '+esc(pr.nombre)+'</label>';}).join('');
+  var docs=(M.impresoras||[]).filter(function(i){return i.tipo==='documentos';});
+  var cocs=(M.impresoras||[]).filter(function(i){return i.tipo==='cocina';});
+  var docOpts='<option value="">— Ninguna —</option>'+docs.map(function(i){return '<option value="'+i.id+'"'+(s&&s.impresoraTickets===i.id?' selected':'')+'>'+esc(i.nombre)+'</option>';}).join('');
+  var cocChecks=cocs.map(function(i){var on=s&&s.impresorasCocina&&s.impresorasCocina.indexOf(i.id)>=0; return '<label class="chk" style="margin:0 12px 6px 0"><input type="checkbox" class="est_coc" value="'+i.id+'" '+(on?'checked':'')+'> '+esc(i.nombre)+'</label>';}).join('');
+  var esDisp=(tipo==='tpv'||tipo==='comandera');
+  ov('<h3>'+(s?'Editar estación':'Nueva estación')+'</h3><div class="mb">'
+    +'<div class="row"><div class="field"><label>Nombre</label><input id="es_n" value="'+esc(s?s.nombre:'')+'" placeholder="p. ej. Cocina caliente"></div>'
+    +'<div class="field"><label>Tipo</label><select id="es_t" '+(s?'disabled':'')+'>'+tipos+'</select></div></div>'
+    +'<div class="field"><label>ID (para enlaces ?id=…)</label><input id="es_id" value="'+esc(s?s.id:'')+'" placeholder="se genera del nombre"></div>'
+    +'<div id="es_kds" style="'+(tipo==='kds'?'':'display:none')+'">'
+      +'<div style="margin:8px 0 6px;font-weight:800;font-size:12px;color:var(--soft);text-transform:uppercase">Preparaciones que entran en este monitor</div>'
+      +'<div style="display:flex;flex-wrap:wrap">'+(preps||'<span class="muted">Crea preparaciones en la pestaña Impresoras.</span>')+'</div>'
+      +'<p style="color:var(--soft);font-size:12px;margin:2px 0 10px">Vacío = todas las preparaciones.</p>'
+      +'<div style="margin:8px 0 6px;font-weight:800;font-size:12px;color:var(--soft);text-transform:uppercase">Pases / órdenes que entran</div>'
+      +'<div style="display:flex;flex-wrap:wrap">'+ords+'</div>'
+      +'<p style="color:var(--soft);font-size:12px;margin:2px 0 10px">Vacío = todos los pases. (Ej.: un monitor solo Primeros, otro solo Segundos, otro «pase» con todo.)</p>'
+      +'<label class="chk" style="margin-bottom:10px"><input type="checkbox" id="es_avisar" '+(!s||s.avisarCamareros!==false?'checked':'')+'> Avisar a camareros cuando algo está listo</label>'
+      +'<div style="margin:6px 0 6px;font-weight:800;font-size:12px;color:var(--soft);text-transform:uppercase">Acciones especiales</div>'
+      +'<div style="display:flex;flex-wrap:wrap">'+accs+'</div>'
+      +'<div class="field" style="max-width:170px;margin-top:10px"><label>Columnas (0 = auto)</label><input id="es_col" type="number" min="0" value="'+(s&&s.columnas?s.columnas:0)+'"></div>'
+    +'</div>'
+    +'<div id="es_disp" style="'+(esDisp?'':'display:none')+'">'
+      +'<div style="margin:8px 0 6px;font-weight:800;font-size:12px;color:var(--soft);text-transform:uppercase">Impresora de tickets / documentos (cuenta y factura)</div>'
+      +'<div class="row"><div class="field"><label>Impresora</label><select id="es_doc">'+docOpts+'</select></div>'
+      +'<div class="field"><label>Al cobrar (solo TPV)</label><select id="es_ticketauto"><option value="preguntar"'+((s&&s.ticketAuto||'preguntar')==='preguntar'?' selected':'')+'>Preguntar si imprimir</option><option value="siempre"'+(s&&s.ticketAuto==='siempre'?' selected':'')+'>Imprimir siempre</option><option value="nunca"'+(s&&s.ticketAuto==='nunca'?' selected':'')+'>No imprimir nunca</option></select></div></div>'
+      +'<div style="margin:8px 0 6px;font-weight:800;font-size:12px;color:var(--soft);text-transform:uppercase">Impresoras de cocina a las que envía este dispositivo</div>'
+      +'<div style="display:flex;flex-wrap:wrap">'+(cocChecks||'<span class="muted">Crea impresoras de cocina primero.</span>')+'</div>'
+      +'<p style="color:var(--soft);font-size:12px;margin:2px 0 0">Cada dispositivo puede usar impresoras distintas; no tienen por qué coincidir.</p>'
+    +'</div>'
+    +'<label class="chk" style="margin-top:10px"><input type="checkbox" id="es_a" '+(!s||s.activa!==false?'checked':'')+'> Activa</label>'
+    +'</div><div class="foot">'+(s?'<button class="btn red" data-del-est="'+esc(s.id)+'" style="margin-right:auto">Eliminar</button>':'')
+    +'<button class="btn ghost" data-act="cerrar">Cancelar</button><button class="btn" data-act="saveest" data-id="'+(s?esc(s.id):'')+'">Guardar</button></div>');
+  var selT=document.getElementById('es_t'); if(selT) selT.onchange=function(){ var v=this.value; var k=document.getElementById('es_kds'); if(k)k.style.display=(v==='kds')?'':'none'; var d=document.getElementById('es_disp'); if(d)d.style.display=(v==='tpv'||v==='comandera')?'':'none'; };
+}
+function guardarEstacion(id){
+  var n=val('es_n').trim(); if(!n)return toast('Pon el nombre');
+  if(!M.estaciones)M.estaciones=[];
+  var tipo = id ? ((M.estaciones||[]).filter(function(x){return x.id===id;})[0]||{}).tipo : val('es_t');
+  var nid = (val('es_id').trim() || (tipo+'-'+n.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,''))).slice(0,40);
+  if((M.estaciones||[]).some(function(x){return x.id===nid && x.id!==id;})) return toast('Ese ID ya existe, usa otro');
+  var data={id:nid,tipo:tipo,nombre:n,activa:chk('es_a')};
+  if(tipo==='kds'){
+    data.ordenes=Array.prototype.map.call(document.querySelectorAll('.est_ord:checked'),function(x){return x.value;});
+    data.preparaciones=Array.prototype.map.call(document.querySelectorAll('.est_prep:checked'),function(x){return x.value;});
+    data.acciones=Array.prototype.map.call(document.querySelectorAll('.est_acc:checked'),function(x){return x.value;});
+    data.avisarCamareros=chk('es_avisar');
+    data.columnas=parseInt(val('es_col'),10)||0;
+  }
+  if(tipo==='tpv'||tipo==='comandera'){
+    data.impresoraTickets=val('es_doc')||undefined;
+    data.ticketAuto=val('es_ticketauto')||'preguntar';
+    data.impresorasCocina=Array.prototype.map.call(document.querySelectorAll('.est_coc:checked'),function(x){return x.value;});
+  }
+  if(id) M.estaciones=M.estaciones.map(function(x){return x.id===id?data:x;}); else M.estaciones.push(data);
+  saveMaster();cerrar();render();toast('Estación guardada',true);
+}
+
+/* ---- Selección múltiple / acciones en lote ---- */
+var bulk={tab:null,ids:[]};
+var BULK={
+  carta:{a:'productos',k:'activo',extra:true},
+  empleados:{a:'usuarios',k:'activo'},
+  estaciones:{a:'estaciones',k:'activa'},
+  mesas:{a:'mesas'},
+  tarifas:{a:'tarifas',k:'activa'},
+  comentarios:{a:'comentarios'},
+  clientes:{a:'clientes'},
+  promos:{a:'promociones',k:'activa'},
+  acciones:{a:'accionesRapidas'},
+  impresoras:{a:'impresoras'}
+};
+function bulkCfg(){ return BULK[tab]||null; }
+function bulkArr(){ var c=bulkCfg(); if(!c)return null; if(!M[c.a])M[c.a]=[]; return M[c.a]; }
+function bulkKey(){ var c=bulkCfg(); return (c&&c.k)?c.k:'activo'; }
+function bulkAllIds(){ var a=bulkArr(); return a?a.map(function(x){return x.id;}):[]; }
+function bulkApply(fn){ var a=bulkArr(); if(a)a.forEach(function(it){ if(bulk.ids.indexOf(it.id)>=0) fn(it); }); }
+function bulkChk(id){ return '<input type="checkbox" class="bchk" data-bid="'+esc(id)+'"'+(bulk.ids.indexOf(id)>=0?' checked':'')+'>'; }
+function bulkSelAllBtn(){ var all=bulkAllIds(); var todo=all.length&&bulk.ids.length===all.length; return '<button class="btn ghost" data-act="bulkall">'+(todo?'☑ Quitar selección':'☐ Seleccionar todos')+'</button>'; }
+function updateBulkBar(){
+  var bar=document.getElementById('bulkbar'); if(!bar)return;
+  var c=bulkCfg(), n=bulk.ids.length;
+  if(!n||!c){ bar.className=''; bar.innerHTML=''; return; }
+  var b='';
+  if(c.extra){ b+='<button data-bulk="precio">💲 Precio</button><button data-bulk="familia">📂 Familia / pase</button>'; }
+  if(c.k){ b+='<button data-bulk="on">✓ Activar</button><button data-bulk="off">✕ Desactivar</button>'; }
+  b+='<button data-bulk="dup">⧉ Duplicar</button><button data-bulk="del" class="red">🗑 Eliminar</button>';
+  bar.className='on';
+  bar.innerHTML='<span class="cnt">'+n+' seleccionados</span>'+b+'<button class="x" data-bulk="clear" title="Quitar selección">✕</button>';
+}
+function bulkAction(act){
+  if(act==='clear'){ bulk.ids=[]; render(); return; }
+  if(!bulk.ids.length) return;
+  var arr=bulkArr(); if(!arr) return;
+  if(act==='on'||act==='off'){ var k=bulkKey(), v=(act==='on'); bulkApply(function(it){ it[k]=v; }); saveMaster(); render(); toast('Actualizado',true); return; }
+  if(act==='dup'){ var add=[]; arr.forEach(function(it){ if(bulk.ids.indexOf(it.id)>=0){ var c=clone(it); c.id=(tab==='estaciones'?((it.tipo||'est')+'-'):'')+uid(); c.nombre=(it.nombre||'')+' (copia)'; add.push(c); } }); Array.prototype.push.apply(arr,add); saveMaster(); bulk.ids=[]; render(); toast(add.length+' duplicado(s)',true); return; }
+  if(act==='del'){ if(!confirm('¿Eliminar '+bulk.ids.length+' elemento(s)? No se puede deshacer.')) return; M[bulkCfg().a]=arr.filter(function(it){return bulk.ids.indexOf(it.id)<0;}); saveMaster(); bulk.ids=[]; render(); toast('Eliminados'); return; }
+  if(act==='precio'){ bulkPrecioModal(); return; }
+  if(act==='familia'){ bulkFamiliaModal(); return; }
+}
+function bulkPrecioModal(){
+  modalOpen=true;
+  ov('<h3>Cambiar precio · '+bulk.ids.length+' productos</h3><div class="mb">'
+    +'<div class="field"><label>Tipo de cambio</label><select id="bp_modo"><option value="pct">Ajustar un porcentaje (%)</option><option value="fijo">Poner un precio fijo (€)</option></select></div>'
+    +'<div class="field"><label>Valor</label><input id="bp_val" type="number" step="0.01" placeholder="p. ej. 10 o -5"></div>'
+    +'<p style="color:var(--soft);font-size:12px;margin:0">En porcentaje, usa negativo para bajar (-10 = −10%). Los productos sin precio se omiten.</p>'
+    +'</div><div class="foot"><button class="btn ghost" data-act="cerrar">Cancelar</button><button class="btn" data-act="bulkpreciook">Aplicar</button></div>');
+}
+function bulkPrecioOk(){
+  var modo=val('bp_modo'), v=parseFloat(val('bp_val')); if(isNaN(v))return toast('Pon un valor');
+  bulkApply(function(p){ if(p.precio==null)return; p.precio=(modo==='pct')?Math.round(p.precio*(1+v/100)*100)/100:v; });
+  saveMaster();cerrar();render();toast('Precios actualizados',true);
+}
+function bulkFamiliaModal(){
+  modalOpen=true;
+  var cats=(M.categorias||[]).map(function(c){return '<option value="'+c.id+'">'+esc(c.nombre)+'</option>';}).join('');
+  var pases=ORDLIST.map(function(o){return '<option value="'+o+'">'+o+'</option>';}).join('');
+  var preps=(M.preparaciones||[]).map(function(pr){return '<option value="'+pr.id+'">'+esc(pr.nombre)+'</option>';}).join('');
+  ov('<h3>Familia / pase / preparación · '+bulk.ids.length+' productos</h3><div class="mb">'
+    +'<label class="chk" style="margin-bottom:6px"><input type="checkbox" id="bf_cc" checked> Cambiar familia</label>'
+    +'<div class="field"><select id="bf_cat">'+cats+'</select></div>'
+    +'<label class="chk" style="margin:12px 0 6px"><input type="checkbox" id="bf_pc"> Cambiar pase de cocina</label>'
+    +'<div class="field"><select id="bf_pase">'+pases+'</select></div>'
+    +'<label class="chk" style="margin:12px 0 6px"><input type="checkbox" id="bf_rc"> Cambiar preparación</label>'
+    +'<div class="field"><select id="bf_prep"><option value="">— Sin preparación —</option>'+preps+'</select></div>'
+    +'</div><div class="foot"><button class="btn ghost" data-act="cerrar">Cancelar</button><button class="btn" data-act="bulkfamiliaok">Aplicar</button></div>');
+}
+function bulkFamiliaOk(){
+  var cc=chk('bf_cc'), pc=chk('bf_pc'), rc=chk('bf_rc'), cat=val('bf_cat'), pase=val('bf_pase'), prep=val('bf_prep');
+  if(!cc&&!pc&&!rc)return toast('Marca qué quieres cambiar');
+  bulkApply(function(p){ if(cc)p.categoriaId=cat; if(pc)p.pasePorDefecto=pase; if(rc)p.preparacion=prep||undefined; });
+  saveMaster();cerrar();render();toast('Productos actualizados',true);
+}
+
+/* ---- Ordenar tablas al pulsar el encabezado de columna ---- */
+function sortTable(th){
+  var table=th.closest('table'); if(!table)return;
+  var ths=Array.prototype.slice.call(th.parentNode.children), idx=ths.indexOf(th);
+  var tbody=table.querySelector('tbody'); if(!tbody)return;
+  var rows=Array.prototype.slice.call(tbody.children).filter(function(r){return r.children.length>idx;});
+  if(rows.length<2)return;
+  var dir=(th.getAttribute('data-dir')==='asc')?'desc':'asc';
+  ths.forEach(function(x){x.removeAttribute('data-dir');}); th.setAttribute('data-dir',dir);
+  function cv(r){ return (r.children[idx]?r.children[idx].textContent:'').trim(); }
+  function num(t){ var s=t.replace(/[^0-9,.\-]/g,'').replace(',','.'); var f=parseFloat(s); return (s===''||isNaN(f))?null:f; }
+  rows.sort(function(a,b){ var x=cv(a),y=cv(b),nx=num(x),ny=num(y),r; if(nx!==null&&ny!==null) r=nx-ny; else r=x.localeCompare(y,'es',{sensitivity:'base',numeric:true}); return dir==='asc'?r:-r; });
+  rows.forEach(function(r){tbody.appendChild(r);});
 }
 
 /* ---- MODIFICADORES (editor) ---- */
@@ -350,9 +575,9 @@ function guardarCash(id){
 /* ---- CLIENTES ---- */
 function viewClientes(){
   var cs=M.clientes||[];
-  var rows=cs.map(function(c){return '<tr><td><b>'+esc(c.nombre)+'</b>'+(c.recargo?' <span class="badge" style="background:#fef3c7;color:#92400e">RE</span>':'')+'</td><td>'+esc(c.cif||'')+'</td><td>'+esc(c.direccion||'')+'</td><td>'+(c.descuento?('-'+c.descuento+'%'):'—')+'</td><td><b>'+(c.puntos||0)+'</b> ⭐</td><td style="text-align:right"><button class="btn ghost sm" data-editcl="'+c.id+'">Editar</button></td></tr>';}).join('');
-  return '<div class="bar"><h2>Clientes</h2><div class="r"><button class="btn" data-act="nuevocli">+ Cliente</button></div></div>'
-    +'<div class="card"><table><thead><tr><th>Nombre</th><th>CIF/NIF</th><th>Dirección</th><th>Dto.</th><th>Puntos</th><th></th></tr></thead><tbody>'+(rows||'<tr><td colspan="6" class="muted">Sin clientes. Crea clientes para emitir facturas con sus datos.</td></tr>')+'</tbody></table></div>';
+  var rows=cs.map(function(c){return '<tr><td>'+bulkChk(c.id)+'</td><td><b>'+esc(c.nombre)+'</b>'+(c.recargo?' <span class="badge" style="background:#fef3c7;color:#92400e">RE</span>':'')+'</td><td>'+esc(c.cif||'')+'</td><td>'+esc(c.direccion||'')+'</td><td>'+(c.descuento?('-'+c.descuento+'%'):'—')+'</td><td><b>'+(c.puntos||0)+'</b> ⭐</td><td style="text-align:right"><button class="btn ghost sm" data-editcl="'+c.id+'">Editar</button></td></tr>';}).join('');
+  return '<div class="bar"><h2>Clientes</h2><div class="r">'+bulkSelAllBtn()+'<button class="btn" data-act="nuevocli">+ Cliente</button></div></div>'
+    +'<div class="card"><table><thead><tr><th style="width:34px"></th><th>Nombre</th><th>CIF/NIF</th><th>Dirección</th><th>Dto.</th><th>Puntos</th><th></th></tr></thead><tbody>'+(rows||'<tr><td colspan="7" class="muted">Sin clientes. Crea clientes para emitir facturas con sus datos.</td></tr>')+'</tbody></table></div>';
 }
 function modalCli(c){
   modalOpen=true;
@@ -380,10 +605,10 @@ function viewPromos(){
   var TP={horario:'Happy hour (horario)',nxm:'NxM (2x1, 3x2…)',pack:'Pack precio fijo'};
   var rows=ps.map(function(p){
     var regla=p.tipo==='horario'?(p.pct+'% · '+(p.desde||'')+'-'+(p.hasta||'')):p.tipo==='nxm'?(p.n+'x'+p.m):p.tipo==='pack'?('= '+eur(p.precio||0)+' ('+((p.productos||[]).length)+' prod.)'):'';
-    return '<tr><td><b>'+esc(p.nombre)+'</b></td><td>'+esc(TP[p.tipo]||p.tipo)+'</td><td>'+regla+'</td><td><span class="badge" style="background:'+(p.activa?'#dcfce7':'#fee2e2')+';color:'+(p.activa?'#15803d':'#e11d48')+'">'+(p.activa?'Activa':'Inactiva')+'</span></td><td style="text-align:right"><button class="btn ghost sm" data-editpr="'+p.id+'">Editar</button></td></tr>';
+    return '<tr><td>'+bulkChk(p.id)+'</td><td><b>'+esc(p.nombre)+'</b></td><td>'+esc(TP[p.tipo]||p.tipo)+'</td><td>'+regla+'</td><td><span class="badge" style="background:'+(p.activa?'#dcfce7':'#fee2e2')+';color:'+(p.activa?'#15803d':'#e11d48')+'">'+(p.activa?'Activa':'Inactiva')+'</span></td><td style="text-align:right"><button class="btn ghost sm" data-editpr="'+p.id+'">Editar</button></td></tr>';
   }).join('');
-  return '<div class="bar"><h2>Promociones</h2><div class="r"><button class="btn" data-act="nuevapromo">+ Promoción</button></div></div>'
-    +'<div class="card"><table><thead><tr><th>Nombre</th><th>Tipo</th><th>Regla</th><th>Estado</th><th></th></tr></thead><tbody>'+(rows||'<tr><td colspan="5" class="muted">Sin promociones. Crea happy hour, 2x1 o packs.</td></tr>')+'</tbody></table></div>'
+  return '<div class="bar"><h2>Promociones</h2><div class="r">'+bulkSelAllBtn()+'<button class="btn" data-act="nuevapromo">+ Promoción</button></div></div>'
+    +'<div class="card"><table><thead><tr><th style="width:34px"></th><th>Nombre</th><th>Tipo</th><th>Regla</th><th>Estado</th><th></th></tr></thead><tbody>'+(rows||'<tr><td colspan="6" class="muted">Sin promociones. Crea happy hour, 2x1 o packs.</td></tr>')+'</tbody></table></div>'
     +'<p style="color:var(--soft);font-size:13px;margin-top:12px">Las promociones <b>activas</b> se aplican solas al ticket en el TPV.</p>';
 }
 function modalPromo(){
@@ -481,37 +706,60 @@ function guardarFP(id){
 }
 
 /* ---- IMPRESORAS ---- */
+function prepName(id){ var x=(M.preparaciones||[]).filter(function(p){return p.id===id;})[0]; return x?x.nombre:id; }
 function viewImpresoras(){
   var imps=M.impresoras||[];
-  var html='<div class="bar"><h2>Impresoras</h2><div class="r"><button class="btn" data-act="nuevaimp">+ Impresora</button></div></div>'
-    +'<div class="card"><table><thead><tr><th>Nombre</th><th>IP : Puerto</th><th>Zona</th><th></th></tr></thead><tbody>';
-  if(!imps.length) html+='<tr><td colspan="4" style="color:var(--soft)">Sin impresoras. Añade la de cocina/barra/caja con su IP de red.</td></tr>';
+  var preps=M.preparaciones||[];
+  var chips=preps.map(function(pr){return '<span style="display:inline-flex;align-items:center;gap:8px;background:'+(pr.color||'#334155')+';color:#fff;border-radius:999px;padding:5px 7px 5px 13px;font-weight:700;font-size:13px;margin:0 8px 8px 0">'+esc(pr.nombre)+'<button class="btn sm" data-delprep="'+pr.id+'" style="padding:1px 8px;background:rgba(255,255,255,.25);color:#fff;border:none;border-radius:999px">✕</button></span>';}).join('');
+  var html='<div class="card" style="padding:16px;margin-bottom:16px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><b>Tipos de preparación</b><button class="btn sm" data-act="newprep" style="margin-left:auto">+ Preparación</button></div>'
+    +'<div style="display:flex;flex-wrap:wrap;align-items:center">'+(chips||'<span class="muted">Crea preparaciones (Cocina, Barra, Plancha…). Cada producto se asigna a una y se enruta a impresoras y monitores.</span>')+'</div></div>';
+  html+='<div class="bar"><h2>Impresoras</h2><div class="r">'+bulkSelAllBtn()+'<button class="btn" data-act="nuevaimp">+ Impresora</button></div></div>'
+    +'<div class="card"><table><thead><tr><th style="width:34px"></th><th>Nombre</th><th>Tipo</th><th>Windows</th><th>Copias</th><th>Enruta</th><th></th></tr></thead><tbody>';
+  if(!imps.length) html+='<tr><td colspan="7" style="color:var(--soft)">Sin impresoras. Crea la de cocina/barra/caja.</td></tr>';
   imps.forEach(function(p){
-    html+='<tr><td><b>'+esc(p.nombre||'')+'</b></td><td>'+esc(p.ip||'')+' : '+(p.puerto||9100)+'</td><td><span class="badge" style="background:#eef2ff;color:#4338ca">'+esc(p.zona||'cocina')+'</span></td>'
+    var ruta=p.tipo==='documentos'?'Cuenta / factura':((p.preparaciones&&p.preparaciones.length?p.preparaciones.map(prepName).join(', '):'todas las prep.')+(p.ordenes&&p.ordenes.length?(' · '+p.ordenes.join(', ')):''));
+    html+='<tr><td>'+bulkChk(p.id)+'</td><td><b>'+esc(p.nombre||'')+'</b></td><td><span class="badge" style="background:#eef2ff;color:#4338ca">'+(p.tipo==='documentos'?'Documentos':'Cocina')+'</span></td><td>'+esc(p.windows||'—')+'</td><td>'+(p.copias||1)+'</td><td style="font-size:13px;color:var(--soft)">'+esc(ruta)+'</td>'
       +'<td style="text-align:right"><button class="btn ghost sm" data-testi="'+p.id+'">Prueba</button> <button class="btn ghost sm" data-editi="'+p.id+'">Editar</button></td></tr>';
   });
-  html+='</tbody></table></div><p style="color:var(--soft);font-size:13px;margin-top:12px">Impresoras térmicas de red (ESC/POS, puerto 9100). Las comandas se imprimen solas en cocina/barra al enviarlas; el ticket de cobro se imprime desde el TPV.</p>';
+  html+='</tbody></table></div><p style="color:var(--soft);font-size:13px;margin-top:12px">Da de alta la impresora en <b>Windows</b> y pon aquí su <b>nombre exacto</b>: luego el sistema imprime llamando a esa impresora por nombre. El enrutado por preparación/pase queda configurado; la salida física se conecta con el agente de impresión local.</p>';
   return html;
 }
 function modalImp(p){
   modalOpen=true;
-  var zonas=[['cocina','Cocina'],['barra','Barra'],['caja','Caja']];
-  var zopt=zonas.map(function(z){return '<option value="'+z[0]+'"'+((p?(p.zona||'cocina'):'cocina')===z[0]?' selected':'')+'>'+z[1]+'</option>';}).join('');
+  var tipo=p?(p.tipo||'cocina'):'cocina';
+  var preps=(M.preparaciones||[]).map(function(pr){var on=p&&p.preparaciones&&p.preparaciones.indexOf(pr.id)>=0; return '<label class="chk" style="margin:0 12px 6px 0"><input type="checkbox" class="i_prep" value="'+pr.id+'" '+(on?'checked':'')+'> '+esc(pr.nombre)+'</label>';}).join('');
+  var ords=ORDLIST.map(function(o){var on=p&&p.ordenes&&p.ordenes.indexOf(o)>=0; return '<label class="chk" style="margin:0 12px 6px 0"><input type="checkbox" class="i_ord" value="'+o+'" '+(on?'checked':'')+'> '+o+'</label>';}).join('');
   ov('<h3>'+(p?'Editar impresora':'Nueva impresora')+'</h3><div class="mb">'
-    +'<div class="field"><label>Nombre</label><input id="i_n" value="'+esc(p?p.nombre:'')+'" placeholder="Cocina"></div>'
-    +'<div class="row"><div class="field"><label>IP de red</label><input id="i_ip" value="'+esc(p?p.ip:'')+'" placeholder="192.168.1.50"></div>'
-    +'<div class="field" style="max-width:110px"><label>Puerto</label><input id="i_pt" type="number" value="'+(p?(p.puerto||9100):9100)+'"></div></div>'
-    +'<div class="field"><label>Zona</label><select id="i_z">'+zopt+'</select></div>'
+    +'<div class="row"><div class="field"><label>Nombre</label><input id="i_n" value="'+esc(p?p.nombre:'')+'" placeholder="Cocina / Barra / Caja"></div>'
+    +'<div class="field"><label>Tipo</label><select id="i_tipo"><option value="cocina"'+(tipo==='cocina'?' selected':'')+'>Cocina (comandas por preparación)</option><option value="documentos"'+(tipo==='documentos'?' selected':'')+'>Documentos (cuenta / factura)</option></select></div></div>'
+    +'<div class="field"><label>Nombre de la impresora en Windows</label><input id="i_win" value="'+esc(p?(p.windows||''):'')+'" placeholder="Tal cual aparece en Windows"></div>'
+    +'<div class="row"><div class="field" style="max-width:130px"><label>Copias</label><input id="i_cop" type="number" min="1" value="'+(p&&p.copias?p.copias:1)+'"></div>'
+    +'<div class="field"><label>IP de red (opcional)</label><input id="i_ip" value="'+esc(p?(p.ip||''):'')+'" placeholder="ESC/POS 192.168.1.50"></div>'
+    +'<div class="field" style="max-width:100px"><label>Puerto</label><input id="i_pt" type="number" value="'+(p?(p.puerto||9100):9100)+'"></div></div>'
+    +'<div id="i_cocina" style="'+(tipo==='cocina'?'':'display:none')+'">'
+      +'<div style="margin:8px 0 6px;font-weight:800;font-size:12px;color:var(--soft);text-transform:uppercase">Preparaciones que salen por esta impresora</div>'
+      +'<div style="display:flex;flex-wrap:wrap">'+(preps||'<span class="muted">Crea preparaciones en la pestaña Impresoras.</span>')+'</div>'
+      +'<div style="margin:10px 0 6px;font-weight:800;font-size:12px;color:var(--soft);text-transform:uppercase">Pases (opcional · vacío = todos)</div>'
+      +'<div style="display:flex;flex-wrap:wrap">'+ords+'</div>'
+    +'</div>'
     +'</div><div class="foot">'+(p?'<button class="btn red" data-deli="'+p.id+'" style="margin-right:auto">Eliminar</button>':'')
     +'<button class="btn ghost" data-act="cerrar">Cancelar</button><button class="btn" data-act="saveimp" data-id="'+(p?p.id:'')+'">Guardar</button></div>');
+  var selT=document.getElementById('i_tipo'); if(selT) selT.onchange=function(){ var k=document.getElementById('i_cocina'); if(k)k.style.display=(this.value==='cocina')?'':'none'; };
 }
 function guardarImp(id){
   var n=val('i_n').trim(); if(!n)return toast('Pon el nombre');
   if(!M.impresoras)M.impresoras=[];
-  var data={id:id||('imp'+uid()),nombre:n,ip:val('i_ip').trim(),puerto:parseInt(val('i_pt'))||9100,zona:val('i_z')};
+  var tipo=val('i_tipo');
+  var data={id:id||('imp'+uid()),nombre:n,tipo:tipo,windows:val('i_win').trim()||undefined,copias:parseInt(val('i_cop'),10)||1,ip:val('i_ip').trim()||undefined,puerto:parseInt(val('i_pt'))||9100};
+  if(tipo==='cocina'){
+    data.preparaciones=Array.prototype.map.call(document.querySelectorAll('.i_prep:checked'),function(x){return x.value;});
+    data.ordenes=Array.prototype.map.call(document.querySelectorAll('.i_ord:checked'),function(x){return x.value;});
+  }
   if(id) M.impresoras=M.impresoras.map(function(p){return p.id===id?data:p;}); else M.impresoras.push(data);
   saveMaster();cerrar();render();toast('Impresora guardada',true);
 }
+function newPrep(){ var n=prompt('Nombre de la preparación (ej. Cocina, Barra, Plancha):'); if(!n||!n.trim())return; if(!M.preparaciones)M.preparaciones=[]; M.preparaciones.push({id:'prep-'+uid(),nombre:n.trim(),color:'#334155'}); saveMaster(); render(); toast('Preparación creada',true); }
+function delPrep(id){ if(!confirm('¿Eliminar esta preparación?'))return; M.preparaciones=(M.preparaciones||[]).filter(function(p){return p.id!==id;}); saveMaster(); render(); toast('Preparación eliminada'); }
 function testPrint(id){
   var p=(M.impresoras||[]).filter(function(x){return x.id===id;})[0]; if(!p)return;
   if(Sync.modo()!=='servidor')return toast('Necesita el servidor en marcha');
@@ -544,11 +792,17 @@ function cerrar(){var o=document.getElementById('ov');if(o)o.remove();modalOpen=
 /* ---- eventos ---- */
 document.addEventListener('click',function(e){
   var t=e.target.closest('[data-tab]');if(t){tab=t.dataset.tab;render();return;}
+  var bchk=e.target.closest('.bchk'); if(bchk){ var bid=bchk.dataset.bid, i=bulk.ids.indexOf(bid); if(bchk.checked){ if(i<0)bulk.ids.push(bid); } else if(i>=0){ bulk.ids.splice(i,1); } updateBulkBar(); return; }
+  var bb=e.target.closest('[data-bulk]'); if(bb){ bulkAction(bb.dataset.bulk); return; }
+  var thS=e.target.closest('th'); if(thS && thS.closest('.content') && thS.textContent.trim() && !e.target.closest('button,input,a')){ sortTable(thS); return; }
   var a=e.target.closest('[data-act]');
   var idp=e.target.closest('[data-editp]'); if(idp){modalProd((M.productos||[]).filter(function(p){return p.id===idp.dataset.editp;})[0]);return;}
   var cpy=e.target.closest('[data-copyp]'); if(cpy){ var ref=(M.productos||[]).filter(function(p){return p.id===cpy.dataset.copyp;})[0]; if(ref){ var clon=JSON.parse(JSON.stringify(ref)); clon.nombre=ref.nombre+' (copia)'; window._copySrc={mods:ref.mods,pasos:ref.pasos,esMenu:ref.esMenu}; modalProd(clon,true); } return; }
   var idm=e.target.closest('[data-editm]'); if(idm){modalMesa((M.mesas||[]).filter(function(m){return m.id===idm.dataset.editm;})[0]);return;}
   var ide=e.target.closest('[data-edite]'); if(ide){modalEmp((M.usuarios||[]).filter(function(u){return u.id===ide.dataset.edite;})[0]);return;}
+  var iee=e.target.closest('[data-edit-est]'); if(iee){modalEstacion((M.estaciones||[]).filter(function(x){return x.id===iee.dataset.editEst;})[0]);return;}
+  var dee=e.target.closest('[data-del-est]'); if(dee){ if(confirm('¿Eliminar esta estación?')){ M.estaciones=(M.estaciones||[]).filter(function(x){return x.id!==dee.dataset.delEst;});saveMaster();cerrar();render();toast('Estación eliminada'); } return;}
+  var dpr=e.target.closest('[data-delprep]'); if(dpr){ delPrep(dpr.dataset.delprep); return; }
   var dp=e.target.closest('[data-delp]'); if(dp){M.productos=M.productos.filter(function(p){return p.id!==dp.dataset.delp;});saveMaster();cerrar();render();toast('Producto eliminado');return;}
   var ec=e.target.closest('[data-editcom]'); if(ec){modalComentario((M.comentarios||[]).filter(function(c){return c.id===ec.dataset.editcom;})[0]);return;}
   var dc=e.target.closest('[data-delcom]'); if(dc){M.comentarios=(M.comentarios||[]).filter(function(c){return c.id!==dc.dataset.delcom;});saveMaster();cerrar();render();toast('Comentario eliminado');return;}
@@ -592,6 +846,12 @@ document.addEventListener('click',function(e){
     case 'nuevacat': modalCat(); break;
     case 'nuevamesa': modalMesa(null); break;
     case 'nuevoemp': modalEmp(null); break;
+    case 'nuevaest': modalEstacion(null); break;
+    case 'saveest': guardarEstacion(a.dataset.id); break;
+    case 'newprep': newPrep(); break;
+    case 'bulkall': { var all=bulkAllIds(); bulk.ids=(bulk.ids.length===all.length&&all.length)?[]:all.slice(); render(); break; }
+    case 'bulkpreciook': bulkPrecioOk(); break;
+    case 'bulkfamiliaok': bulkFamiliaOk(); break;
     case 'nuevaimp': modalImp(null); break;
     case 'saveimp': guardarImp(a.dataset.id); break;
     case 'saveconfig': guardarConfig(); break;
@@ -644,7 +904,7 @@ function guardarProd(id){
     nombreBoton:(val('f_nb').trim()||undefined),nombreComanda:(val('f_ncom').trim()||undefined),nombreDoc:(val('f_ndoc').trim()||undefined),
     descripcion:(val('f_desc').trim()||undefined),imagen:(val('f_img').trim()||undefined),
     precio:precioVal('f_pr'),precioAnadido:precioVal('f_pra'),precioSupl:precioVal('f_prs'),
-    pasePorDefecto:val('f_pase'),iva:(val('f_iva')!==''?parseFloat(val('f_iva')):undefined),
+    pasePorDefecto:val('f_pase'),preparacion:(val('f_prep')||undefined),iva:(val('f_iva')!==''?parseFloat(val('f_iva')):undefined),
     disponibilidad:(val('f_disp')===''?undefined:(parseInt(val('f_disp'),10)||0)),
     coste:(val('f_coste')===''?undefined:(parseFloat(val('f_coste'))||0)),
     principal:chk('f_ppal'),anadido:chk('f_padd'),pideAnadidos:chk('f_pidea'),pideNotas:chk('f_piden'),
@@ -686,10 +946,10 @@ function guardarEscandallo(id){
 function viewComentarios(){
   var coms=M.comentarios||[];
   var catName=function(id){ if(!id)return '🌐 Global (todas las familias)'; var c=(M.categorias||[]).filter(function(x){return x.id===id;})[0]; return c?(c.ic||'')+' '+c.nombre:'—'; };
-  var h='<div class="bar"><p class="muted" style="margin:0">Comentarios rápidos para las líneas de comanda. Asígnalos a una familia o déjalos globales.</p><button class="btn" data-act="newcom" style="margin-left:auto">+ Comentario</button></div>';
-  h+='<table class="tbl"><thead><tr><th>Comentario</th><th>Familia</th><th></th></tr></thead><tbody>';
-  if(!coms.length) h+='<tr><td colspan="3" style="color:var(--soft)">Aún no hay comentarios. Crea el primero.</td></tr>';
-  coms.forEach(function(c){ h+='<tr><td><b>'+esc(c.texto)+'</b></td><td>'+esc(catName(c.categoriaId))+'</td><td style="text-align:right"><button class="btn ghost sm" data-editcom="'+c.id+'">Editar</button></td></tr>'; });
+  var h='<div class="bar"><p class="muted" style="margin:0">Comentarios rápidos para las líneas de comanda. Asígnalos a una familia o déjalos globales.</p><div class="r" style="margin-left:auto">'+bulkSelAllBtn()+'<button class="btn" data-act="newcom">+ Comentario</button></div></div>';
+  h+='<table class="tbl"><thead><tr><th style="width:34px"></th><th>Comentario</th><th>Familia</th><th></th></tr></thead><tbody>';
+  if(!coms.length) h+='<tr><td colspan="4" style="color:var(--soft)">Aún no hay comentarios. Crea el primero.</td></tr>';
+  coms.forEach(function(c){ h+='<tr><td>'+bulkChk(c.id)+'</td><td><b>'+esc(c.texto)+'</b></td><td>'+esc(catName(c.categoriaId))+'</td><td style="text-align:right"><button class="btn ghost sm" data-editcom="'+c.id+'">Editar</button></td></tr>'; });
   h+='</tbody></table>'; return h;
 }
 function modalComentario(c){
@@ -713,14 +973,14 @@ function guardarComentario(id){
 function viewTarifas(){
   var tfs=M.tarifas||[];
   var salaName=function(ids){ if(!ids||!ids.length)return '—'; return ids.map(function(id){var s=(M.salas||[]).filter(function(x){return x.id===id;})[0];return s?s.nombre:'?';}).join(', '); };
-  var h='<div class="bar"><p class="muted" style="margin:0">Listas de precio: ajuste por % o precios concretos por producto. Se aplican por sala y/o franja horaria; la marcada «por defecto» se usa cuando no hay otra.</p><button class="btn" data-act="newtarifa" style="margin-left:auto">+ Tarifa</button></div>';
-  h+='<table class="tbl"><thead><tr><th>Tarifa</th><th>Ajuste</th><th>Salas</th><th>Horario</th><th>Por defecto</th><th></th></tr></thead><tbody>';
-  if(!tfs.length) h+='<tr><td colspan="6" style="color:var(--soft)">Sin tarifas. La carta usa los precios base.</td></tr>';
+  var h='<div class="bar"><p class="muted" style="margin:0">Listas de precio: ajuste por % o precios concretos por producto. Se aplican por sala y/o franja horaria; la marcada «por defecto» se usa cuando no hay otra.</p><div class="r" style="margin-left:auto">'+bulkSelAllBtn()+'<button class="btn" data-act="newtarifa">+ Tarifa</button></div></div>';
+  h+='<table class="tbl"><thead><tr><th style="width:34px"></th><th>Tarifa</th><th>Ajuste</th><th>Salas</th><th>Horario</th><th>Por defecto</th><th></th></tr></thead><tbody>';
+  if(!tfs.length) h+='<tr><td colspan="7" style="color:var(--soft)">Sin tarifas. La carta usa los precios base.</td></tr>';
   tfs.forEach(function(t){
     var nover=t.precios?Object.keys(t.precios).length:0;
     var aj=(t.pct?((t.pct>0?'+':'')+t.pct+'%'):'—')+(nover?(' · '+nover+' precios fijos'):'');
     var hor=(t.desde||t.hasta)?((t.desde||'')+'–'+(t.hasta||'')):'todo el día';
-    h+='<tr style="'+(t.activa===false?'opacity:.5':'')+'"><td><b>'+esc(t.nombre)+'</b></td><td>'+aj+'</td><td>'+esc(salaName(t.salaIds))+'</td><td>'+hor+'</td><td>'+(t.porDefecto?'⭐':'')+'</td><td style="text-align:right"><button class="btn ghost sm" data-edittf="'+t.id+'">Editar</button></td></tr>';
+    h+='<tr style="'+(t.activa===false?'opacity:.5':'')+'"><td>'+bulkChk(t.id)+'</td><td><b>'+esc(t.nombre)+'</b></td><td>'+aj+'</td><td>'+esc(salaName(t.salaIds))+'</td><td>'+hor+'</td><td>'+(t.porDefecto?'⭐':'')+'</td><td style="text-align:right"><button class="btn ghost sm" data-edittf="'+t.id+'">Editar</button></td></tr>';
   });
   h+='</tbody></table>'; return h;
 }
@@ -761,12 +1021,12 @@ function guardarTarifa(id){
 var ACC_TIPOS={descuento:'Descuento % al ticket',invitacion:'Invitación (100%)',tarifa:'Activar/desactivar tarifa','86':'Marcar producto agotado (86)'};
 function viewAcciones(){
   var acc=M.accionesRapidas||[];
-  var h='<div class="bar"><p class="muted" style="margin:0;max-width:640px">Crea <b>botones a medida</b> para el TPV que ejecutan acciones de los módulos que ya existen (descuentos, tarifas, 86…). Personalizas la operativa sin tocar el núcleo del sistema.</p><button class="btn" data-act="newacc" style="margin-left:auto">+ Acción</button></div>';
-  h+='<table class="tbl"><thead><tr><th>Botón</th><th>Tipo</th><th>Parámetro</th><th></th></tr></thead><tbody>';
-  if(!acc.length) h+='<tr><td colspan="4" style="color:var(--soft)">Sin acciones. Crea botones rápidos para tu TPV.</td></tr>';
+  var h='<div class="bar"><p class="muted" style="margin:0;max-width:640px">Crea <b>botones a medida</b> para el TPV que ejecutan acciones de los módulos que ya existen (descuentos, tarifas, 86…). Personalizas la operativa sin tocar el núcleo del sistema.</p><div class="r" style="margin-left:auto">'+bulkSelAllBtn()+'<button class="btn" data-act="newacc">+ Acción</button></div></div>';
+  h+='<table class="tbl"><thead><tr><th style="width:34px"></th><th>Botón</th><th>Tipo</th><th>Parámetro</th><th></th></tr></thead><tbody>';
+  if(!acc.length) h+='<tr><td colspan="5" style="color:var(--soft)">Sin acciones. Crea botones rápidos para tu TPV.</td></tr>';
   acc.forEach(function(a){
     var par=a.tipo==='descuento'?(a.param+'%'):a.tipo==='tarifa'?((M.tarifas||[]).filter(function(t){return t.id===a.param;})[0]||{}).nombre||'—':a.tipo==='86'?((M.productos||[]).filter(function(p){return p.id===a.param;})[0]||{}).nombre||'—':'—';
-    h+='<tr><td><span class="badge" style="background:'+(a.color||'#334155')+';color:#fff">'+(a.ic||'⚡')+' '+esc(a.label)+'</span></td><td>'+esc(ACC_TIPOS[a.tipo]||a.tipo)+'</td><td>'+esc(par)+'</td><td style="text-align:right"><button class="btn ghost sm" data-editacc="'+a.id+'">Editar</button></td></tr>';
+    h+='<tr><td>'+bulkChk(a.id)+'</td><td><span class="badge" style="background:'+(a.color||'#334155')+';color:#fff">'+(a.ic||'⚡')+' '+esc(a.label)+'</span></td><td>'+esc(ACC_TIPOS[a.tipo]||a.tipo)+'</td><td>'+esc(par)+'</td><td style="text-align:right"><button class="btn ghost sm" data-editacc="'+a.id+'">Editar</button></td></tr>';
   });
   h+='</tbody></table><p class="muted" style="font-size:12px;margin-top:12px">Aparecen como botones en la pantalla de venta del TPV. La columna vertebral del sistema no se altera: las acciones solo combinan funciones ya existentes.</p>';
   return h;
@@ -968,8 +1228,13 @@ function guardarMesa(id){
 }
 function guardarEmp(id){
   var n=val('e_n').trim(); if(!n)return toast('Pon el nombre');
+  var rol=val('e_r'), pin=val('e_pin').trim();
+  if(!pin) return toast('Pon un PIN (lo usan TPV, comandera y cocina)');
+  if(!/^\d{4,6}$/.test(pin)) return toast('El PIN debe tener entre 4 y 6 dígitos');
   if(!M.usuarios)M.usuarios=[];
-  var data={id:id||uid(),nombre:n,rol:val('e_r'),pin:val('e_pin'),color:val('e_col'),usuario:val('e_u')||undefined,password:val('e_pw')||undefined,activo:chk('e_a')};
+  if((M.usuarios||[]).some(function(x){return x.id!==id && x.activo!==false && String(x.pin)===pin;})) return toast('Ese PIN ya lo usa otro empleado');
+  if((rol==='admin'||rol==='encargado') && (!val('e_u').trim() || !val('e_pw'))) return toast('Admin/encargado necesitan usuario y contraseña para entrar en Administración');
+  var data={id:id||uid(),nombre:n,rol:rol,pin:pin,color:val('e_col'),usuario:val('e_u').trim()||undefined,password:val('e_pw')||undefined,activo:chk('e_a')};
   if(id) M.usuarios=M.usuarios.map(function(u){return u.id===id?Object.assign({},u,data):u;}); else M.usuarios.push(data);
   saveMaster();cerrar();render();toast('Empleado guardado',true);
 }
