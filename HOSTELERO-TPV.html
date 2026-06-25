@@ -231,7 +231,6 @@ table.tbl{width:100%;border-collapse:collapse}
   <aside class="sidebar">
     <div class="brand"><span class="logo">🍽️</span>HOSTELERO<small>TPV</small></div>
     <button class="nav-item" data-view="sala"><span class="ico">🍽️</span>Sala</button>
-    <button class="nav-item" data-view="cocina"><span class="ico">👨‍🍳</span>Cocina<span class="nav-badge" id="cocinaBadge"></span></button>
     <button class="nav-item" data-view="productos"><span class="ico">📦</span>Carta</button>
     <button class="nav-item" data-view="reservas"><span class="ico">📅</span>Reservas</button>
     <button class="nav-item" data-view="caja"><span class="ico">💶</span>Caja</button>
@@ -652,20 +651,16 @@ function render(){
 }
 function renderInner(){
   document.querySelectorAll('.nav-item').forEach(function(b){ b.classList.toggle('active', b.dataset.view===state.view); });
-  // badge cocina
-  var nCoc=comandasCocina().reduce(function(s,c){return s+c.lineas.length;},0);
-  var cb=document.getElementById('cocinaBadge'); if(cb){ cb.textContent=nCoc||''; cb.style.display=nCoc?'block':'none'; }
   var caja=cajaAbierta();
   var pill=document.getElementById('cajaPill');
   if(pill){ pill.className='caja-pill '+(caja?'on':'off'); pill.textContent=caja?'CAJA ABIERTA':'CAJA CERRADA'; }
   var main=document.getElementById('main');
   if(state.ticketActivo){ main.innerHTML=viewVenta(); return; }
-  if(state.view==='sala'){ main.innerHTML=viewSala(); setTimeout(fitPlano,0); }
-  else if(state.view==='cocina') main.innerHTML=viewCocina();
-  else if(state.view==='productos') main.innerHTML=viewProductos();
+  if(state.view==='productos') main.innerHTML=viewProductos();
   else if(state.view==='reservas') main.innerHTML=viewReservas();
   else if(state.view==='caja') main.innerHTML=viewCaja();
   else if(state.view==='informes') main.innerHTML=viewInformes();
+  else { state.view='sala'; main.innerHTML=viewSala(); setTimeout(fitPlano,0); }
 }
 
 /* ----- SALA ----- */
@@ -1061,7 +1056,7 @@ if(typeof document!=='undefined'){
   function boot(){ load(); if(typeof window!=='undefined'&&window.HOSTELERO_SYNC){ aplicarMaster(); var _agoSig=''; window.HOSTELERO_SYNC.onChange(function(){ var mc=aplicarMaster(); var sig=(window.HOSTELERO_SYNC.agotados?window.HOSTELERO_SYNC.agotados().join(','):''); var agoCambio=(sig!==_agoSig); _agoSig=sig; if(((mc&&!state.ticketActivo)||agoCambio)&&!state.editPlano) render(); }); } document.addEventListener('click',onClick); document.addEventListener('change',onChange);
     document.addEventListener('pointerdown',onPointerDown); document.addEventListener('pointermove',onPointerMove); document.addEventListener('pointerup',onPointerUp);
     window.addEventListener('resize',function(){ if(state.view==='sala'&&!state.ticketActivo) fitPlano(); });
-    render(); setInterval(function(){ if((state.view==='sala'||state.view==='cocina')&&!state.ticketActivo&&!state.editPlano&&!drag) render(); },20000); }
+    render(); setInterval(function(){ if(state.view==='sala'&&!state.ticketActivo&&!state.editPlano&&!drag) render(); },20000); }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
 }
 
