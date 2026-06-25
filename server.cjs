@@ -21,12 +21,13 @@ var PUERTOS = {
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
 function masterSeed() {
+  function FK(kw,l){ return 'https://loremflickr.com/640/480/'+kw+'?lock='+l; }
   var cats = [
-    { id: 'c1', nombre: 'Bebidas',     color: '#0ea5e9', ic: '🥤', orden: 1, pase: 'Bebidas', zona: 'barra' },
-    { id: 'c2', nombre: 'Cervezas',    color: '#d97706', ic: '🍺', orden: 2, pase: 'Bebidas', zona: 'barra' },
-    { id: 'c3', nombre: 'Entrantes',   color: '#16a34a', ic: '🥗', orden: 3, pase: 'Entrantes', zona: 'cocina' },
-    { id: 'c4', nombre: 'Principales', color: '#7c3aed', ic: '🥩', orden: 4, pase: 'Segundos', zona: 'cocina' },
-    { id: 'c5', nombre: 'Postres',     color: '#db2777', ic: '🍰', orden: 5, pase: 'Postres', zona: 'cocina' }
+    { id: 'c1', nombre: 'Bebidas',     color: '#0ea5e9', ic: '🥤', orden: 1, pase: 'Bebidas', zona: 'barra', imagen: FK('cocktail,drinks',11) },
+    { id: 'c2', nombre: 'Cervezas',    color: '#d97706', ic: '🍺', orden: 2, pase: 'Bebidas', zona: 'barra', imagen: FK('beer,glass',12) },
+    { id: 'c3', nombre: 'Entrantes',   color: '#16a34a', ic: '🥗', orden: 3, pase: 'Entrantes', zona: 'cocina', imagen: FK('tapas,appetizer',13) },
+    { id: 'c4', nombre: 'Principales', color: '#7c3aed', ic: '🥩', orden: 4, pase: 'Segundos', zona: 'cocina', imagen: FK('steak,grill',14) },
+    { id: 'c5', nombre: 'Postres',     color: '#db2777', ic: '🍰', orden: 5, pase: 'Postres', zona: 'cocina', imagen: FK('dessert,cake',15) }
   ];
   function p(id, n, cat, precio, ic, pase) { return { id: id, nombre: n, categoriaId: cat, precio: precio, ic: ic, pasePorDefecto: pase, activo: true, stock: 100 }; }
   var prods = [
@@ -40,6 +41,33 @@ function masterSeed() {
   function setc(id, coste){ var p=prods.filter(function(x){return x.id===id;})[0]; if(p)p.coste=coste; }
   // costes de ejemplo (escandallo) para que el Maître pueda optimizar márgenes
   setc('p10',2.0); setc('p12',2.7); setc('p15',7.6); setc('p16',9.0); setc('p18',5.2); setc('p20',7.5); setc('p25',22.0);
+  function setimg(id,kw,l,desc){ var x=prods.filter(function(z){return z.id===id;})[0]; if(x){ x.imagen=FK(kw,l); if(desc)x.descripcion=desc; } }
+  setimg('p1','beer,draft',101,'Caña de cerveza bien tirada.');
+  setimg('p2','beer,glass',102,'Doble de cerveza de barril.');
+  setimg('p3','soda,softdrink',103,'Refresco frío a elegir.');
+  setimg('p4','water,bottle',104,'Agua mineral 50 cl.');
+  setimg('p5','wine,glass',105,'Copa de vino de la casa, D.O. Rioja.');
+  setimg('p6','coffee,espresso',106,'Café de tueste natural, recién molido.');
+  setimg('p7','beer,bottle',107,'Tercio de cerveza nacional.');
+  setimg('p8','beer,bottle',108,'Cerveza sin alcohol, bien fría.');
+  setimg('p9','craft,beer',109,'IPA artesana local, lúpulo aromático.');
+  setimg('p10','salad,fresh',110,'Hojas frescas, tomate, cebolla, atún y huevo.');
+  setimg('p11','gazpacho,soup',111,'Gazpacho andaluz, fresco y suave.');
+  setimg('p12','croquettes,fried',112,'Croquetas cremosas de jamón ibérico. 6 uds.');
+  setimg('p13','potatoes,fried',113,'Patatas crujientes con salsa brava y alioli.');
+  setimg('p14','potato,salad',114,'Ensaladilla rusa casera.');
+  setimg('p15','steak,beef',115,'Entrecot madurado a la brasa con guarnición.');
+  setimg('p16','beef,tenderloin',116,'Solomillo de ternera al punto que elijas.');
+  setimg('p17','roast,chicken',117,'Pollo de corral asado, jugoso.');
+  setimg('p18','paella,rice',118,'Paella de marisco, mínimo 2 personas.');
+  setimg('p19','calamari,fried',119,'Calamares a la andaluza, recién fritos.');
+  setimg('p20','octopus,seafood',120,'Pulpo a la gallega con pimentón y AOVE.');
+  setimg('p21','cheesecake,dessert',121,'Tarta de queso casera horneada.');
+  setimg('p22','flan,caramel',122,'Flan de huevo con caramelo.');
+  setimg('p23','icecream,gelato',123,'Selección de helados artesanos.');
+  setimg('p24','fruit,plate',124,'Fruta fresca de temporada.');
+  setimg('p25','monkfish,fish',125,'Rape a la plancha, fresco del día.');
+  setimg('menu1','lunch,menu',126,'Primero, segundo, postre y bebida.');
   function setm(id, mods){ var p=prods.filter(function(x){return x.id===id;})[0]; if(p)p.mods=mods; }
   setm('p6',[{n:'Leche',op:[{n:'Normal'},{n:'Desnatada'},{n:'Avena',p:0.3},{n:'Soja',p:0.3}]}]);
   setm('p13',[{n:'Salsa',op:[{n:'Brava'},{n:'Alioli'},{n:'Mixta'}]},{n:'Tamaño',op:[{n:'Tapa'},{n:'Ración',p:2}]}]);
@@ -92,7 +120,7 @@ function masterSeed() {
     { id: 'u5', nombre: 'Cocina',    rol: 'cocina',    pin: '9999', color: '#d97706', activo: true }
   ];
   var config = {
-    empresa: { nombre: 'La Taberna', direccion: 'C/ Mayor 1', poblacion: '', cif: 'B00000000', telefono: '' },
+    empresa: { nombre: 'La Taberna', direccion: 'C/ Mayor 1', poblacion: '', cif: 'B00000000', telefono: '', portada: 'https://loremflickr.com/1200/600/restaurant,food?lock=7' },
     ivaPorDefecto: 10,
     impuestos: [ { id: 'iva10', nombre: 'IVA 10%', tipo: 10 }, { id: 'iva21', nombre: 'IVA 21%', tipo: 21 }, { id: 'iva4', nombre: 'IVA 4%', tipo: 4 } ],
     formasPago: [
@@ -141,7 +169,7 @@ function masterSeed() {
     { id:'ar2', label:'Invitación', ic:'🎁', color:'#d97706', tipo:'invitacion' },
     { id:'ar3', label:'Happy Hour', ic:'⚡', color:'#7c3aed', tipo:'tarifa', param:'tf2' }
   ];
-  return { version: 17, categorias: cats, productos: prods, salas: salas, mesas: mesas, decor: decor, promociones: promociones, clientes: clientes, datafonos: datafonos, comentarios: comentarios, tarifas: tarifas, accionesRapidas: accionesRapidas, ventas7d: ventas7d, usuarios: usuarios, impresoras: [], config: config };
+  return { version: 19, categorias: cats, productos: prods, salas: salas, mesas: mesas, decor: decor, promociones: promociones, clientes: clientes, datafonos: datafonos, comentarios: comentarios, tarifas: tarifas, accionesRapidas: accionesRapidas, ventas7d: ventas7d, usuarios: usuarios, impresoras: [], config: config };
 }
 
 // Reservas de demostración (hoy)
