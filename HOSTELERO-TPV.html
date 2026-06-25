@@ -997,7 +997,9 @@ function onClick(e){
   var a=el.dataset.act, id=el.dataset.id;
   if(a==='closeModal'){ closeModal(); return; }
   switch(a){
-    case 'cambiarUsuario': cambiarUsuario(); break;
+    case 'cambiarUsuario': menuUsuario(); break;
+    case 'cambiarUsuarioGo': closeModal(); cambiarUsuario(); break;
+    case 'fichar': { var ft=el.dataset.tipo; var F=(typeof window!=='undefined')&&window.HOSTELERO_FICHAJE; if(F&&state.operador){ F.fichar(state.operador,ft); var lbl=((F.TIPOS&&F.TIPOS[ft])||{}).etiqueta||'Fichaje'; toast('🕒 '+lbl+' registrada'); } closeModal(); render(); break; }
     case 'sala': state.salaSel=id; render(); break;
     case 'toggleplano': state.editPlano=!state.editPlano; render(); break;
     case 'addmesa': { var sa=state.salaSel||DB.salas.slice().sort(function(a,b){return a.orden-b.orden;})[0].id; var nm=addMesa(sa); pushPlanoMaster(); render(); modalMesaEditor(nm.id); break; }
@@ -1424,6 +1426,23 @@ function loginKey(k){
   showLoginTPV(state._loginSel);
 }
 function cambiarUsuario(){ if(!confirm('¿Cerrar sesión y cambiar de usuario?')) return; var A=(typeof window!=='undefined')&&window.HOSTELERO_AUTH; if(A&&A.logout)A.logout(); state.operador=null; loginPin=''; showLoginTPV(); }
+function menuUsuario(){
+  var op=state.operador; if(!op)return;
+  var F=(typeof window!=='undefined')&&window.HOSTELERO_FICHAJE;
+  var acc=F?F.siguienteAccion(op.id):'entrada';
+  var est=F?F.estado(op.id):'fuera';
+  var min=F?F.minutosDia(op.id,fechaLocalStr(new Date())):0;
+  var ACC={entrada:{t:'Fichar entrada',ic:'🟢'},salida:{t:'Fichar salida',ic:'🔴'},pausa_fin:{t:'Reanudar turno',ic:'▶️'}};
+  var a=ACC[acc]||ACC.entrada;
+  var estTxt={fuera:'Fuera de turno',dentro:'En turno',pausa:'En pausa'}[est]||'';
+  var horas=min?(Math.floor(min/60)?Math.floor(min/60)+'h ':'')+(min%60)+'m':'';
+  openModal('<div class="modal sm" data-stop><h2>👤 '+esc(op.nombre)+'</h2><div class="mbody">'
+    +'<p class="muted" style="margin:0 0 12px">'+esc(estTxt)+(horas?(' · '+horas+' hoy'):'')+'</p>'
+    +'<button class="btn primary block" data-act="fichar" data-tipo="'+acc+'">'+a.ic+' '+a.t+'</button>'
+    +(est==='dentro'?'<button class="btn ghost block" style="margin-top:8px" data-act="fichar" data-tipo="pausa_inicio">⏸️ Iniciar pausa</button>':'')
+    +'<button class="btn ghost block" style="margin-top:8px" data-act="cambiarUsuarioGo">⇄ Cambiar de usuario</button>'
+    +'</div><div class="foot"><button class="btn ghost" data-act="closeModal">Cerrar</button></div></div>');
+}
 
 /* ----- Cliente y factura ----- */
 function modalCliente(){
