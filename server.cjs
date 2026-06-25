@@ -369,6 +369,14 @@ function escposTicket(t, ancho){
   return Buffer.from(o, 'latin1');
 }
 function pad(izq, der, ancho){ izq=String(izq); der=String(der); if(izq.length>ancho-der.length-1) izq=izq.slice(0,ancho-der.length-1); var sp=ancho-izq.length-der.length; if(sp<1)sp=1; return izq + rep(' ',sp) + der; }
+function imprimirMarcha(c){
+  var imps = (state.master && state.master.impresoras) || [];
+  imps.filter(function(p){ return p.activa !== false && (p.tipo||'cocina')==='cocina' && (p.windows || p.ip); }).forEach(function(p){
+    var buf = Buffer.concat([ p.beep ? Buffer.from(escposBeep(),'latin1') : Buffer.alloc(0),
+      escposTicket({cabecera:'>> MARCHAR '+(c.marcha||''), subs:[(c.mesa?('Mesa '+c.mesa):''), (c.camarero||''), new Date(c.createdAt||Date.now()).toLocaleTimeString('es-ES')].filter(Boolean), lineas:[]}, p.ancho||42) ]);
+    var cop = p.copias || 1; for(var i=0;i<cop;i++){ enviarBuf(p, buf); }
+  });
+}
 function aplicar(accion, d) {
   if (accion === '/api/comanda') {
     d.id = uid(); d.createdAt = Date.now(); d.estado = 'pendiente'; d.avisado = false;
@@ -411,6 +419,17 @@ function aplicar(accion, d) {
       var copias = (pr && pr.copias) || 1;
       var win = (pr && pr.windows) || d.windows;
       for (var ci = 0; ci < copias; ci++) { if (win) imprimirWin(win, buf); else if (pr && pr.ip) imprimirEn(pr.ip, pr.puerto, buf); }
+    } catch (e) {}
+  } else if (accion === '/api/marcha') {
+    var mc = { id: uid(), createdAt: Date.now(), estado: 'pendiente', avisado: false, mesa: d.mesa, camarero: d.camarero, marcha: d.pase, lineas: [{ kid: uid(), nombre: '▶ MARCHAR ' + d.pase, cantidad: 1, orden: d.pase, estado: 'pendiente', marcha: true }] };
+    state.comandas.push(mc);
+    try { imprimirMarcha(mc); } catch (e) {}
+  } else if (accion === '/api/abrir-cajon') {
+    try {
+      var imps3 = (state.master && state.master.impresoras) || [];
+      var pr3 = d.printerId ? imps3.filter(function (x) { return x.id === d.printerId; })[0] : null;
+      var kick = Buffer.from('\x1b\x70\x00\x19\xfa', 'latin1');
+      if (pr3) { if (pr3.windows) imprimirWin(pr3.windows, kick); else if (pr3.ip) imprimirEn(pr3.ip, pr3.puerto, kick); }
     } catch (e) {}
   }
   state.v = (state.v || 0) + 1;

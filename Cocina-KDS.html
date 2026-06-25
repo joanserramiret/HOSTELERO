@@ -132,7 +132,10 @@ function render(){
   var avisarOn=!estKDS||estKDS.avisarCamareros!==false;
   var acc=(estKDS&&estKDS.acciones)?estKDS.acciones:['disponibilidad','todolisto'];
   function pasaLin(l){ if(l.estado==='servido'||l.servido)return false; if(ordSet&&ordSet.indexOf(l.orden||'Primeros')<0)return false; if(prepSet&&prepSet.indexOf(l.preparacion)<0)return false; return true; }
-  var coms=Sync.comandas().map(function(c){ var lf=c.lineas.filter(pasaLin); return lf.length===c.lineas.length?c:Object.assign({},c,{lineas:lf}); }).filter(function(c){return c.lineas.length>0;});
+  var allComs=Sync.comandas();
+  var marchas=allComs.filter(function(c){ return c.marcha && (!ordSet || ordSet.indexOf(c.marcha)>=0); });
+  var coms=allComs.filter(function(c){return !c.marcha;}).map(function(c){ var lf=c.lineas.filter(pasaLin); return lf.length===c.lineas.length?c:Object.assign({},c,{lineas:lf}); }).filter(function(c){return c.lineas.length>0;});
+  var marchaH=marchas.map(function(c){ var mins=Math.floor((Date.now()-(c.createdAt||Date.now()))/60000); return '<div class="card urg" style="border-top-color:#e0436a;grid-column:1/-1"><div class="chead"><span class="m" style="color:#e0436a">▶ MARCHAR '+esc(c.marcha)+'</span><span class="cam">'+esc(c.mesa?('Mesa '+c.mesa):'')+(c.camarero?(' · '+esc(c.camarero)):'')+'</span><span class="t">⏱ '+mins+'′</span></div><div class="cfoot"><button class="btn recoger" data-act="recoger" data-id="'+c.id+'">✓ Hecho</button></div></div>'; }).join('');
   var cards=coms.length?coms.map(function(c){
     var mins=Math.floor((Date.now()-(c.createdAt||Date.now()))/60000);
     var urg=mins>=12?' urg':(mins>=7?' aviso':'');
@@ -162,7 +165,7 @@ function render(){
   var colStyle=(estKDS&&estKDS.columnas)?' style="grid-template-columns:repeat('+estKDS.columnas+',minmax(0,1fr))"':'';
   app.innerHTML='<div class="app"><div class="top"><h1>👨‍🍳 '+esc(nombreMon)+'</h1><span class="sub">'+coms.length+' comandas'+(ordSet?' · '+esc(ordSet.join(', ')):'')+'</span>'
     +'<div class="right"><span class="sub"><span class="dotmodo" style="background:'+mc+'"></span>'+(modo==='servidor'?'En red (tiempo real)':'Local')+'</span>'+cambiarBtn+dispBtn+'<button class="btn ghost" data-act="logout">Salir</button></div></div>'
-    +'<div class="grid"'+colStyle+'>'+cards+'</div></div>';
+    +'<div class="grid"'+colStyle+'>'+marchaH+cards+'</div></div>';
 }
 document.addEventListener('click',function(e){
   var es=e.target.closest('[data-est]');if(es){ if(EST)EST.set('kds',es.dataset.est); start(); return; }

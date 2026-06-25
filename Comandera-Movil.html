@@ -287,7 +287,7 @@ function showComanda(){st.view='comanda';
   } else cmd='<div class="empty">Toca productos para añadir a la comanda</div>';
   var uds=st.lineas.reduce(function(s,l){return s+l.cantidad;},0);
   var total=st.lineas.reduce(function(s,l){return s+lineImp(l);},0);
-  app.innerHTML='<div class="app"><div class="top"><button class="back" data-go="mesas">←</button><h1>Mesa '+esc(st.mesa)+'</h1><div class="right"><button class="btn123" data-go="disp" style="background:#3a1620;color:#ff9db4">🚫</button><button class="btn123" data-go="orden123">123</button></div></div>'
+  app.innerHTML='<div class="app"><div class="top"><button class="back" data-go="mesas">←</button><h1>Mesa '+esc(st.mesa)+'</h1><div class="right"><button class="btn123" data-go="cajon" title="Abrir cajón">💰</button><button class="btn123" data-go="marchar" title="Marchar pase">▶</button><button class="btn123" data-go="disp" style="background:#3a1620;color:#ff9db4">🚫</button><button class="btn123" data-go="orden123">123</button></div></div>'
     +'<div class="body">'+ordbar+'<div class="cattabs">'+tabs+'</div><div class="prods">'+prods+'</div></div>'
     +'<div class="cmd"><div class="cmdtot">Total <b>'+eur(total)+'</b></div><div class="lst">'+cmd+'</div><div class="foot" style="display:flex;gap:8px"><button class="btn123" style="flex:0 0 auto;padding:0 16px" '+(st.lineas.length?'':'disabled')+' data-go="cuenta">🧾 Cuenta</button><button class="enviar" style="flex:1" '+(uds?'':'disabled')+' data-go="enviar">Enviar a cocina ('+uds+')</button></div></div></div>';
 }
@@ -368,6 +368,14 @@ function enviar(){
   Sync.enviarComanda({mesa:st.mesa,camarero:me().nombre,lineas:st.lineas.map(function(l){return {nombre:l.nombre,ic:l.ic,cantidad:l.cantidad,orden:l.orden,preparacion:_prepDe(l.productId),precio:l.precio,comentario:l.comentario,descLinea:l.descLinea};})});
   toast('✅ Comanda enviada a cocina');
   showMesas();
+}
+function modalMarchar(){
+  if(!st.mesa){ toast('Abre una mesa primero'); return; }
+  var ops=ORDLIST.map(function(o){return '<button class="opt" data-marcha="'+o+'"><span class="oc" style="background:'+ordColor(o)+'"></span>▶ Marchar '+o+'</button>';}).join('');
+  var ov=document.createElement('div');ov.className='overlay';
+  ov.innerHTML='<div class="sheet"><h3>Marchar pase · Mesa '+esc(st.mesa)+'</h3><p style="color:#94a3b8;font-size:13px;margin:0 0 8px">Avisa a cocina e imprime la marcha en las impresoras de comandas.</p>'+ops+'</div>';
+  ov.addEventListener('click',function(e){ if(e.target===ov)return ov.remove(); var b=e.target.closest('[data-marcha]'); if(b){ Sync.marchar(st.mesa,b.dataset.marcha,me().nombre); ov.remove(); toast('▶ Marchado '+b.dataset.marcha); } });
+  document.body.appendChild(ov);
 }
 function imprimirCuentaCom(){
   if(!st.lineas.length){ toast('No hay líneas en la cuenta'); return; }
@@ -484,6 +492,8 @@ document.addEventListener('click',function(e){
     else if(go==='ordendef'){st.ordenActivo=null;showComanda();}
     else if(go==='enviar')enviar();
     else if(go==='cuenta')imprimirCuentaCom();
+    else if(go==='marchar')modalMarchar();
+    else if(go==='cajon'){ var ec=estCom(); if(ec&&ec.impresoraTickets){ Sync.abrirCajon(ec.impresoraTickets); toast('💰 Abriendo cajón'); } else toast('Sin impresora configurada para el cajón'); }
     return;}
 });
 if(Auth.sesion()&&Auth.puedeAbrir(Auth.sesion().rol,'movil')){ showMesas(); avisoJornada(); } else showLogin();

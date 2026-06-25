@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maqueta · HOSTELERO estilo Ágora</title>
+<style>
+:root{--navy:#0f2436;--bg:#eef1f6;--card:#fff;--line:#dfe4ec;--ink:#222c3a;--soft:#6b7686;--green:#16a34a;--teal:#0f766e;--gold:#f59e0b;--red:#0f766e;--hdrbtn:#1d3a52;}
+*{box-sizing:border-box;font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif}
+body{margin:0;background:#c8cfdb;color:var(--ink);padding:22px}
+h2.sec{font-weight:600;margin:6px 4px 10px;color:#3a4452}
+.rainbow{height:4px;background:linear-gradient(90deg,#0f766e,#14b8a6,#f59e0b)}
+.note{max-width:1280px;margin:0 auto 22px;color:#33405a;font-size:13px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 16px}
+.tpv{width:1280px;max-width:100%;margin:0 auto 34px;border-radius:14px;overflow:hidden;box-shadow:0 18px 50px rgba(10,30,60,.25);background:var(--bg)}
+.hdr{background:var(--navy);color:#fff;display:flex;align-items:center;gap:10px;padding:8px 12px}
+.logo{width:34px;height:34px;border-radius:9px;background:var(--red);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px}
+.datebox{background:#16456f;border-radius:8px;padding:6px 10px;text-align:center;font-size:12px;font-weight:800;line-height:1.2}
+.datebox small{display:block;font-weight:600;color:#ffd27a}
+.hbtn{background:var(--hdrbtn);border:none;color:#fff;border-radius:8px;padding:8px 11px;font-size:12.5px;font-weight:700}
+.hcol{display:flex;flex-direction:column;gap:6px}.hrow{display:flex;gap:6px;flex-wrap:wrap}.sp{flex:1}
+.huser{display:flex;align-items:center;gap:8px;font-weight:700}.huser .av{width:30px;height:30px;border-radius:50%;background:#fff;color:var(--navy);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:12px}
+.clock{background:#0a2742;border-radius:8px;padding:6px 10px;text-align:center;font-weight:800;line-height:1.1}.clock small{display:block;font-weight:600;font-size:10px;color:#9fb4cc}
+.body{display:flex;height:620px}
+.ticket{width:300px;background:var(--card);display:flex;flex-direction:column;border-right:1px solid var(--line)}
+.tkcols{display:flex;background:#5a6678;color:#fff;font-size:12px;font-weight:700;padding:8px 12px}
+.tkcols .c1{width:30px}.tkcols .c2{flex:1}.tkcols .c3{width:54px;text-align:right}.tkcols .c4{width:58px;text-align:right}
+.lines{flex:1;overflow:auto}
+.ln{display:flex;align-items:center;padding:9px 12px;border-bottom:1px solid #eef1f5;font-size:14px}
+.ln .c1{width:30px;font-weight:900;color:var(--navy)}.ln .c2{flex:1}.ln .c2 small{display:block;color:var(--soft);font-size:11px}.ln .c3{width:54px;text-align:right;color:var(--soft)}.ln .c4{width:58px;text-align:right;font-weight:800}
+.ln.sel{background:#eaf2fb}
+.tktot{display:flex;align-items:center;gap:10px;padding:10px 12px;border-top:2px solid var(--line);border-bottom:1px solid var(--line)}.tktot .ic{width:34px;height:34px;border:1px solid var(--line);border-radius:8px;display:flex;align-items:center;justify-content:center}.tktot .l{font-size:20px;font-weight:800}.tktot .v{margin-left:auto;font-size:25px;font-weight:900}
+.pad{display:grid;grid-template-columns:repeat(3,1fr) 74px;gap:6px;padding:8px}
+.pad .disp{grid-column:1 / 4;background:#f4f6fa;border:1px solid var(--line);border-radius:8px;text-align:right;padding:9px 12px;font-size:19px;font-weight:800;color:var(--soft)}
+.k{background:#fff;border:1px solid var(--line);border-radius:9px;padding:13px 0;font-size:18px;font-weight:800;text-align:center}.k.fn{background:#eef1f6;font-size:10.5px;font-weight:700;color:#445}.k.c{background:#5a6678;color:#fff}
+.fncol{width:104px;background:var(--bg);display:flex;flex-direction:column;gap:6px;padding:8px 6px;border-right:1px solid var(--line);overflow:auto}
+.fn{background:var(--navy);color:#fff;border:none;border-radius:9px;padding:10px 4px;font-size:10.5px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:4px;line-height:1.15}.fn .i{font-size:18px}
+.fn.green{background:var(--green)}.fn.amber{background:#e8920c}
+.prods{flex:1;display:flex;flex-direction:column;background:var(--bg);overflow:auto}
+.seclbl{font-size:11px;font-weight:800;color:var(--soft);text-transform:uppercase;letter-spacing:.5px;padding:10px 12px 4px}
+.tiles{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;padding:4px 10px 8px}
+.tile{background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 4px;min-height:78px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;text-align:center;cursor:pointer}
+.tile .em{font-size:26px}.tile .nm{font-size:11.5px;font-weight:700;line-height:1.1}
+.tile.fam{border-top:4px solid #2f73c7}
+.artwrap{border-top:6px solid #e7ebf2}
+.cobrarrow{padding:8px 10px}
+.cobrar{width:100%;background:var(--green);color:#fff;border:none;border-radius:11px;padding:15px;font-size:18px;font-weight:900}
+/* comandera */
+.stack{display:flex;gap:30px;flex-wrap:wrap;justify-content:center;align-items:flex-start}
+.phone{width:340px;border-radius:26px;background:#000;padding:8px;box-shadow:0 18px 50px rgba(10,30,60,.25)}
+.pscreen{background:var(--bg);border-radius:18px;overflow:hidden;height:680px;display:flex;flex-direction:column}
+.phdr{background:var(--navy);color:#fff;display:flex;align-items:center;gap:8px;padding:0 10px;height:48px}.phdr .t{font-weight:800;flex:1}.phdr .ic{width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:14px}
+.ptiles{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;padding:8px;overflow:auto;flex:1}
+.ptile{background:#fff;border:1px solid var(--line);border-top:3px solid #2f73c7;border-radius:9px;min-height:70px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-align:center}.ptile .em{font-size:22px}.ptile .nm{font-size:11px;font-weight:700}
+.pcmd{background:#fff;border-top:1px solid var(--line)}
+.pcmdtot{display:flex;justify-content:space-between;padding:8px 12px;font-weight:800;border-bottom:1px solid var(--line)}
+.pln{display:flex;gap:8px;padding:7px 12px;font-size:13px;border-bottom:1px solid #f1f4f8}.pln .q{font-weight:900;color:var(--navy)}.pln .n{flex:1}
+.pfoot{display:flex;gap:6px;padding:8px}.pbtn{flex:1;border:none;border-radius:10px;padding:12px;font-weight:900;color:#fff}
+</style>
+</head>
+<body>
+<div class="note"><b>Maqueta (no funcional)</b> · HOSTELERO con la disposición real de Ágora: barra azul + acciones, <b>ticket + teclado</b> a la izquierda, <b>columna de funciones</b> y <b>familias + artículos en mosaico</b> a la derecha. Si te vale, lo aplico al TPV y la comandera reales.</div>
+
+<h2 class="sec">TPV — pantalla de venta</h2>
+<div class="tpv">
+  <div class="hdr">
+    <div class="logo">H</div>
+    <div class="datebox">Negocio<small>⚠ 25/06/2026</small></div>
+    <div class="hcol">
+      <div class="hrow"><button class="hbtn">🍽️ Mesa 12</button><button class="hbtn">👤 Asignar cliente</button><button class="hbtn">🏷️ Tarifa Terraza</button><button class="hbtn">🎫 Identificar ticket</button></div>
+      <div class="hrow"><button class="hbtn">👥 Nº comensales</button><button class="hbtn">▶ Orden preparación (123)</button><button class="hbtn">↔️ Mover mesa</button></div>
+    </div>
+    <div class="sp"></div>
+    <div class="huser"><span class="av">JO</span> Joan</div>
+    <div class="clock">14:32<small>26 jun 2026</small></div>
+  </div>
+  <div class="rainbow"></div>
+  <div class="body">
+    <div class="ticket">
+      <div class="tkcols"><span class="c1">Uds</span><span class="c2">Producto</span><span class="c3">Precio</span><span class="c4">Total</span></div>
+      <div class="lines">
+        <div class="ln sel"><span class="c1">2</span><span class="c2">Caña</span><span class="c3">1,80</span><span class="c4">3,60</span></div>
+        <div class="ln"><span class="c1">1</span><span class="c2">Croquetas</span><span class="c3">6,00</span><span class="c4">6,00</span></div>
+        <div class="ln"><span class="c1">1</span><span class="c2">Entrecot<small>· en cocina</small></span><span class="c3">18,00</span><span class="c4">18,00</span></div>
+        <div class="ln"><span class="c1">1</span><span class="c2">Tarta queso<small>+ helado +1,00</small></span><span class="c3">6,00</span><span class="c4">6,00</span></div>
+      </div>
+      <div class="tktot"><span class="ic">🧮</span><span class="l">Total</span><span class="v">33,60 €</span></div>
+      <div class="pad">
+        <div class="disp">0</div>
+        <div class="k">7</div><div class="k">8</div><div class="k">9</div><div class="k c">C</div>
+        <div class="k">4</div><div class="k">5</div><div class="k">6</div><div class="k fn">% Dto</div>
+        <div class="k">1</div><div class="k">2</div><div class="k">3</div><div class="k fn">€ Dto</div>
+        <div class="k">0</div><div class="k">,</div><div class="k">-</div><div class="k fn">Cant.</div>
+      </div>
+    </div>
+    <div class="fncol">
+      <button class="fn green"><span class="i">💵</span>Cobrar efectivo</button>
+      <button class="fn green"><span class="i">💳</span>Cobrar tarjeta</button>
+      <button class="fn"><span class="i">▶</span>Marchar</button>
+      <button class="fn"><span class="i">👨‍🍳</span>Preparar</button>
+      <button class="fn"><span class="i">🖨️</span>Imprimir</button>
+      <button class="fn"><span class="i">💶</span>Pagos</button>
+      <button class="fn"><span class="i">➗</span>Dividir</button>
+      <button class="fn"><span class="i">🧾</span>Cuenta</button>
+      <button class="fn amber"><span class="i">⚙️</span>Más opciones</button>
+    </div>
+    <div class="prods">
+      <div class="seclbl">Familias</div>
+      <div class="tiles">
+        <div class="tile fam"><span class="em">🥤</span><span class="nm">Refrescos</span></div>
+        <div class="tile fam"><span class="em">🍺</span><span class="nm">Cervezas</span></div>
+        <div class="tile fam"><span class="em">🍷</span><span class="nm">Vinos</span></div>
+        <div class="tile fam"><span class="em">🥃</span><span class="nm">Destilados</span></div>
+        <div class="tile fam"><span class="em">🍔</span><span class="nm">Hamburguesas</span></div>
+        <div class="tile fam"><span class="em">🥩</span><span class="nm">Carnes</span></div>
+        <div class="tile fam"><span class="em">🐟</span><span class="nm">Pescados</span></div>
+        <div class="tile fam"><span class="em">🥗</span><span class="nm">Ensaladas</span></div>
+        <div class="tile fam"><span class="em">🍕</span><span class="nm">Pizzas</span></div>
+        <div class="tile fam"><span class="em">🍝</span><span class="nm">Pasta</span></div>
+        <div class="tile fam"><span class="em">🍰</span><span class="nm">Postres</span></div>
+        <div class="tile fam"><span class="em">🍽️</span><span class="nm">Menús</span></div>
+        <div class="tile fam"><span class="em">☕</span><span class="nm">Cafés</span></div>
+        <div class="tile fam"><span class="em">🍳</span><span class="nm">Desayunos</span></div>
+        <div class="tile fam"><span class="em">🧆</span><span class="nm">Raciones</span></div>
+        <div class="tile fam"><span class="em">🥪</span><span class="nm">Bocadillos</span></div>
+      </div>
+      <div class="artwrap">
+        <div class="seclbl">Artículos · Cervezas</div>
+        <div class="tiles">
+          <div class="tile"><span class="em">🍺</span><span class="nm">Caña<br>1,80</span></div>
+          <div class="tile"><span class="em">🍺</span><span class="nm">Doble<br>2,60</span></div>
+          <div class="tile"><span class="em">🍺</span><span class="nm">Tercio<br>2,80</span></div>
+          <div class="tile"><span class="em">🍺</span><span class="nm">Sin<br>2,40</span></div>
+          <div class="tile"><span class="em">🍺</span><span class="nm">IPA<br>3,80</span></div>
+          <div class="tile"><span class="em">🍺</span><span class="nm">Estrella<br>2,60</span></div>
+          <div class="tile"><span class="em">🍺</span><span class="nm">Mahou<br>2,40</span></div>
+          <div class="tile"><span class="em">🍺</span><span class="nm">Ambar<br>2,80</span></div>
+          <div class="tile"><span class="em">🍺</span><span class="nm">Tostada<br>2,60</span></div>
+          <div class="tile"><span class="em">🍺</span><span class="nm">Cruzcampo<br>2,40</span></div>
+          <div class="tile"><span class="em">🍺</span><span class="nm">Barril<br>2,20</span></div>
+          <div class="tile"><span class="em">🍺</span><span class="nm">Radler<br>2,60</span></div>
+        </div>
+      </div>
+      <div class="cobrarrow"><button class="cobrar">💶 Cobrar 33,60 €</button></div>
+    </div>
+  </div>
+</div>
+
+<h2 class="sec">Comandera (móvil)</h2>
+<div class="stack">
+  <div class="phone"><div class="pscreen">
+    <div class="phdr"><div class="logo" style="width:28px;height:28px;font-size:14px">H</div><div class="t">Salón S1 · 👥2</div><div class="ic">💬</div><div class="ic">⌨</div></div>
+    <div class="rainbow"></div>
+    <div class="pcmd" style="max-height:170px;overflow:auto;border-top:none">
+      <div class="pln"><span class="q">2</span><span class="n">Caña</span><span style="color:#6b7686">1,80</span><span style="width:50px;text-align:right;font-weight:800">3,60</span></div>
+      <div class="pln" style="background:#eaf2fb"><span class="q">1</span><span class="n">Croquetas</span><span style="color:#6b7686">6,00</span><span style="width:50px;text-align:right;font-weight:800">6,00</span></div>
+      <div class="pln"><span class="q">1</span><span class="n">Entrecot</span><span style="color:#6b7686">18,00</span><span style="width:50px;text-align:right;font-weight:800">18,00</span></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-top:2px solid var(--line);border-bottom:1px solid var(--line);background:#fff"><span style="font-size:18px;font-weight:800">Total</span><span style="font-size:20px;font-weight:900">27,60 €</span></div>
+    <div class="pfams">
+      <div class="pfam" style="background:#0ea5e9">🥤 Refrescos</div>
+      <div class="pfam" style="background:#d97706">🍺 Cervezas</div>
+      <div class="pfam" style="background:#16a34a">🥗 Entrantes</div>
+      <div class="pfam" style="background:#7c3aed">🥩 Carnes</div>
+      <div class="pfam" style="background:#db2777">🍰 Postres</div>
+    </div>
+    <div class="ptiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="ptile" style="border-top-color:#16a34a"><span class="em">🥗</span><span class="nm">Ensalada<br>6,50</span></div>
+      <div class="ptile" style="border-top-color:#16a34a"><span class="em">🧆</span><span class="nm">Croquetas<br>6,00</span></div>
+      <div class="ptile" style="border-top-color:#16a34a"><span class="em">🍅</span><span class="nm">Gazpacho<br>4,50</span></div>
+      <div class="ptile" style="border-top-color:#16a34a"><span class="em">🍟</span><span class="nm">Bravas<br>4,50</span></div>
+      <div class="ptile" style="border-top-color:#16a34a"><span class="em">🥔</span><span class="nm">Ensaladilla<br>4,00</span></div>
+      <div class="ptile" style="border-top-color:#16a34a"><span class="em">🧀</span><span class="nm">Tabla<br>9,00</span></div>
+    </div>
+    <div style="display:flex;justify-content:space-around;align-items:center;background:var(--navy);padding:10px 6px;color:#fff;font-size:20px">
+      <span title="Atrás">‹</span><span title="Marchar">▶</span><span title="Orden 123">1·2·3</span><span title="Cuenta">🧾</span><span title="Enviar a cocina" style="background:#16a34a;border-radius:8px;padding:6px 14px;font-size:14px;font-weight:800">Enviar (3)</span><span title="Más">▦</span>
+    </div>
+  </div></div>
+</div>
+</body>
+</html>

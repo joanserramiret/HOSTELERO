@@ -63,7 +63,13 @@
     guardarReserva: function (r) { if (modo === 'servidor') return post('/api/reserva', { reserva: r }); if (!state.reservas) state.reservas = []; if (r.id) { var k = -1; state.reservas.forEach(function (x, i) { if (x.id === r.id) k = i; }); if (k >= 0) state.reservas[k] = r; else state.reservas.push(r); } else { r.id = 'rsv' + uid(); r.creada = Date.now(); state.reservas.push(r); } commitLocal(); },
     borrarReserva: function (id) { if (modo === 'servidor') return post('/api/reserva-borrar', { id: id }); state.reservas = (state.reservas || []).filter(function (x) { return x.id !== id; }); commitLocal(); },
     jornada: function () { return state.jornada || null; },
-    setJornada: function (j) { if (modo === 'servidor') return post('/api/jornada', { jornada: j }); state.jornada = j; commitLocal(); }
+    setJornada: function (j) { if (modo === 'servidor') return post('/api/jornada', { jornada: j }); state.jornada = j; commitLocal(); },
+    marchar: function (mesa, pase, camarero) {
+      if (modo === 'servidor') return post('/api/marcha', { mesa: mesa, pase: pase, camarero: camarero });
+      var m = { id: uid(), createdAt: Date.now(), estado: 'pendiente', avisado: false, mesa: mesa, camarero: camarero, marcha: pase, lineas: [{ kid: uid(), nombre: '▶ MARCHAR ' + pase, cantidad: 1, orden: pase, estado: 'pendiente', marcha: true }] };
+      state.comandas.push(m); commitLocal();
+    },
+    abrirCajon: function (printerId) { if (modo === 'servidor') return post('/api/abrir-cajon', { printerId: printerId }); }
   };
 
   if (esServidor) initServidor(); else initLocal();
