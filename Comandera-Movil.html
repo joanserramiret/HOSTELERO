@@ -289,7 +289,7 @@ function showComanda(){st.view='comanda';
   var total=st.lineas.reduce(function(s,l){return s+lineImp(l);},0);
   app.innerHTML='<div class="app"><div class="top"><button class="back" data-go="mesas">←</button><h1>Mesa '+esc(st.mesa)+'</h1><div class="right"><button class="btn123" data-go="disp" style="background:#3a1620;color:#ff9db4">🚫</button><button class="btn123" data-go="orden123">123</button></div></div>'
     +'<div class="body">'+ordbar+'<div class="cattabs">'+tabs+'</div><div class="prods">'+prods+'</div></div>'
-    +'<div class="cmd"><div class="cmdtot">Total <b>'+eur(total)+'</b></div><div class="lst">'+cmd+'</div><div class="foot"><button class="enviar" '+(uds?'':'disabled')+' data-go="enviar">Enviar a cocina ('+uds+')</button></div></div></div>';
+    +'<div class="cmd"><div class="cmdtot">Total <b>'+eur(total)+'</b></div><div class="lst">'+cmd+'</div><div class="foot" style="display:flex;gap:8px"><button class="btn123" style="flex:0 0 auto;padding:0 16px" '+(st.lineas.length?'':'disabled')+' data-go="cuenta">🧾 Cuenta</button><button class="enviar" style="flex:1" '+(uds?'':'disabled')+' data-go="enviar">Enviar a cocina ('+uds+')</button></div></div></div>';
 }
 function addProd(ix){
   var cat=getCARTA()[st.catSel];if(!cat)return;var it=cat.items[ix];if(!it)return;
@@ -368,6 +368,15 @@ function enviar(){
   Sync.enviarComanda({mesa:st.mesa,camarero:me().nombre,lineas:st.lineas.map(function(l){return {nombre:l.nombre,ic:l.ic,cantidad:l.cantidad,orden:l.orden,preparacion:_prepDe(l.productId),precio:l.precio,comentario:l.comentario,descLinea:l.descLinea};})});
   toast('✅ Comanda enviada a cocina');
   showMesas();
+}
+function imprimirCuentaCom(){
+  if(!st.lineas.length){ toast('No hay líneas en la cuenta'); return; }
+  var est=estCom(); var pid=est&&est.impresoraTickets;
+  if(!pid){ toast('⚠️ Esta comandera no tiene impresora (Admin → Estaciones)'); return; }
+  var total=st.lineas.reduce(function(s,l){return s+lineImp(l);},0);
+  var lineas=st.lineas.map(function(l){ var det=[]; if(l.comentario)det.push(l.comentario); return {cantidad:l.cantidad,nombre:l.nombre,importe:eur(lineImp(l)),detalle:det}; });
+  var doc={cabecera:'CUENTA',subs:['Mesa '+st.mesa, new Date().toLocaleString('es-ES'), 'Atiende: '+me().nombre],lineas:lineas,total:eur(total),pies:['Cuenta provisional · no es factura','Solicítela en caja para el cobro']};
+  try{ fetch('/api/imprimir-doc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({printerId:pid,doc:doc})}); toast('🧾 Cuenta enviada a la impresora'); }catch(e){ toast('Error al imprimir'); }
 }
 
 /* avisos de cocina al móvil del camarero */
@@ -474,6 +483,7 @@ document.addEventListener('click',function(e){
     else if(go==='orden123')modal123();
     else if(go==='ordendef'){st.ordenActivo=null;showComanda();}
     else if(go==='enviar')enviar();
+    else if(go==='cuenta')imprimirCuentaCom();
     return;}
 });
 if(Auth.sesion()&&Auth.puedeAbrir(Auth.sesion().rol,'movil')){ showMesas(); avisoJornada(); } else showLogin();

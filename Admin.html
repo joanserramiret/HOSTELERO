@@ -732,9 +732,13 @@ function modalImp(p){
   ov('<h3>'+(p?'Editar impresora':'Nueva impresora')+'</h3><div class="mb">'
     +'<div class="row"><div class="field"><label>Nombre</label><input id="i_n" value="'+esc(p?p.nombre:'')+'" placeholder="Cocina / Barra / Caja"></div>'
     +'<div class="field"><label>Tipo</label><select id="i_tipo"><option value="cocina"'+(tipo==='cocina'?' selected':'')+'>Cocina (comandas por preparación)</option><option value="documentos"'+(tipo==='documentos'?' selected':'')+'>Documentos (cuenta / factura)</option></select></div></div>'
-    +'<div class="field"><label>Nombre de la impresora en Windows</label><input id="i_win" value="'+esc(p?(p.windows||''):'')+'" placeholder="Tal cual aparece en Windows"></div>'
-    +'<div class="row"><div class="field" style="max-width:130px"><label>Copias</label><input id="i_cop" type="number" min="1" value="'+(p&&p.copias?p.copias:1)+'"></div>'
-    +'<div class="field"><label>IP de red (opcional)</label><input id="i_ip" value="'+esc(p?(p.ip||''):'')+'" placeholder="ESC/POS 192.168.1.50"></div>'
+    +'<div class="field"><label>Impresora de Windows <button type="button" class="btn ghost sm" data-act="detectimp" style="margin-left:6px">🔄 Detectar</button></label>'
+      +'<input id="i_win" list="winlist" value="'+esc(p?(p.windows||''):'')+'" placeholder="Elige de la lista o escribe el nombre exacto"><datalist id="winlist"></datalist>'
+      +'<div id="win_note" class="muted" style="font-size:11px;margin-top:4px">Da de alta la impresora en Windows; aquí saldrá su nombre. Imprime en ESC/POS por ese nombre.</div></div>'
+    +'<div class="row"><div class="field" style="max-width:120px"><label>Copias</label><input id="i_cop" type="number" min="1" value="'+(p&&p.copias?p.copias:1)+'"></div>'
+    +'<div class="field"><label>Ancho (caracteres)</label><input id="i_anc" type="number" value="'+(p&&p.ancho?p.ancho:42)+'"></div>'
+    +'<div class="field" style="display:flex;align-items:flex-end"><label class="chk" style="margin-bottom:8px"><input type="checkbox" id="i_beep" '+(p&&p.beep?'checked':'')+'> 🔔 Pitido al imprimir</label></div></div>'
+    +'<div class="row"><div class="field"><label>IP de red (opcional, si no es por Windows)</label><input id="i_ip" value="'+esc(p?(p.ip||''):'')+'" placeholder="ESC/POS 192.168.1.50"></div>'
     +'<div class="field" style="max-width:100px"><label>Puerto</label><input id="i_pt" type="number" value="'+(p?(p.puerto||9100):9100)+'"></div></div>'
     +'<div id="i_cocina" style="'+(tipo==='cocina'?'':'display:none')+'">'
       +'<div style="margin:8px 0 6px;font-weight:800;font-size:12px;color:var(--soft);text-transform:uppercase">Preparaciones que salen por esta impresora</div>'
@@ -745,12 +749,21 @@ function modalImp(p){
     +'</div><div class="foot">'+(p?'<button class="btn red" data-deli="'+p.id+'" style="margin-right:auto">Eliminar</button>':'')
     +'<button class="btn ghost" data-act="cerrar">Cancelar</button><button class="btn" data-act="saveimp" data-id="'+(p?p.id:'')+'">Guardar</button></div>');
   var selT=document.getElementById('i_tipo'); if(selT) selT.onchange=function(){ var k=document.getElementById('i_cocina'); if(k)k.style.display=(this.value==='cocina')?'':'none'; };
+  cargarImpresorasWin();
+}
+function cargarImpresorasWin(){
+  try{ fetch('/api/printers').then(function(r){return r.json();}).then(function(j){
+    var dl=document.getElementById('winlist'); if(dl) dl.innerHTML=(j.printers||[]).map(function(n){return '<option value="'+esc(n)+'"></option>';}).join('');
+    var nt=document.getElementById('win_note');
+    if(nt){ if(j.windows===false) nt.textContent='El servidor no corre en Windows: escribe el nombre manualmente.'; else nt.textContent=(j.printers&&j.printers.length?('Detectadas '+j.printers.length+' impresoras de Windows. Elige una.'):'No se detectaron impresoras; revísalas en Windows.'); }
+  }).catch(function(){}); }catch(e){}
 }
 function guardarImp(id){
   var n=val('i_n').trim(); if(!n)return toast('Pon el nombre');
   if(!M.impresoras)M.impresoras=[];
   var tipo=val('i_tipo');
-  var data={id:id||('imp'+uid()),nombre:n,tipo:tipo,windows:val('i_win').trim()||undefined,copias:parseInt(val('i_cop'),10)||1,ip:val('i_ip').trim()||undefined,puerto:parseInt(val('i_pt'))||9100};
+  var _ip=val('i_ip').trim();
+  var data={id:id||('imp'+uid()),nombre:n,tipo:tipo,windows:val('i_win').trim()||undefined,copias:parseInt(val('i_cop'),10)||1,ancho:parseInt(val('i_anc'),10)||42,beep:chk('i_beep'),ip:_ip||undefined,puerto:_ip?(parseInt(val('i_pt'))||9100):undefined};
   if(tipo==='cocina'){
     data.preparaciones=Array.prototype.map.call(document.querySelectorAll('.i_prep:checked'),function(x){return x.value;});
     data.ordenes=Array.prototype.map.call(document.querySelectorAll('.i_ord:checked'),function(x){return x.value;});
@@ -763,7 +776,7 @@ function delPrep(id){ if(!confirm('¿Eliminar esta preparación?'))return; M.pre
 function testPrint(id){
   var p=(M.impresoras||[]).filter(function(x){return x.id===id;})[0]; if(!p)return;
   if(Sync.modo()!=='servidor')return toast('Necesita el servidor en marcha');
-  try{ fetch('/api/print-test',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ip:p.ip,puerto:p.puerto})}); toast('Prueba enviada a '+p.nombre,true); }catch(e){ toast('Error al enviar'); }
+  try{ fetch('/api/imprimir-doc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({printerId:p.id,doc:{cabecera:p.nombre,sub:'Prueba de impresion',lineas:[{cantidad:1,nombre:'HOSTELERO IA POS',importe:''}],pies:['Impresora OK','¡Pitido!']}})}); toast('Prueba enviada a '+p.nombre,true); }catch(e){ toast('Error al enviar'); }
 }
 
 /* ---- FICHAJE ---- */
@@ -849,6 +862,7 @@ document.addEventListener('click',function(e){
     case 'nuevaest': modalEstacion(null); break;
     case 'saveest': guardarEstacion(a.dataset.id); break;
     case 'newprep': newPrep(); break;
+    case 'detectimp': cargarImpresorasWin(); toast('Buscando impresoras…'); break;
     case 'bulkall': { var all=bulkAllIds(); bulk.ids=(bulk.ids.length===all.length&&all.length)?[]:all.slice(); render(); break; }
     case 'bulkpreciook': bulkPrecioOk(); break;
     case 'bulkfamiliaok': bulkFamiliaOk(); break;
@@ -949,24 +963,27 @@ function viewComentarios(){
   var h='<div class="bar"><p class="muted" style="margin:0">Comentarios rápidos para las líneas de comanda. Asígnalos a una familia o déjalos globales.</p><div class="r" style="margin-left:auto">'+bulkSelAllBtn()+'<button class="btn" data-act="newcom">+ Comentario</button></div></div>';
   h+='<table class="tbl"><thead><tr><th style="width:34px"></th><th>Comentario</th><th>Familia</th><th></th></tr></thead><tbody>';
   if(!coms.length) h+='<tr><td colspan="4" style="color:var(--soft)">Aún no hay comentarios. Crea el primero.</td></tr>';
-  coms.forEach(function(c){ h+='<tr><td>'+bulkChk(c.id)+'</td><td><b>'+esc(c.texto)+'</b></td><td>'+esc(catName(c.categoriaId))+'</td><td style="text-align:right"><button class="btn ghost sm" data-editcom="'+c.id+'">Editar</button></td></tr>'; });
+  coms.forEach(function(c){ var pb=(c.precio!=null&&c.precio!==0)?(' <span class="badge" style="background:'+(c.precio<0?'#fee2e2':'#dcfce7')+';color:'+(c.precio<0?'#e11d48':'#15803d')+'">'+(c.precio>0?'+':'')+c.precio.toFixed(2)+' €</span>'):''; h+='<tr><td>'+bulkChk(c.id)+'</td><td><b>'+esc(c.texto)+'</b>'+pb+'</td><td>'+esc(catName(c.categoriaId))+'</td><td style="text-align:right"><button class="btn ghost sm" data-editcom="'+c.id+'">Editar</button></td></tr>'; });
   h+='</tbody></table>'; return h;
 }
 function modalComentario(c){
   modalOpen=true;
   var opts='<option value=""'+(!c||!c.categoriaId?' selected':'')+'>🌐 Global (todas las familias)</option>'+(M.categorias||[]).map(function(k){return '<option value="'+k.id+'"'+(c&&c.categoriaId===k.id?' selected':'')+'>'+esc((k.ic||'')+' '+k.nombre)+'</option>';}).join('');
   ov('<h3>'+(c?'Editar comentario':'Nuevo comentario')+'</h3><div class="mb">'
-    +'<div class="field"><label>Texto</label><input id="cm_t" value="'+esc(c?c.texto:'')+'" placeholder="ej. Sin gluten, Poco hecho, Para llevar…"></div>'
+    +'<div class="row"><div class="field"><label>Texto</label><input id="cm_t" value="'+esc(c?c.texto:'')+'" placeholder="ej. Sin gluten, Poco hecho, Para llevar…"></div>'
+    +'<div class="field" style="max-width:140px"><label>Precio (± €, opcional)</label><input id="cm_p" type="number" step="0.10" value="'+(c&&c.precio!=null?c.precio:'')+'" placeholder="—"></div></div>'
     +'<div class="field"><label>Familia</label><select id="cm_c">'+opts+'</select></div>'
+    +'<p class="muted" style="font-size:12px;margin:0">Con precio (suma o resta, ej. -1,00 o 2,00) se cobra e imprime en el ticket. Sin precio, solo es una nota de preparación.</p>'
     +'</div><div class="foot">'+(c?'<button class="btn red" data-delcom="'+c.id+'" style="margin-right:auto">Eliminar</button>':'')
     +'<button class="btn ghost" data-act="cerrar">Cancelar</button><button class="btn" data-act="savecom" data-id="'+(c?c.id:'')+'">Guardar</button></div>');
 }
 function guardarComentario(id){
   var t=val('cm_t').trim(); if(!t)return toast('Pon el texto');
   var cat=val('cm_c')||null;
+  var pr=(val('cm_p')==='')?undefined:(parseFloat(val('cm_p'))||0);
   if(!M.comentarios)M.comentarios=[];
-  if(id) M.comentarios=M.comentarios.map(function(c){return c.id===id?{id:id,texto:t,categoriaId:cat}:c;});
-  else M.comentarios.push({id:'cm'+uid(),texto:t,categoriaId:cat});
+  if(id) M.comentarios=M.comentarios.map(function(c){return c.id===id?{id:id,texto:t,categoriaId:cat,precio:pr}:c;});
+  else M.comentarios.push({id:'cm'+uid(),texto:t,categoriaId:cat,precio:pr});
   saveMaster();cerrar();render();toast('Comentario guardado',true);
 }
 /* ---- TARIFAS / listas de precio ---- */

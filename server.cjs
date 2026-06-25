@@ -6,8 +6,71 @@
 */
 'use strict';
 var http = require('http'), fs = require('fs'), path = require('path'), net = require('net');
+var cp = require('child_process'), os = require('os');
 var DIR = __dirname;
 var DATAFILE = path.join(DIR, 'servicio.json');
+
+/* ===== Impresión a impresoras de Windows (ESC/POS en crudo, sin npm) ===== */
+var ESWIN = (process.platform === 'win32');
+var _psRaw = null;
+function psRawScript() {
+  if (_psRaw) return _psRaw;
+  var f = path.join(os.tmpdir(), 'hostelero_rawprint.ps1');
+  var src =
+    'param([string]$Printer,[string]$DataFile)\n' +
+    '$cs = @"\n' +
+    'using System;\n' +
+    'using System.IO;\n' +
+    'using System.Runtime.InteropServices;\n' +
+    'public class RawPrinter {\n' +
+    '  [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Unicode)]\n' +
+    '  public struct DOCINFOW { [MarshalAs(UnmanagedType.LPWStr)] public string pDocName; [MarshalAs(UnmanagedType.LPWStr)] public string pOutputFile; [MarshalAs(UnmanagedType.LPWStr)] public string pDataType; }\n' +
+    '  [DllImport("winspool.Drv", EntryPoint="OpenPrinterW", SetLastError=true, CharSet=CharSet.Unicode)] public static extern bool OpenPrinter(string src, out IntPtr h, IntPtr pd);\n' +
+    '  [DllImport("winspool.Drv", EntryPoint="ClosePrinter", SetLastError=true)] public static extern bool ClosePrinter(IntPtr h);\n' +
+    '  [DllImport("winspool.Drv", EntryPoint="StartDocPrinterW", SetLastError=true, CharSet=CharSet.Unicode)] public static extern bool StartDocPrinter(IntPtr h, int level, ref DOCINFOW di);\n' +
+    '  [DllImport("winspool.Drv", EntryPoint="EndDocPrinter", SetLastError=true)] public static extern bool EndDocPrinter(IntPtr h);\n' +
+    '  [DllImport("winspool.Drv", EntryPoint="StartPagePrinter", SetLastError=true)] public static extern bool StartPagePrinter(IntPtr h);\n' +
+    '  [DllImport("winspool.Drv", EntryPoint="EndPagePrinter", SetLastError=true)] public static extern bool EndPagePrinter(IntPtr h);\n' +
+    '  [DllImport("winspool.Drv", EntryPoint="WritePrinter", SetLastError=true)] public static extern bool WritePrinter(IntPtr h, IntPtr buf, int count, out int written);\n' +
+    '  public static bool Send(string printer, byte[] bytes) {\n' +
+    '    IntPtr h; if(!OpenPrinter(printer, out h, IntPtr.Zero)) return false;\n' +
+    '    DOCINFOW di = new DOCINFOW(); di.pDocName="HOSTELERO"; di.pDataType="RAW"; bool ok=false;\n' +
+    '    if(StartDocPrinter(h,1,ref di)){ if(StartPagePrinter(h)){ IntPtr p=Marshal.AllocCoTaskMem(bytes.Length); Marshal.Copy(bytes,0,p,bytes.Length); int w; ok=WritePrinter(h,p,bytes.Length,out w); Marshal.FreeCoTaskMem(p); EndPagePrinter(h);} EndDocPrinter(h);} \n' +
+    '    ClosePrinter(h); return ok;\n' +
+    '  }\n' +
+    '}\n' +
+    '"@\n' +
+    'Add-Type -TypeDefinition $cs -Language CSharp\n' +
+    '$bytes = [System.IO.File]::ReadAllBytes($DataFile)\n' +
+    '[RawPrinter]::Send($Printer, $bytes) | Out-Null\n';
+  try { fs.writeFileSync(f, src, 'utf8'); _psRaw = f; } catch (e) { _psRaw = null; }
+  return _psRaw;
+}
+function imprimirWin(printer, buf) {
+  if (!ESWIN || !printer) return;
+  try {
+    var tmp = path.join(os.tmpdir(), 'hostelero_doc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6) + '.bin');
+    fs.writeFileSync(tmp, buf);
+    var script = psRawScript(); if (!script) return;
+    var args = ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', script, '-Printer', printer, '-DataFile', tmp];
+    var ch = cp.spawn('powershell.exe', args, { windowsHide: true });
+    ch.on('close', function () { try { fs.unlinkSync(tmp); } catch (e) {} });
+    ch.on('error', function () {});
+  } catch (e) {}
+}
+function listarImpresorasWin(cb) {
+  if (!ESWIN) return cb([]);
+  cp.exec('powershell -NoProfile -Command "Get-Printer | Select-Object -ExpandProperty Name"', { timeout: 9000, windowsHide: true }, function (err, stdout) {
+    var arr = String(stdout || '').split(/\r?\n/).map(function (s) { return s.trim(); }).filter(Boolean);
+    if (!err && arr.length) return cb(arr);
+    cp.exec('wmic printer get name', { timeout: 9000, windowsHide: true }, function (e2, out2) {
+      var a2 = String(out2 || '').split(/\r?\n/).map(function (s) { return s.trim(); }).filter(function (s) { return s && s.toLowerCase() !== 'name'; });
+      cb(a2);
+    });
+  });
+}
+/* Pitido ESC/POS (buzzer): ESC B n t — n=veces, t=duración */
+function escposBeep() { return '\x1b\x42\x03\x02'; }
 
 var PUERTOS = {
   7870: 'index.html',            // Acceso / lanzador
@@ -265,10 +328,14 @@ function imprimirEn(ip, puerto, buf){
     sock.on('error', function(){});
   }catch(e){}
 }
+function enviarBuf(p, buf){
+  // Imprime a la impresora de Windows por nombre (crudo ESC/POS); si no, a IP de red.
+  if(p.windows) imprimirWin(p.windows, buf);
+  else if(p.ip) imprimirEn(p.ip, p.puerto, buf);
+}
 function imprimirComanda(c){
   var imps = (state.master && state.master.impresoras) || [];
-  // Solo impresoras de cocina con IP (ESC/POS). Las mapeadas por nombre de Windows requieren el agente local.
-  imps.filter(function(p){ return p.activa !== false && (p.tipo||'cocina')==='cocina' && p.ip; }).forEach(function(p){
+  imps.filter(function(p){ return p.activa !== false && (p.tipo||'cocina')==='cocina' && (p.windows || p.ip); }).forEach(function(p){
     var lineas = (c.lineas || []).filter(function(l){
       if(l.estado==='servido') return false;
       if(p.preparaciones && p.preparaciones.length && p.preparaciones.indexOf(l.preparacion)<0) return false;
@@ -276,10 +343,32 @@ function imprimirComanda(c){
       return true;
     });
     if(!lineas.length) return;
+    var buf = Buffer.concat([ p.beep ? Buffer.from(escposBeep(),'latin1') : Buffer.alloc(0), escposComanda({mesa:c.mesa,camarero:c.camarero,createdAt:c.createdAt,lineas:lineas}, p.ancho||42) ]);
     var copias = p.copias || 1;
-    for(var i=0;i<copias;i++){ imprimirEn(p.ip, p.puerto, escposComanda({mesa:c.mesa,camarero:c.camarero,createdAt:c.createdAt,lineas:lineas}, p.ancho||42)); }
+    for(var i=0;i<copias;i++){ enviarBuf(p, buf); }
   });
 }
+/* ESC/POS de un documento genérico (cuenta / ticket de cobro) */
+function escposTicket(t, ancho){
+  ancho = ancho || 42;
+  var ESC='\x1b', GS='\x1d', o = ESC+'@';
+  if(t.beep) o += escposBeep();
+  if(t.cabecera){ o += ESC+'a'+'\x01' + GS+'!'+'\x11' + t.cabecera + '\n' + GS+'!'+'\x00' + ESC+'a'+'\x00'; }
+  (t.subs||[]).forEach(function(s){ o += ESC+'a'+'\x01' + s + '\n' + ESC+'a'+'\x00'; });
+  if((t.lineas||[]).length || (t.subs||[]).length) o += rep('-',ancho) + '\n';
+  (t.lineas||[]).forEach(function(l){
+    o += pad((l.cantidad!=null?l.cantidad+' ':'') + (l.nombre||''), (l.importe!=null?String(l.importe):''), ancho) + '\n';
+    if(l.detalle){ (Array.isArray(l.detalle)?l.detalle:[l.detalle]).forEach(function(dd){ o += '  ' + dd + '\n'; }); }
+  });
+  if((t.lineas||[]).length) o += rep('-',ancho) + '\n';
+  (t.filas||[]).forEach(function(f){ o += (f.bold?ESC+'!'+'\x18':'') + pad(f.l||'', f.r||'', ancho) + (f.bold?ESC+'!'+'\x00':'') + '\n'; });
+  if(t.total!=null) o += ESC+'!'+'\x18' + pad('TOTAL', String(t.total), ancho) + ESC+'!'+'\x00' + '\n';
+  if((t.filas||[]).length || t.total!=null) o += rep('-',ancho) + '\n';
+  (t.pies||[]).forEach(function(li){ o += ESC+'a'+'\x01' + li + '\n' + ESC+'a'+'\x00'; });
+  o += '\n\n\n' + GS+'V'+'\x42'+'\x00';
+  return Buffer.from(o, 'latin1');
+}
+function pad(izq, der, ancho){ izq=String(izq); der=String(der); if(izq.length>ancho-der.length-1) izq=izq.slice(0,ancho-der.length-1); var sp=ancho-izq.length-der.length; if(sp<1)sp=1; return izq + rep(' ',sp) + der; }
 function aplicar(accion, d) {
   if (accion === '/api/comanda') {
     d.id = uid(); d.createdAt = Date.now(); d.estado = 'pendiente'; d.avisado = false;
@@ -314,6 +403,15 @@ function aplicar(accion, d) {
     var ces = (state.master && state.master.cajasEfectivo) || [];
     var ce = d.id ? ces.filter(function(x){return x.id===d.id;})[0] : ces.filter(function(x){return x.modo==='integrado' && x.activo!==false && x.ip;})[0];
     if (ce && ce.modo === 'integrado' && ce.ip) { try { imprimirEn(ce.ip, ce.puerto || 7780, Buffer.from((d.op||'COBRO') + ';IMPORTE=' + (d.importe || 0) + ';ENTREGADO=' + (d.entregado || 0) + ';REF=' + (d.ref || '') + '\n', 'latin1')); } catch (e) {} }
+  } else if (accion === '/api/imprimir-doc') {
+    try {
+      var imps2 = (state.master && state.master.impresoras) || [];
+      var pr = d.printerId ? imps2.filter(function (x) { return x.id === d.printerId; })[0] : null;
+      var buf = escposTicket(Object.assign({ beep: pr ? !!pr.beep : false }, d.doc || {}), (pr && pr.ancho) || 42);
+      var copias = (pr && pr.copias) || 1;
+      var win = (pr && pr.windows) || d.windows;
+      for (var ci = 0; ci < copias; ci++) { if (win) imprimirWin(win, buf); else if (pr && pr.ip) imprimirEn(pr.ip, pr.puerto, buf); }
+    } catch (e) {}
   }
   state.v = (state.v || 0) + 1;
 }
@@ -345,6 +443,7 @@ function handler(porDefecto) {
       return;
     }
     if (pathname === '/api/state') { res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }); return res.end(JSON.stringify(state)); }
+    if (pathname === '/api/printers') { listarImpresorasWin(function (list) { res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }); res.end(JSON.stringify({ windows: ESWIN, printers: list || [] })); }); return; }
     if (req.method === 'POST' && pathname.indexOf('/api/') === 0) {
       var body = ''; req.on('data', function (d) { body += d; if (body.length > 4e6) req.destroy(); });
       req.on('end', function () {

@@ -290,7 +290,7 @@ function precioTarifa(p,salaId){ if(p.precio==null)return null; var t=tarifaActi
   if(t.pct)return round2(p.precio*(1+t.pct/100));
   return p.precio;
 }
-function lineaImporte(l){ var base=l.precio*l.cantidad; if(l.descLinea){ if(l.descLinea.tipo==='pct') base-=base*(l.descLinea.valor||0)/100; else if(l.descLinea.tipo==='eur') base-=Math.min(base,l.descLinea.valor||0); } return round2(Math.max(0,base)); }
+function lineaImporte(l){ var base=l.precio*l.cantidad; if(l.extras){ l.extras.forEach(function(e){ base+=(e.p||0)*l.cantidad; }); } if(l.descLinea){ if(l.descLinea.tipo==='pct') base-=base*(l.descLinea.valor||0)/100; else if(l.descLinea.tipo==='eur') base-=Math.min(base,l.descLinea.valor||0); } return round2(Math.max(0,base)); }
 function totalLineas(lineas){ return round2((lineas||[]).reduce(function(s,l){return s+lineaImporte(l);},0)); }
 function desgloseIVA(total, tipo){ tipo = tipo==null?0.10:tipo; var base=round2(total/(1+tipo)); return {base:base, cuota:round2(total-base), tipo:tipo}; }
 function cambioEfectivo(total, entregado){ return round2((entregado||0) - total); }
@@ -745,6 +745,7 @@ function viewVenta(){
     else if(l.mods&&l.mods.length) det='<div class="ldet">'+l.mods.map(function(m){return esc(m.n)+(m.p?' (+'+eur(m.p)+')':'');}).join(' · ')+'</div>';
     var extra='';
     if(l.descLinea) extra+='<div class="ldet" style="color:#e11d48">Dto. '+(l.descLinea.tipo==='pct'?(l.descLinea.valor+'%'):eur(l.descLinea.valor))+'</div>';
+    if(l.extras) l.extras.forEach(function(e){ extra+='<div class="ldet" style="color:#0f766e">'+esc(e.t)+' '+(e.p>0?'+':'')+eur(e.p)+'</div>'; });
     if(l.comentario) extra+='<div class="ldet" style="color:#0891b2">📝 '+esc(l.comentario)+'</div>';
     return '<div class="linea'+lock+'"><span class="lic">'+(l.ic||'•')+'</span><div class="ln" data-act="linea" data-idx="'+i+'" style="cursor:pointer"><b>'+esc(l.nombre)+' '+k+'</b><span>'+eur(l.precio)+(l.enviado?' · en cocina':'')+'</span>'+det+extra+'</div>'
       +'<button class="qtybtn coment'+(l.comentario?' on':'')+'" data-act="linea" data-idx="'+i+'" title="Comentario y opciones de la línea">💬</button>'
@@ -861,7 +862,7 @@ function viewCaja(){
   var tar=tk.reduce(function(s,t){return s+(t.cobradoTarjeta||0);},0);
   var prop=tk.reduce(function(s,t){return s+(t.propina||0);},0);
   var enCaja=round2(caja.saldoInicial+efe);
-  return '<div class="topbar"><div class="ttl"><h1>Caja</h1><span class="sub">Jornada del '+fmtFecha(caja.fecha||fechaFiscal())+' · abierta</span></div></div><div class="content">'
+  return '<div class="topbar"><div class="ttl"><h1>Caja</h1><span class="sub">Jornada del '+fmtFecha(caja.fecha||fechaFiscal())+' · abierta</span></div><div class="right"><button class="btn ghost" data-act="buscarDocs">🔎 Documentos del día</button></div></div><div class="content">'
     +'<div class="stat-grid">'
     +stat('Ventas turno',eur(efe+tar),'#4f46e5')+stat('💵 Efectivo',eur(efe),'#16a34a')+stat('💳 Tarjeta',eur(tar),'#7c3aed')
     +stat('🪙 Propinas',eur(prop),'#d97706')+stat('Tickets',tk.length,'#0891b2')+stat('Esperado en cajón',eur(enCaja),'#0ea5e9')+'</div>'
@@ -1084,6 +1085,8 @@ function onClick(e){
     case 'lin_precio': autorizar('descuento',function(){ var t=getTicket(state.ticketActivo),l=t&&t.lineas[state.linIdx]; if(l){ var x=prompt('Nuevo precio unitario de '+l.nombre+' (€):',l.precio); if(x!==null){ var n=parseFloat(String(x).replace(',','.')); if(!isNaN(n))l.precio=round2(n); save(); } } modalLinea(state.linIdx); }); break;
     case 'lin_desc': { var t=getTicket(state.ticketActivo),l=t&&t.lineas[state.linIdx]; if(l){ var tp=el.dataset.t; if(tp==='quitar'){ l.descLinea=null; } else { var pc=parseFloat((document.getElementById('lin_pct')||{}).value)||0; var eu=parseFloat((document.getElementById('lin_eur')||{}).value)||0; if(pc>0)l.descLinea={tipo:'pct',valor:pc}; else if(eu>0)l.descLinea={tipo:'eur',valor:eu}; else l.descLinea=null; } save(); } modalLinea(state.linIdx); break; }
     case 'lin_com': { var t=getTicket(state.ticketActivo),l=t&&t.lineas[state.linIdx]; if(l){ var cur=document.getElementById('lin_txt'); var add=el.dataset.txt||''; if(cur){ cur.value=(cur.value?cur.value+', ':'')+add; } } break; }
+    case 'lin_com': { var _lt=getTicket(state.ticketActivo),_ll=_lt&&_lt.lineas[state.linIdx]; var _pc=el.dataset.precio; if(_pc!==''&&_pc!=null&&parseFloat(_pc)!==0){ if(_ll){ if(!_ll.extras)_ll.extras=[]; _ll.extras.push({t:el.dataset.txt,p:parseFloat(_pc)}); save(); modalLinea(state.linIdx); } } else { var _ta=document.getElementById('lin_txt'); if(_ta) _ta.value=(_ta.value?_ta.value+', ':'')+el.dataset.txt; } break; }
+    case 'lin_extradel': { var _et=getTicket(state.ticketActivo),_el2=_et&&_et.lineas[state.linIdx]; if(_el2&&_el2.extras){ _el2.extras.splice(+el.dataset.i,1); if(!_el2.extras.length)delete _el2.extras; save(); modalLinea(state.linIdx); } break; }
     case 'lin_comsave': { var t=getTicket(state.ticketActivo),l=t&&t.lineas[state.linIdx]; if(l){ var cur=document.getElementById('lin_txt'); l.comentario=(cur&&cur.value.trim())||''; if(!l.comentario)delete l.comentario; save(); } closeModal(); render(); break; }
     case 'enviarCocina': { var n=enviarCocina(state.ticketActivo); if(n>0) toast('👨‍🍳 '+n+' plato(s) enviados a cocina'); render(); break; }
     case 'anular': autorizar('anular',function(){ if(confirm('¿Anular este ticket?')){ anularTicket(state.ticketActivo); state.ticketActivo=null; render(); } }); break;
@@ -1124,7 +1127,19 @@ function onClick(e){
     case 'irAbrirJornada': modalAbrirJornada(fechaFiscal()); break;
     case 'abrirJornada': { var js=parseFloat(document.getElementById('j_saldo').value)||0; var jf=document.getElementById('j_fecha').value||fechaFiscal(); abrirCaja(js,jf); closeModal(); render(); break; }
     case 'cerrarJornadaIr': { closeModal(); state.view='caja'; state.ticketActivo=null; render(); break; }
-    case 'cerrarCaja': autorizar('caja',function(){ var c=document.getElementById('contado').value; if(confirm('¿Cerrar la jornada y emitir cierre Z?')){ var z=cerrarCajaZ(parseFloat(c)||0); pubJornada(); if(z) imprimirZ(z); render(); checkJornada(); } }); break;
+    case 'cerrarCaja': autorizar('caja',function(){ previewZ(parseFloat((document.getElementById('contado')||{}).value)||0); }); break;
+    case 'cerrarZok': { var z=cerrarCajaZ(state.zContado||0); pubJornada(); closeModal(); if(z) imprimirZ(z); render(); checkJornada(); break; }
+    case 'cerrarZsolo': { var z2=cerrarCajaZ(state.zContado||0); pubJornada(); closeModal(); render(); checkJornada(); break; }
+    case 'buscarDocs': modalDocs(); break;
+    case 'editpago': modalPagoEdit(el.dataset.id); break;
+    case 'pgfull': { var pgi=document.getElementById('pg_efe'),pgt=document.getElementById('pg_tar'); if(pgi&&pgt){ pgi.value=(el.dataset.m==='efe')?(state._pgTotal||0):0; pgt.value=(el.dataset.m==='tar')?(state._pgTotal||0):0; } break; }
+    case 'savepago': guardarPagoEdit(el.dataset.id); break;
+    case 'reimprimir': reimprimirDoc(el.dataset.id); break;
+    case 'docfactura': docFactura(el.dataset.id); break;
+    case 'docfacturacli': { var dft=getTicket(el.dataset.id); if(dft){ dft.clienteId=el.dataset.cli; save(); imprimirFactura(dft); closeModal(); modalDocs(); toast('Factura emitida',true); } break; }
+    case 'devolver': devolverDoc(el.dataset.id); break;
+    case 'reabrir': modalReabrir(el.dataset.id); break;
+    case 'reabrirmesa': reabrirEn(el.dataset.id, el.dataset.mesa||''); break;
     case 'nuevaR': modalReserva(); break;
     case 'saveR': saveReserva(el.dataset.fecha); break;
     case 'sentar': cambiarEstadoReserva(id,'sentada'); render(); break;
@@ -1298,26 +1313,29 @@ function imprimirHTML(html){
   var doc=f.contentWindow.document; doc.open(); doc.write(html); doc.close();
   setTimeout(function(){ try{ f.contentWindow.focus(); f.contentWindow.print(); }catch(e){} setTimeout(function(){ try{document.body.removeChild(f);}catch(e){} },1500); },350);
 }
+function imprimirDoc(doc){
+  try{
+    var est=estTPV(); var pid=est&&est.impresoraTickets;
+    if(!pid){ toast('⚠️ Sin impresora de tickets (config. Admin → Estaciones)'); return; }
+    fetch('/api/imprimir-doc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({printerId:pid,doc:doc})});
+  }catch(e){}
+}
 function imprimirTicketCobro(t){
   if(!t)return; var reg=registroFiscal(t);
-  var bruto=totalLineas(t.lineas), desc=descuentoImporte(t), promo=promocionesTicket(t), total=round2(bruto-desc-promo.total), iva=desgloseIVA(total,ivaTipo());
-  var rows=t.lineas.map(function(l){ return '<tr><td>'+l.cantidad+'</td><td>'+esc(l.nombreDoc||l.nombre)+'</td><td class="r">'+eur(l.precio*l.cantidad)+'</td></tr>'+((l.mods&&l.mods.length)?'<tr><td></td><td colspan="2" class="sm">'+l.mods.map(function(m){return esc(m.n);}).join(', ')+'</td></tr>':'')+((l.subs&&l.subs.length)?'<tr><td></td><td colspan="2" class="sm">'+l.subs.map(esc).join(' · ')+'</td></tr>':''); }).join('');
-  var pagos='';
-  if(t.cobradoEfectivo) pagos+='<tr><td>Efectivo</td><td class="r">'+eur(t.cobradoEfectivo)+'</td></tr>';
-  if(t.cobradoTarjeta) pagos+='<tr><td>Tarjeta</td><td class="r">'+eur(t.cobradoTarjeta)+'</td></tr>';
-  var html='<html><head><meta charset="utf-8"><style>*{font-family:\'Courier New\',monospace;font-size:12px;color:#000}@page{margin:3mm}body{width:72mm;margin:0}h2{text-align:center;margin:4px 0;font-size:15px}.c{text-align:center}.r{text-align:right}.sm{font-size:10px;color:#333}table{width:100%;border-collapse:collapse}td{padding:1px 0;vertical-align:top}hr{border:none;border-top:1px dashed #000;margin:5px 0}.tot{font-size:15px}</style></head><body>'
-    +'<h2>'+esc((DB.config&&DB.config.empresa&&DB.config.empresa.nombre)||DB.restaurante||'HOSTELERO')+'</h2>'+((DB.config&&DB.config.empresa)?'<div class="c sm">'+esc(DB.config.empresa.direccion||'')+(DB.config.empresa.cif?(' · CIF '+esc(DB.config.empresa.cif)):'')+'</div>':'')
-    +'<div class="c">Ticket #'+t.numero+(t.mesaNombre?(' · '+esc(t.mesaNombre)):'')+'</div>'
-    +'<div class="c">'+new Date(t.closedAt||Date.now()).toLocaleString('es-ES')+'</div>'
-    +(t.comensales?'<div class="c">'+t.comensales+' comensales</div>':'')+'<hr>'
-    +'<table>'+rows+'</table><hr>'
-    +'<table>'+desgloseIVAmulti(t.lineas).map(function(d){return '<tr><td>Base '+d.tipo+'%</td><td class="r">'+eur(d.base)+'</td></tr><tr><td>IVA '+d.tipo+'%</td><td class="r">'+eur(d.cuota)+'</td></tr>';}).join('')
-    +((promo.total>0||desc>0)?('<tr><td>Subtotal</td><td class="r">'+eur(bruto)+'</td></tr>'+promo.detalle.map(function(d){return '<tr><td>'+esc(d.nombre)+'</td><td class="r">-'+eur(d.importe)+'</td></tr>';}).join('')+(desc>0?'<tr><td>Descuento</td><td class="r">-'+eur(desc)+'</td></tr>':'')):'')+'<tr class="tot"><td><b>TOTAL</b></td><td class="r"><b>'+eur(total)+'</b></td></tr>'
-    +pagos+(t.propina?'<tr><td>Propina</td><td class="r">'+eur(t.propina)+'</td></tr>':'')+'</table><hr>'
-    +((t.clienteId&&t.puntosGanados)?(function(){var cl=getCliente(t.clienteId)||{};return '<div class="c sm">⭐ '+esc(cl.nombre||'Cliente')+': +'+t.puntosGanados+' puntos'+(cl.puntos!=null?(' (total '+cl.puntos+')'):'')+'</div><hr>';})():'')
-    +'<div class="c">'+esc((DB.config&&DB.config.ticket&&DB.config.ticket.pie)||'¡Gracias por su visita!')+'</div>'+(reg?('<hr><div style="font-size:8px;word-break:break-all;text-align:center"><b>'+(reg.sistema==='verifactu'?'VERI*FACTU':'TicketBAI')+'</b><br>'+esc(reg.id)+'<br>'+esc(reg.url)+'</div>'):'')
-    +'</body></html>';
-  imprimirHTML(html);
+  var bruto=totalLineas(t.lineas), desc=descuentoImporte(t), promo=promocionesTicket(t), total=round2(bruto-desc-promo.total);
+  var emp=(DB.config&&DB.config.empresa)||{};
+  var lineas=t.lineas.map(function(l){ var det=[]; if(l.mods&&l.mods.length)det.push(l.mods.map(function(m){return m.n;}).join(', ')); if(l.subs&&l.subs.length)det.push(l.subs.join(' · ')); if(l.extras)l.extras.forEach(function(e){det.push(e.t+' '+(e.p>0?'+':'')+eur(e.p*l.cantidad));}); return {cantidad:l.cantidad,nombre:(l.nombreDoc||l.nombre),importe:eur(lineaImporte(l)),detalle:det}; });
+  var filas=[]; desgloseIVAmulti(t.lineas).forEach(function(d){ filas.push({l:'Base '+d.tipo+'%',r:eur(d.base)}); filas.push({l:'IVA '+d.tipo+'%',r:eur(d.cuota)}); });
+  if(promo.total>0||desc>0){ filas.push({l:'Subtotal',r:eur(bruto)}); promo.detalle.forEach(function(d){filas.push({l:d.nombre,r:'-'+eur(d.importe)});}); if(desc>0)filas.push({l:'Descuento',r:'-'+eur(desc)}); }
+  var pies=[]; if(t.cobradoEfectivo){} // pagos van como filas
+  if(t.cobradoEfectivo)filas.push({l:'Efectivo',r:eur(t.cobradoEfectivo)});
+  if(t.cobradoTarjeta)filas.push({l:'Tarjeta',r:eur(t.cobradoTarjeta)});
+  if(t.propina)filas.push({l:'Propina',r:eur(t.propina)});
+  var subs=[]; if(emp.direccion)subs.push(emp.direccion); if(emp.cif)subs.push('CIF '+emp.cif); subs.push('Ticket #'+t.numero+(t.mesaNombre?(' · '+t.mesaNombre):'')); subs.push(new Date(t.closedAt||Date.now()).toLocaleString('es-ES')); if(t.comensales)subs.push(t.comensales+' comensales');
+  if(t.clienteId&&t.puntosGanados){ var cl=getCliente(t.clienteId)||{}; pies.push('* '+(cl.nombre||'Cliente')+': +'+t.puntosGanados+' puntos'); }
+  pies.push((DB.config&&DB.config.ticket&&DB.config.ticket.pie)||'¡Gracias por su visita!');
+  if(reg){ pies.push((reg.sistema==='verifactu'?'VERI*FACTU':'TicketBAI')); pies.push(reg.id); }
+  imprimirDoc({cabecera:(emp.nombre||DB.restaurante||'HOSTELERO'),subs:subs,lineas:lineas,filas:filas,total:eur(total),pies:pies});
 }
 
 /* ----- Editor de elemento del plano (barra, billar, planta, sofá, aseos) ----- */
@@ -1333,30 +1351,121 @@ function modalDecorEditor(id){
 }
 
 /* ----- Cierre Z e informes imprimibles ----- */
-function cerrarCajaZ(contado){
+function calcularZ(contado){
   var c=cajaAbierta(); if(!c)return null;
   var tk=DB.tickets.filter(function(t){return t.estado==='cobrado'&&t.cajaId===c.id;});
   var efe=tk.reduce(function(a,t){return a+(t.cobradoEfectivo||0);},0), tar=tk.reduce(function(a,t){return a+(t.cobradoTarjeta||0);},0), otr=tk.reduce(function(a,t){return a+(t.cobradoOtros||0);},0), prop=tk.reduce(function(a,t){return a+(t.propina||0);},0);
   var ventas=round2(efe+tar+otr), enCaja=round2(c.saldoInicial+efe);
   var todas=[]; tk.forEach(function(t){ todas=todas.concat(t.lineas||[]); });
-  var ivas=desgloseIVAmulti(todas);
-  DB.numeroZ=(DB.numeroZ||0)+1;
-  var z={numero:DB.numeroZ,abiertaAt:c.abiertaAt,cerradaAt:Date.now(),saldoInicial:c.saldoInicial,efectivo:efe,tarjeta:tar,otros:otr,propinas:prop,ventas:ventas,tickets:tk.length,esperado:enCaja,contado:round2(contado),descuadre:round2(contado-enCaja),ivas:ivas};
+  var co=round2(contado||0);
+  return {abiertaAt:c.abiertaAt,cerradaAt:Date.now(),saldoInicial:c.saldoInicial,efectivo:efe,tarjeta:tar,otros:otr,propinas:prop,ventas:ventas,tickets:tk.length,esperado:enCaja,contado:co,descuadre:round2(co-enCaja),ivas:desgloseIVAmulti(todas)};
+}
+function cerrarCajaZ(contado){
+  var c=cajaAbierta(); if(!c)return null;
+  var z=calcularZ(contado); DB.numeroZ=(DB.numeroZ||0)+1; z.numero=DB.numeroZ;
   if(!DB.cierresZ)DB.cierresZ=[]; DB.cierresZ.push(z);
-  c.estado='cerrada'; c.cerradaAt=z.cerradaAt; c.saldoFinalContado=contado; c.zNumero=z.numero; save();
+  c.estado='cerrada'; c.cerradaAt=z.cerradaAt; c.saldoFinalContado=round2(contado||0); c.zNumero=z.numero; save();
   return z;
+}
+function previewZ(contado){ var z=calcularZ(contado); if(!z){toast('No hay jornada abierta');return;} state.zContado=round2(contado||0); modalZ(z); }
+function modalDocs(){
+  var c=cajaAbierta();
+  var tk=DB.tickets.filter(function(t){ if(t.estado!=='cobrado')return false; if(c)return t.cajaId===c.id; return fechaLocalStr(new Date(t.closedAt||0))===fechaFiscal(); }).sort(function(a,b){return (b.closedAt||0)-(a.closedAt||0);});
+  var rows=tk.map(function(t){ var fp=(t.cobradoEfectivo&&t.cobradoTarjeta)?'Mixto':(t.cobradoTarjeta?'Tarjeta':(t.cobradoEfectivo?'Efectivo':'—')); var tot=round2((t.cobradoEfectivo||0)+(t.cobradoTarjeta||0)+(t.cobradoOtros||0));
+    var acc;
+    if(t.esDevolucion){ acc='<button class="btn ghost sm" data-act="reimprimir" data-id="'+t.id+'">🖨️</button>'; }
+    else if(t.devueltoPor){ acc='<span class="muted" style="font-size:12px">Devuelto</span> <button class="btn ghost sm" data-act="reimprimir" data-id="'+t.id+'">🖨️</button>'; }
+    else { acc='<button class="btn ghost sm" data-act="reimprimir" data-id="'+t.id+'" title="Reimprimir">🖨️</button> <button class="btn ghost sm" data-act="docfactura" data-id="'+t.id+'" title="Convertir en factura">🧾</button> <button class="btn ghost sm" data-act="editpago" data-id="'+t.id+'" title="Cambiar forma de pago">💳</button> <button class="btn ghost sm" data-act="reabrir" data-id="'+t.id+'" title="Reabrir en una mesa">↺</button> <button class="btn danger-ghost sm" data-act="devolver" data-id="'+t.id+'">↩︎</button>'; }
+    return '<tr'+(t.esDevolucion?' style="color:#e11d48"':'')+'><td>#'+t.numero+'</td><td>'+esc(t.mesaNombre||'—')+'</td><td>'+new Date(t.closedAt||0).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})+'</td><td>'+eur(tot)+'</td><td>'+fp+(t.numeroFactura?(' · Fra '+t.numeroFactura):'')+'</td><td style="text-align:right;white-space:nowrap">'+acc+'</td></tr>'; }).join('') || '<tr><td colspan="6" class="muted" style="padding:12px">No hay documentos cobrados.</td></tr>';
+  openModal('<div class="modal" data-stop><h2>🔎 Documentos del día</h2><div class="mbody" style="max-height:66vh;overflow:auto"><style>#docsT td,#docsT th{padding:7px 8px;border-bottom:1px solid #eef2f7;text-align:left;font-size:13px}</style>'
+    +'<p class="muted" style="margin:0 0 8px">Corrige la forma de pago de un cobro mal asignado, sin reimprimir ni hacer devolución.</p>'
+    +'<table id="docsT" style="width:100%;border-collapse:collapse"><thead><tr><th>#</th><th>Mesa</th><th>Hora</th><th>Total</th><th>Pago</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>'
+    +'</div><div class="foot"><button class="btn ghost" data-act="closeModal">Cerrar</button></div></div>');
+}
+function modalPagoEdit(id){
+  var t=getTicket(id); if(!t)return;
+  var total=round2((t.cobradoEfectivo||0)+(t.cobradoTarjeta||0)+(t.cobradoOtros||0)); if(!total)total=totalNeto(t);
+  state._pgTotal=total;
+  openModal('<div class="modal sm" data-stop><h2>💳 Forma de pago · Ticket #'+t.numero+'</h2><div class="mbody">'
+    +'<p class="muted" style="margin:0 0 10px">Total <b>'+eur(total)+'</b>. Ajusta sin reimprimir ni devolver.</p>'
+    +'<div class="inline" style="gap:8px;margin-bottom:10px"><button class="btn ghost" data-act="pgfull" data-m="efe">Todo efectivo</button><button class="btn ghost" data-act="pgfull" data-m="tar">Todo tarjeta</button></div>'
+    +'<div class="inline"><div class="field" style="flex:1"><label>Efectivo (€)</label><input id="pg_efe" type="number" step="0.01" value="'+(t.cobradoEfectivo||0)+'"></div>'
+    +'<div class="field" style="flex:1"><label>Tarjeta (€)</label><input id="pg_tar" type="number" step="0.01" value="'+(t.cobradoTarjeta||0)+'"></div></div>'
+    +'</div><div class="foot"><button class="btn ghost" data-act="closeModal">Cancelar</button><button class="btn primary" data-act="savepago" data-id="'+t.id+'">Guardar</button></div></div>');
+}
+function guardarPagoEdit(id){
+  var t=getTicket(id); if(!t)return;
+  var efe=round2(parseFloat((document.getElementById('pg_efe')||{}).value)||0), tar=round2(parseFloat((document.getElementById('pg_tar')||{}).value)||0);
+  t.cobradoEfectivo=efe; t.cobradoTarjeta=tar; t.cobradoOtros=0;
+  t.metodo=(efe&&tar)?'mixto':(tar?'tarjeta':'efectivo');
+  save(); closeModal(); modalDocs(); render(); toast('Forma de pago actualizada',true);
+}
+function reimprimirDoc(id){ var t=getTicket(id); if(!t)return; if(t.numeroFactura) imprimirFactura(t); else if(t.esDevolucion) imprimirDevolucion(getTicket(t.refDe)||t); else imprimirTicketCobro(t); toast('Reenviado a impresora'); }
+function docFactura(id){
+  var cls=(DB.clientes||[]);
+  var rows=cls.map(function(c){return '<button class="btn ghost block" style="text-align:left;margin-bottom:6px" data-act="docfacturacli" data-id="'+id+'" data-cli="'+c.id+'">'+esc(c.nombre)+(c.cif?(' · '+esc(c.cif)):'')+'</button>';}).join('');
+  openModal('<div class="modal" data-stop><h2>🧾 Convertir en factura</h2><div class="mbody" style="max-height:60vh;overflow:auto"><p class="muted" style="margin:0 0 8px">Elige el cliente para la factura del ticket #'+(getTicket(id)||{}).numero+'.</p>'+(rows||'<p class="muted">No hay clientes. Créalos en Administración → Clientes.</p>')+'</div><div class="foot"><button class="btn ghost" data-act="closeModal">Cancelar</button></div></div>');
+}
+function crearDevolucion(t){
+  var c=cajaAbierta();
+  var dev={id:uid(),numero:DB.numeroTicket++,mesaNombre:'DEVOLUCIÓN de #'+t.numero,salaId:t.salaId,estado:'cobrado',
+    lineas:(t.lineas||[]).map(function(l){return Object.assign({},l,{cantidad:-(l.cantidad||0)});}),
+    pagos:[],propina:0,enviadoCocina:true,avisado:false,createdAt:Date.now(),closedAt:Date.now(),cajaId:c?c.id:null,
+    cobradoEfectivo:-(t.cobradoEfectivo||0),cobradoTarjeta:-(t.cobradoTarjeta||0),cobradoOtros:-(t.cobradoOtros||0),
+    esDevolucion:true,refDe:t.id,clienteId:t.clienteId};
+  DB.tickets.push(dev); t.devueltoPor=dev.id; return dev;
+}
+function imprimirDevolucion(t){
+  if(!t)return; var tot=round2((t.cobradoEfectivo||0)+(t.cobradoTarjeta||0)+(t.cobradoOtros||0));
+  var lineas=(t.lineas||[]).map(function(l){return {cantidad:-(l.cantidad||0),nombre:(l.nombreDoc||l.nombre),importe:'-'+eur(lineaImporte(l))};});
+  imprimirDoc({cabecera:'DEVOLUCIÓN',subs:['Ref. ticket #'+t.numero,new Date().toLocaleString('es-ES')],lineas:lineas,total:'-'+eur(tot),pies:['Documento de devolución']});
+}
+function devolverDoc(id){ var t=getTicket(id); if(!t||t.estado!=='cobrado'||t.devueltoPor||t.esDevolucion)return; if(!confirm('¿Crear devolución del ticket #'+t.numero+'? Se genera un documento negativo y se ajusta la caja.'))return; autorizar('caja',function(){ crearDevolucion(t); save(); imprimirDevolucion(t); closeModal(); modalDocs(); render(); toast('Devolución creada'); }); }
+function modalReabrir(id){
+  var t=getTicket(id); if(!t)return;
+  var salas=DB.salas.slice().sort(function(a,b){return a.orden-b.orden;});
+  var mesasH=salas.map(function(s){ var ms=DB.mesas.filter(function(m){return m.salaId===s.id;}); return '<div style="font-weight:800;margin:10px 0 4px">'+esc(s.nombre)+'</div><div style="display:flex;flex-wrap:wrap;gap:6px">'+ms.map(function(m){return '<button class="btn ghost sm" data-act="reabrirmesa" data-id="'+t.id+'" data-mesa="'+m.id+'">'+esc(m.nombre)+'</button>';}).join('')+'</div>'; }).join('');
+  openModal('<div class="modal" data-stop><h2>↩︎ Reabrir ticket #'+t.numero+'</h2><div class="mbody" style="max-height:64vh;overflow:auto"><p class="muted" style="margin:0 0 8px">Elige la mesa donde reabrirlo. Se <b>devuelve</b> el ticket actual y se carga su comanda en esa mesa para volver a cobrarla bien.</p><button class="btn ghost block" data-act="reabrirmesa" data-id="'+t.id+'" data-mesa="">⚡ Venta rápida (barra)</button>'+mesasH+'</div><div class="foot"><button class="btn ghost" data-act="closeModal">Cancelar</button></div></div>');
+}
+function reabrirEn(id, mesaId){
+  var t=getTicket(id); if(!t)return;
+  autorizar('caja',function(){
+    crearDevolucion(t); imprimirDevolucion(t);
+    var mObj = mesaId ? getMesa(mesaId) : null;
+    var nt = mObj ? abrirTicketMesa(mObj) : nuevoTicketBarra();
+    var copia=(t.lineas||[]).map(function(l){ return Object.assign({},l,{enviado:true,kestado:l.kestado||'listo',kid:l.kid||uid()}); });
+    nt.lineas=(nt.lineas||[]).concat(copia); nt.enviadoCocina=true; if(t.comensales&&!nt.comensales)nt.comensales=t.comensales; if(t.clienteId)nt.clienteId=t.clienteId;
+    save(); closeModal(); state.ticketActivo=nt.id; render(); toast('Ticket reabierto en '+(mObj?mObj.nombre:'barra')+' · anterior devuelto');
+  });
+}
+function modalZ(z){
+  function row(l,r,b){ return '<div style="display:flex;justify-content:space-between;padding:3px 0'+(b?';font-weight:800;font-size:16px':'')+'"><span>'+l+'</span><span>'+r+'</span></div>'; }
+  var desc=z.descuadre, dcol=Math.abs(desc)<0.005?'#16a34a':(desc<0?'#e11d48':'#d97706');
+  var ivas=(z.ivas||[]).map(function(d){return row('Base '+d.tipo+'% · IVA',eur(d.base)+' · '+eur(d.cuota));}).join('');
+  var hr='<hr style="border:none;border-top:1px solid var(--line,#e6eaf0);margin:8px 0">';
+  openModal('<div class="modal" data-stop><h2>🧾 Cierre Z · previsualización</h2><div class="mbody" style="max-height:66vh;overflow:auto">'
+    +'<p class="muted" style="margin:0 0 8px">Revisa el cuadre antes de cerrar. Si hay un cobro mal asignado, corrígelo en «🔎 Documentos del día» y vuelve.</p>'
+    +'<div style="background:var(--panel2,#f6f8fb);border-radius:12px;padding:12px">'
+    +row('Tickets',z.tickets)+row('VENTAS',eur(z.ventas),true)+hr
+    +row('💵 Efectivo',eur(z.efectivo))+row('💳 Tarjeta',eur(z.tarjeta))+(z.otros?row('Otros',eur(z.otros)):'')+row('🪙 Propinas',eur(z.propinas))+hr
+    +ivas+hr
+    +row('Saldo inicial',eur(z.saldoInicial))+row('Esperado en cajón',eur(z.esperado))+row('Contado',eur(z.contado))
+    +'<div style="display:flex;justify-content:space-between;padding:6px 0;font-weight:800;font-size:16px;color:'+dcol+'"><span>DESCUADRE</span><span>'+eur(desc)+'</span></div>'
+    +'</div></div><div class="foot"><button class="btn ghost" data-act="closeModal">Cancelar</button><button class="btn ghost" data-act="cerrarZsolo">Cerrar sin imprimir</button><button class="btn green" data-act="cerrarZok">🖨️ Imprimir y cerrar</button></div></div>');
 }
 function imprimirZ(z){
   if(!z)return;
   var nom=(DB.config&&DB.config.empresa&&DB.config.empresa.nombre)||DB.restaurante||'HOSTELERO';
-  var html='<html><head><meta charset="utf-8"><style>*{font-family:Courier New,monospace;font-size:12px;color:#000}h2{text-align:center;margin:4px 0}.c{text-align:center}.r{text-align:right}.b{font-weight:bold}table{width:100%;border-collapse:collapse}td{padding:1px 0}hr{border:none;border-top:1px dashed #000;margin:5px 0}@page{margin:3mm}body{width:72mm;margin:0}</style></head><body>'
-    +'<h2>CIERRE Z Nº '+z.numero+'</h2><div class="c">'+esc(nom)+'</div><div class="c">'+new Date(z.cerradaAt).toLocaleString('es-ES')+'</div><hr>'
-    +'<table><tr><td>Tickets</td><td class="r">'+z.tickets+'</td></tr><tr class="b"><td>VENTAS</td><td class="r">'+eur(z.ventas)+'</td></tr></table><hr>'
-    +'<table><tr><td>Efectivo</td><td class="r">'+eur(z.efectivo)+'</td></tr><tr><td>Tarjeta</td><td class="r">'+eur(z.tarjeta)+'</td></tr>'+(z.otros?'<tr><td>Otros</td><td class="r">'+eur(z.otros)+'</td></tr>':'')+'<tr><td>Propinas</td><td class="r">'+eur(z.propinas)+'</td></tr></table><hr>'
-    +'<table>'+z.ivas.map(function(d){return '<tr><td>Base '+d.tipo+'%</td><td class="r">'+eur(d.base)+'</td></tr><tr><td>IVA '+d.tipo+'%</td><td class="r">'+eur(d.cuota)+'</td></tr>';}).join('')+'</table><hr>'
-    +'<table><tr><td>Saldo inicial</td><td class="r">'+eur(z.saldoInicial)+'</td></tr><tr><td>Esperado en cajon</td><td class="r">'+eur(z.esperado)+'</td></tr><tr><td>Contado</td><td class="r">'+eur(z.contado)+'</td></tr><tr class="b"><td>DESCUADRE</td><td class="r">'+eur(z.descuadre)+'</td></tr></table>'
-    +'</body></html>';
-  imprimirHTML(html);
+  var filas=[{l:'Tickets',r:String(z.tickets)},{l:'VENTAS',r:eur(z.ventas),bold:true},
+    {l:'Efectivo',r:eur(z.efectivo)},{l:'Tarjeta',r:eur(z.tarjeta)}];
+  if(z.otros)filas.push({l:'Otros',r:eur(z.otros)});
+  filas.push({l:'Propinas',r:eur(z.propinas)});
+  (z.ivas||[]).forEach(function(d){ filas.push({l:'Base '+d.tipo+'%',r:eur(d.base)}); filas.push({l:'IVA '+d.tipo+'%',r:eur(d.cuota)}); });
+  filas.push({l:'Saldo inicial',r:eur(z.saldoInicial)});
+  filas.push({l:'Esperado en cajón',r:eur(z.esperado)});
+  filas.push({l:'Contado',r:eur(z.contado)});
+  filas.push({l:'DESCUADRE',r:eur(z.descuadre),bold:true});
+  imprimirDoc({cabecera:'CIERRE Z Nº '+z.numero,subs:[nom,new Date(z.cerradaAt).toLocaleString('es-ES')],filas:filas});
 }
 function imprimirInforme(){
   var p=state.infPeriodo||'hoy'; var r=rangoPeriodo(p);
@@ -1364,11 +1473,9 @@ function imprimirInforme(){
   var venta=del.reduce(function(a,t){return a+totalNeto(t);},0), efe=del.reduce(function(a,t){return a+(t.cobradoEfectivo||0);},0), tar=del.reduce(function(a,t){return a+(t.cobradoTarjeta||0);},0);
   var lbl={hoy:'Hoy',ayer:'Ayer',semana:'Últimos 7 días',todo:'Histórico'};
   var nom=(DB.config&&DB.config.empresa&&DB.config.empresa.nombre)||DB.restaurante||'';
-  var html='<html><head><meta charset="utf-8"><style>*{font-family:Arial,sans-serif;font-size:13px}h2{text-align:center}table{width:100%;border-collapse:collapse}td,th{padding:5px;border-bottom:1px solid #ddd;text-align:left}</style></head><body>'
-    +'<h2>Informe de ventas — '+lbl[p]+'</h2><p>'+esc(nom)+' · '+new Date().toLocaleString('es-ES')+'</p>'
-    +'<table><tr><td>Ventas</td><td>'+eur(venta)+'</td></tr><tr><td>Tickets</td><td>'+del.length+'</td></tr><tr><td>Ticket medio</td><td>'+eur(del.length?venta/del.length:0)+'</td></tr><tr><td>Efectivo</td><td>'+eur(efe)+'</td></tr><tr><td>Tarjeta</td><td>'+eur(tar)+'</td></tr></table>'
-    +'</body></html>';
-  imprimirHTML(html);
+  imprimirDoc({cabecera:'INFORME '+(lbl[p]||p).toUpperCase(),subs:[nom,new Date().toLocaleString('es-ES')],filas:[
+    {l:'Ventas',r:eur(venta),bold:true},{l:'Tickets',r:String(del.length)},{l:'Ticket medio',r:eur(del.length?venta/del.length:0)},
+    {l:'Efectivo',r:eur(efe)},{l:'Tarjeta',r:eur(tar)}]});
 }
 
 /* ----- Descuento / invitación del ticket ----- */
@@ -1397,7 +1504,8 @@ function modalLinea(idx){
   var t=getTicket(state.ticketActivo); if(!t||!t.lineas[idx])return; state.linIdx=idx;
   var l=t.lineas[idx]; var prod=getProducto(l.productoId)||{};
   var coms=(DB.comentarios||[]).filter(function(c){ return c.categoriaId==null || c.categoriaId===prod.categoriaId; });
-  var chips=coms.map(function(c){ return '<button class="btn ghost sm" data-act="lin_com" data-txt="'+esc(c.texto)+'" style="margin:2px">'+esc(c.texto)+'</button>'; }).join('') || '<span class="muted" style="font-size:12px">No hay comentarios definidos (se crean en Administración).</span>';
+  var chips=coms.map(function(c){ var pp=(c.precio!=null&&c.precio!==0); return '<button class="btn '+(pp?'':'ghost')+' sm" data-act="lin_com" data-txt="'+esc(c.texto)+'" data-precio="'+(c.precio!=null?c.precio:'')+'" style="margin:2px'+(pp?';background:#0f766e;color:#fff':'')+'">'+esc(c.texto)+(pp?(' '+(c.precio>0?'+':'')+c.precio.toFixed(2)+'€'):'')+'</button>'; }).join('') || '<span class="muted" style="font-size:12px">No hay comentarios definidos (se crean en Administración).</span>';
+  var extrasH=(l.extras&&l.extras.length)?('<div style="font-weight:800;font-size:12px;color:#64748b;margin:14px 0 6px;text-transform:uppercase">Extras con precio (van al ticket)</div>'+l.extras.map(function(e,ei){return '<div style="display:flex;justify-content:space-between;align-items:center;border:1px solid var(--line);border-radius:8px;padding:6px 10px;margin-bottom:5px"><span>'+esc(e.t)+' <b style="color:#0f766e">'+(e.p>0?'+':'')+eur(e.p)+'</b></span><button class="btn ghost sm" data-act="lin_extradel" data-i="'+ei+'">✕</button></div>';}).join('')):'';
   openModal('<div class="modal" data-stop><h2>'+(l.ic||'•')+' '+esc(l.nombre)+'</h2><div class="mbody" style="max-height:72vh;overflow:auto">'
     +'<div class="field"><label>Cantidad</label><div class="inline"><input id="lin_c" type="number" min="0" value="'+l.cantidad+'" style="flex:1"><button class="btn" data-act="lin_cant">Aplicar</button></div></div>'
     +'<div class="inline" style="margin-top:6px"><div class="field" style="flex:1"><label>Precio unitario</label><div class="inline"><input value="'+eur(l.precio)+'" disabled style="flex:1"><button class="btn ghost" data-act="lin_precio">Cambiar 🔒</button></div></div></div>'
@@ -1406,7 +1514,8 @@ function modalLinea(idx){
     +'<div class="field" style="flex:1"><label>Importe (€)</label><input id="lin_eur" type="number" step="0.10" placeholder="ej. 2" value="'+(l.descLinea&&l.descLinea.tipo==='eur'?l.descLinea.valor:'')+'"></div>'
     +'<button class="btn" data-act="lin_desc" data-t="aplicar" style="align-self:flex-end">OK</button>'
     +(l.descLinea?'<button class="btn ghost" data-act="lin_desc" data-t="quitar" style="align-self:flex-end">Quitar</button>':'')+'</div>'
-    +'<div style="font-weight:800;font-size:12px;color:var(--muted,#64748b);margin:14px 0 6px;text-transform:uppercase">Comentario</div>'
+    +extrasH
+    +'<div style="font-weight:800;font-size:12px;color:var(--muted,#64748b);margin:14px 0 6px;text-transform:uppercase">Comentario / extra</div>'
     +'<div style="margin-bottom:6px">'+chips+'</div>'
     +'<textarea id="lin_txt" rows="2" style="width:100%" placeholder="Comentario para cocina…">'+esc(l.comentario||'')+'</textarea>'
     +'</div><div class="foot"><button class="btn ghost" data-act="closeModal">Cerrar</button><button class="btn primary" data-act="lin_comsave">Guardar comentario</button></div></div>');
@@ -1527,18 +1636,14 @@ function imprimirFactura(t){
   // recargo de equivalencia (si el cliente es autónomo en RE)
   var RE={21:5.2,10:1.4,5:0.62,4:0.5}; var reRows='', reTotal=0;
   if(cli.recargo){ iva.forEach(function(d){ var r=RE[d.tipo]; if(r){ var imp=round2(d.base*r/100); reTotal+=imp; reRows+='<tr><td>Rec. equiv. '+r+'%</td><td class="r">'+eur(imp)+'</td></tr>'; } }); reTotal=round2(reTotal); total=round2(total+reTotal); }
-  var rows=t.lineas.map(function(l){return '<tr><td>'+l.cantidad+'</td><td>'+esc(l.nombreDoc||l.nombre)+'</td><td class="r">'+eur(l.precio*l.cantidad)+'</td></tr>';}).join('');
-  var html='<html><head><meta charset="utf-8"><style>*{font-family:Arial,sans-serif;font-size:12px;color:#000}h2{text-align:center;margin:4px 0}table{width:100%;border-collapse:collapse}td,th{padding:4px;border-bottom:1px solid #eee;text-align:left}.r{text-align:right}.box{border:1px solid #ccc;border-radius:6px;padding:9px;margin:8px 0}@page{margin:8mm}</style></head><body>'
-    +'<h2>FACTURA Nº '+t.numeroFactura+'</h2>'
-    +'<div class="box"><b>'+esc(emp.nombre||'HOSTELERO')+'</b><br>'+esc(emp.direccion||'')+'<br>CIF: '+esc(emp.cif||'')+(emp.telefono?(' · Tel: '+esc(emp.telefono)):'')+'</div>'
-    +'<div class="box"><b>Cliente:</b> '+esc(cli.nombre||'')+'<br>'+esc(cli.direccion||'')+'<br>CIF/NIF: '+esc(cli.cif||'')+'</div>'
-    +'<div>Fecha: '+new Date(t.closedAt||Date.now()).toLocaleString('es-ES')+'</div>'
-    +'<table><thead><tr><th>Ud</th><th>Concepto</th><th class="r">Importe</th></tr></thead><tbody>'+rows+'</tbody></table>'
-    +'<table style="margin-top:8px">'+(desc>0?'<tr><td>Subtotal</td><td class="r">'+eur(bruto)+'</td></tr><tr><td>Descuentos</td><td class="r">-'+eur(desc)+'</td></tr>':'')
-    +iva.map(function(d){return '<tr><td>Base '+d.tipo+'%</td><td class="r">'+eur(d.base)+'</td></tr><tr><td>IVA '+d.tipo+'%</td><td class="r">'+eur(d.cuota)+'</td></tr>';}).join('')+reRows
-    +'<tr><td><b>TOTAL</b></td><td class="r"><b>'+eur(total)+'</b></td></tr></table>'+(reg?('<div class="box" style="font-size:10px;word-break:break-all"><b>'+(reg.sistema==='verifactu'?'VERI*FACTU':'TicketBAI')+'</b> · '+esc(reg.id)+'<br>'+esc(reg.url)+'</div>'):'')
-    +'</body></html>';
-  imprimirHTML(html);
+  var lineas=t.lineas.map(function(l){ return {cantidad:l.cantidad,nombre:(l.nombreDoc||l.nombre),importe:eur(lineaImporte(l))}; });
+  var filas=[];
+  if(desc>0){ filas.push({l:'Subtotal',r:eur(bruto)}); filas.push({l:'Descuentos',r:'-'+eur(desc)}); }
+  iva.forEach(function(d){ filas.push({l:'Base '+d.tipo+'%',r:eur(d.base)}); filas.push({l:'IVA '+d.tipo+'%',r:eur(d.cuota)}); });
+  if(cli.recargo){ var RE2={21:5.2,10:1.4,5:0.62,4:0.5}; iva.forEach(function(d){ var rr=RE2[d.tipo]; if(rr) filas.push({l:'Rec. equiv. '+rr+'%',r:eur(round2(d.base*rr/100))}); }); }
+  var subs=[ (emp.direccion||''), (emp.cif?('CIF '+emp.cif):''), 'Cliente: '+(cli.nombre||''), (cli.cif?('NIF '+cli.cif):''), new Date(t.closedAt||Date.now()).toLocaleString('es-ES') ].filter(Boolean);
+  var pies=[]; if(reg){ pies.push((reg.sistema==='verifactu'?'VERI*FACTU':'TicketBAI')); pies.push(reg.id); }
+  imprimirDoc({cabecera:'FACTURA Nº '+t.numeroFactura,subs:[(emp.nombre||'HOSTELERO')].concat(subs),lineas:lineas,filas:filas,total:eur(total),pies:pies});
 }
 
 /* ----- Datáfono integrado (envío de importe por red) ----- */
