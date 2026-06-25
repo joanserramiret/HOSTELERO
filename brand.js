@@ -57,23 +57,23 @@
 
   // Splash (solo una vez por carga)
   try {
-    var css = '@keyframes hsl-pop{0%{transform:scale(.86);opacity:0}60%{opacity:1}100%{transform:scale(1);opacity:1}}'
-      + '@keyframes hsl-bar{0%{transform:translateX(-100%)}100%{transform:translateX(220%)}}'
-      + '@keyframes hsl-out{to{opacity:0;visibility:hidden}}'
-      + '#hsl-splash{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;'
+    var css = '@keyframes hslpop{0%{transform:scale(.86);opacity:0}60%{opacity:1}100%{transform:scale(1);opacity:1}}'
+      + '@keyframes hslload{0%{transform:translateX(-100%)}100%{transform:translateX(220%)}}'
+      + '@keyframes hslout{to{opacity:0;visibility:hidden}}'
+      + '#hsl-splash{position:fixed;inset:0;z-index:2147483600;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:22px;margin:0;padding:0;'
       + 'background:radial-gradient(120% 120% at 70% 10%,#10202e 0%,#0B1220 55%,#0F172A 100%);'
       + 'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;'
-      + 'animation:hsl-out .5s ease 1.25s forwards}'
-      + '#hsl-splash .mk{width:104px;height:104px;animation:hsl-pop .55s cubic-bezier(.2,.9,.25,1) both;filter:drop-shadow(0 14px 30px rgba(20,184,166,.35))}'
-      + '#hsl-splash .wm{color:#fff;font-weight:800;font-size:30px;letter-spacing:3px}'
-      + '#hsl-splash .tg{color:#5EEAD4;font-weight:700;font-size:12px;letter-spacing:5px;margin-top:-12px}'
-      + '#hsl-splash .bar{width:188px;height:5px;border-radius:3px;background:#1E293B;overflow:hidden}'
-      + '#hsl-splash .bar i{display:block;width:45%;height:100%;border-radius:3px;background:linear-gradient(90deg,#0F766E,#5EEAD4);animation:hsl-bar 1s ease-in-out infinite}';
+      + 'animation:hslout .5s ease 1.25s forwards}'
+      + '#hsl-splash .hsl-mk{display:block!important;width:104px!important;height:104px!important;max-width:104px!important;flex:0 0 auto;border:0;animation:hslpop .55s cubic-bezier(.2,.9,.25,1) both;filter:drop-shadow(0 14px 30px rgba(20,184,166,.35))}'
+      + '#hsl-splash .hsl-wm{color:#fff;font-weight:800;font-size:30px;letter-spacing:3px;line-height:1.1;margin:0}'
+      + '#hsl-splash .hsl-tg{color:#5EEAD4;font-weight:700;font-size:12px;letter-spacing:5px;margin:4px 0 0}'
+      + '#hsl-splash .hsl-bar{display:block!important;width:188px!important;height:5px!important;flex:0 0 auto;border-radius:3px;background:#1E293B;overflow:hidden;padding:0}'
+      + '#hsl-splash .hsl-bar>span{display:block!important;width:45%!important;height:100%!important;border-radius:3px;background:linear-gradient(90deg,#0F766E,#5EEAD4);animation:hslload 1s ease-in-out infinite}';
     var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
     var s = document.createElement('div'); s.id = 'hsl-splash';
-    s.innerHTML = '<img class="mk" alt="" src="' + MARK + '">'
-      + '<div style="text-align:center"><div class="wm">HOSTELERO</div><div class="tg">IA POS · EL TPV QUE SE PIENSA SOLO</div></div>'
-      + '<div class="bar"><i></i></div>';
+    s.innerHTML = '<img class="hsl-mk" alt="" src="' + MARK + '">'
+      + '<div style="text-align:center;margin:0"><div class="hsl-wm">HOSTELERO</div><div class="hsl-tg">IA POS · EL TPV QUE SE PIENSA SOLO</div></div>'
+      + '<div class="hsl-bar"><span></span></div>';
     var mount = function () { (document.body || document.documentElement).appendChild(s);
       setTimeout(function () { if (s && s.parentNode) s.parentNode.removeChild(s); }, 2000); };
     if (document.body) mount(); else document.addEventListener('DOMContentLoaded', mount);

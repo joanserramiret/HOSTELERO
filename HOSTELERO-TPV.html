@@ -27,6 +27,15 @@ input:focus,select:focus{border-color:var(--primary)!important;box-shadow:0 0 0 
 .nav-item:hover{background:rgba(255,255,255,.06);color:#e2e8f0}
 .nav-item.active{background:var(--primary);color:#fff;box-shadow:0 8px 18px rgba(79,70,229,.45)}
 .nav-badge{position:absolute;top:6px;right:14px;min-width:18px;height:18px;border-radius:9px;background:var(--danger);color:#fff;font-size:10px;font-weight:800;display:none;align-items:center;justify-content:center;padding:0 4px;line-height:18px;text-align:center}
+.nav-user{display:none;align-items:center;gap:9px;width:100%;margin:2px 0 10px;padding:9px 10px;border-radius:13px;background:rgba(255,255,255,.07);color:#e2e8f0;border:none;cursor:pointer;text-align:left}
+.nav-user:hover{background:rgba(255,255,255,.14)}
+.nav-user .av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:14px;flex:0 0 auto}
+.nav-user .meta{display:flex;flex-direction:column;line-height:1.15;overflow:hidden}
+.nav-user .meta .nm{font-weight:800;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav-user .meta .rl{font-size:10px;color:#8b97ad}
+.nav-user .chg{margin-left:auto;color:#8b97ad;font-size:13px;flex:0 0 auto}
+#tpv-login{position:fixed;inset:0;z-index:3000;background:radial-gradient(120% 120% at 70% 10%,#10202e,#0B1220 60%,#0F172A);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+#tpv-login [data-luser]:active,#tpv-login [data-lk]:active{transform:scale(.96)}
 .sidebar .spacer{flex:1}
 .caja-pill{font-size:10px;text-align:center;padding:7px 4px;border-radius:10px;width:80px;font-weight:800;letter-spacing:.3px}
 .caja-pill.on{background:rgba(22,163,74,.18);color:#4ade80}
@@ -230,6 +239,7 @@ table.tbl{width:100%;border-collapse:collapse}
 <div class="app">
   <aside class="sidebar">
     <div class="brand"><span class="logo">🍽️</span>HOSTELERO<small>TPV</small></div>
+    <button class="nav-user" id="navUser" data-act="cambiarUsuario" title="Cambiar de usuario / cerrar sesión"></button>
     <button class="nav-item" data-view="sala"><span class="ico">🍽️</span>Sala</button>
     <button class="nav-item" data-view="productos"><span class="ico">📦</span>Carta</button>
     <button class="nav-item" data-view="reservas"><span class="ico">📅</span>Reservas</button>
@@ -657,6 +667,12 @@ function render(){
 }
 function renderInner(){
   document.querySelectorAll('.nav-item').forEach(function(b){ b.classList.toggle('active', b.dataset.view===state.view); });
+  var nu=document.getElementById('navUser');
+  if(nu){ if(state.operador){ var A=(typeof window!=='undefined')&&window.HOSTELERO_AUTH; var rl=((A&&A.rolInfo&&A.rolInfo(state.operador.rol))||{}).nombre||state.operador.rol||'';
+      nu.style.display='flex';
+      nu.innerHTML='<span class="av" style="background:'+(state.operador.color||'#4f46e5')+'">'+esc(String(state.operador.nombre||'?').slice(0,1).toUpperCase())+'</span>'
+        +'<span class="meta"><span class="nm">'+esc(state.operador.nombre)+'</span><span class="rl">'+esc(rl)+'</span></span><span class="chg">⇄</span>';
+    } else { nu.style.display='none'; } }
   var caja=cajaAbierta();
   var pill=document.getElementById('cajaPill');
   if(pill){ pill.className='caja-pill '+(caja?'on':'off'); pill.textContent=caja?'CAJA ABIERTA':'CAJA CERRADA'; }
@@ -972,12 +988,16 @@ function modalReserva(){
 /* ----- EVENTOS ----- */
 function onClick(e){
   if(_suppressClick){ _suppressClick=false; return; }
+  var lu=e.target.closest('[data-luser]'); if(lu){ loginPin=''; showLoginTPV(lu.dataset.luser); return; }
+  if(e.target.closest('[data-lback]')){ loginPin=''; showLoginTPV(); return; }
+  var lk=e.target.closest('[data-lk]'); if(lk){ loginKey(lk.dataset.lk); return; }
   var navBtn=e.target.closest('.nav-item'); if(navBtn){ state.view=navBtn.dataset.view; state.ticketActivo=null; render(); return; }
   if(e.target.classList&&e.target.classList.contains('overlay')&&!e.target.classList.contains('sticky')){ closeModal(); return; }
   var el=e.target.closest('[data-act]'); if(!el)return;
   var a=el.dataset.act, id=el.dataset.id;
   if(a==='closeModal'){ closeModal(); return; }
   switch(a){
+    case 'cambiarUsuario': cambiarUsuario(); break;
     case 'sala': state.salaSel=id; render(); break;
     case 'toggleplano': state.editPlano=!state.editPlano; render(); break;
     case 'addmesa': { var sa=state.salaSel||DB.salas.slice().sort(function(a,b){return a.orden-b.orden;})[0].id; var nm=addMesa(sa); pushPlanoMaster(); render(); modalMesaEditor(nm.id); break; }
@@ -1086,7 +1106,10 @@ if(typeof document!=='undefined'){
   function boot(){ load(); if(typeof window!=='undefined'&&window.HOSTELERO_SYNC){ aplicarMaster(); var _agoSig=''; window.HOSTELERO_SYNC.onChange(function(){ var mc=aplicarMaster(); var sig=(window.HOSTELERO_SYNC.agotados?window.HOSTELERO_SYNC.agotados().join(','):''); var agoCambio=(sig!==_agoSig); _agoSig=sig; if(((mc&&!state.ticketActivo)||agoCambio)&&!state.editPlano) render(); }); } document.addEventListener('click',onClick); document.addEventListener('change',onChange);
     document.addEventListener('pointerdown',onPointerDown); document.addEventListener('pointermove',onPointerMove); document.addEventListener('pointerup',onPointerUp);
     window.addEventListener('resize',function(){ if(state.view==='sala'&&!state.ticketActivo) fitPlano(); });
-    render(); checkJornada(); pubJornada(); setInterval(function(){ if(state.view==='sala'&&!state.ticketActivo&&!state.editPlano&&!drag) render(); },20000); }
+    render();
+    var ses=(typeof window!=='undefined'&&window.HOSTELERO_AUTH&&window.HOSTELERO_AUTH.sesion&&window.HOSTELERO_AUTH.sesion());
+    if(ses){ state.operador=ses; render(); checkJornada(); pubJornada(); } else { showLoginTPV(); }
+    setInterval(function(){ if(state.view==='sala'&&!state.ticketActivo&&!state.editPlano&&!drag) render(); },20000); }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
 }
 
@@ -1359,6 +1382,48 @@ function verificarPin(){
   if(u && A.permiso(u.rol,p.accion)){ state.operador=u; closeModal(); var cb=p.cb; state.pinAuth=null; cb(); }
   else { p.ent=''; toast('PIN incorrecto o sin permiso'); modalPinAuth(); }
 }
+
+/* ----- Inicio de sesión del TPV (selección de usuario + PIN) ----- */
+var loginPin='';
+function loginRoot(){ var r=document.getElementById('tpvLoginRoot'); if(!r){ r=document.createElement('div'); r.id='tpvLoginRoot'; document.body.appendChild(r); } return r; }
+function cerrarLoginUI(){ var r=document.getElementById('tpvLoginRoot'); if(r) r.innerHTML=''; }
+function showLoginTPV(sel){
+  var A=(typeof window!=='undefined')&&window.HOSTELERO_AUTH; var us=A?A.usuarios():[]; var r=loginRoot();
+  function inicial(n){ return esc(String(n||'?').slice(0,1).toUpperCase()); }
+  if(!sel){
+    var cards=us.map(function(u){ var rl=((A.rolInfo&&A.rolInfo(u.rol))||{}).nombre||u.rol;
+      return '<button data-luser="'+u.id+'" style="display:flex;flex-direction:column;align-items:center;gap:8px;background:#1e293b;border:2px solid transparent;border-radius:16px;padding:16px 14px;cursor:pointer;min-width:118px">'
+      +'<span style="width:54px;height:54px;border-radius:50%;background:'+(u.color||'#4f46e5')+';display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:22px">'+inicial(u.nombre)+'</span>'
+      +'<span style="color:#fff;font-weight:800;font-size:15px">'+esc(u.nombre)+'</span>'
+      +'<span style="color:#8b97ad;font-size:11px">'+esc(rl)+'</span></button>'; }).join('');
+    r.innerHTML='<div id="tpv-login">'
+      +'<div style="text-align:center"><div style="color:#fff;font-weight:800;font-size:27px;letter-spacing:2px">HOSTELERO <span style="color:#5eead4">TPV</span></div><div style="color:#8b97ad;font-size:13px;margin-top:4px">Selecciona tu usuario</div></div>'
+      +'<div style="display:flex;flex-wrap:wrap;gap:14px;justify-content:center;max-width:720px;padding:0 16px">'+(cards||'<span style="color:#8b97ad">No hay usuarios. Créalos en Administración.</span>')+'</div></div>';
+  } else {
+    var u=us.filter(function(x){return x.id===sel;})[0]; if(!u){ showLoginTPV(); return; }
+    state._loginSel=sel;
+    var dots=''; for(var i=0;i<4;i++){ dots+='<span style="width:16px;height:16px;border-radius:50%;border:2px solid #475569;'+(i<loginPin.length?'background:#14b8a6;border-color:#14b8a6':'')+'"></span>'; }
+    var keys=['1','2','3','4','5','6','7','8','9','C','0','⌫'];
+    var kp=keys.map(function(k){return '<button data-lk="'+k+'" style="font-size:22px;font-weight:700;padding:16px;border-radius:14px;border:none;background:#1e293b;color:#fff;cursor:pointer">'+k+'</button>';}).join('');
+    r.innerHTML='<div id="tpv-login">'
+      +'<button data-lback style="position:absolute;top:22px;left:22px;background:none;border:none;color:#8b97ad;font-size:15px;cursor:pointer">← Usuarios</button>'
+      +'<div style="text-align:center;color:#fff"><span style="display:inline-flex;width:64px;height:64px;border-radius:50%;background:'+(u.color||'#4f46e5')+';align-items:center;justify-content:center;font-weight:800;font-size:26px">'+inicial(u.nombre)+'</span><div style="font-weight:800;font-size:19px;margin-top:8px">'+esc(u.nombre)+'</div><div style="color:#8b97ad;font-size:12px">Introduce tu PIN</div></div>'
+      +'<div style="display:flex;gap:14px">'+dots+'</div>'
+      +'<div style="display:grid;grid-template-columns:repeat(3,76px);gap:12px">'+kp+'</div></div>';
+  }
+}
+function loginKey(k){
+  if(k==='C') loginPin='';
+  else if(k==='⌫') loginPin=loginPin.slice(0,-1);
+  else if(loginPin.length<4) loginPin+=k;
+  if(loginPin.length===4){
+    var A=(typeof window!=='undefined')&&window.HOSTELERO_AUTH; var u=A?A.loginPin(state._loginSel,loginPin):null;
+    if(u){ state.operador=u; loginPin=''; cerrarLoginUI(); render(); checkJornada(); pubJornada(); return; }
+    loginPin=''; toast('PIN incorrecto'); showLoginTPV(state._loginSel); return;
+  }
+  showLoginTPV(state._loginSel);
+}
+function cambiarUsuario(){ if(!confirm('¿Cerrar sesión y cambiar de usuario?')) return; var A=(typeof window!=='undefined')&&window.HOSTELERO_AUTH; if(A&&A.logout)A.logout(); state.operador=null; loginPin=''; showLoginTPV(); }
 
 /* ----- Cliente y factura ----- */
 function modalCliente(){
