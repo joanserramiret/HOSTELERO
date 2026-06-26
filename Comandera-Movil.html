@@ -287,17 +287,19 @@ function showComanda(){st.view='comanda';
         var sub='<span class="lpr">'+eur(l.precio)+'</span>';
         if(l.descLinea) sub+=' <span style="color:var(--red)">·dto</span>';
         if(l.comentario) sub+='<br><span style="color:#5fd0e0">📝 '+esc(l.comentario)+'</span>';
-        return '<div class="cl"><button class="q" data-menos="'+i+'">−</button><span class="qn">'+l.cantidad+'</span><button class="q" data-mas="'+i+'">+</button>'
-          +'<span class="n" data-line="'+i+'">'+(l.ic||'')+' '+esc(l.nombre)+'<div class="lsub">'+sub+'</div></span>'
+        return '<div class="cl'+(l.enviado?' enviado':'')+'">'
+          +(l.enviado?'<span class="q" style="background:#0f766e;border-color:#0f766e">✓</span><span class="qn">'+l.cantidad+'</span>':'<button class="q" data-menos="'+i+'">−</button><span class="qn">'+l.cantidad+'</span><button class="q" data-mas="'+i+'">+</button>')
+          +'<span class="n" data-line="'+i+'">'+(l.ic||'')+' '+esc(l.nombre)+'<div class="lsub">'+sub+(l.enviado?'<br><span style="color:#5eead4">✓ en cocina</span>':'')+'</div></span>'
           +'<span class="limp" data-line="'+i+'">'+eur(lineImp(l))+'</span></div>';}).join('');}
     });
   } else cmd='<div class="empty">Toca productos para añadir a la comanda</div>';
   var uds=st.lineas.reduce(function(s,l){return s+l.cantidad;},0);
+  var pend=st.lineas.filter(function(l){return !l.enviado;}).reduce(function(s,l){return s+l.cantidad;},0);
   var total=st.lineas.reduce(function(s,l){return s+lineImp(l);},0);
   app.innerHTML='<div class="app"><div class="top"><button class="back" data-go="mesas">←</button><h1>Mesa '+esc(st.mesa)+'</h1><div class="right"><button class="btn123" data-go="cajon" title="Abrir cajón">💰</button><button class="btn123" data-go="disp" style="background:#3a1620;color:#ff9db4">🚫</button></div></div>'
     +'<div class="cmd-top"><div class="cmdtot"><span>Comanda · '+uds+' uds</span><b>'+eur(total)+'</b></div><div class="lst">'+cmd+'</div></div>'
     +'<div class="body">'+ordbar+'<div class="cattabs">'+tabs+'</div><div class="prods">'+prods+'</div></div>'
-    +'<div class="botbar"><button class="btn123" data-go="orden123" title="Orden de platos">123</button><button class="btn123" data-go="marchar" title="Marchar pase">▶</button><button class="btn123" '+(st.lineas.length?'':'disabled')+' data-go="cuenta">🧾</button><button class="enviar" '+(uds?'':'disabled')+' data-go="enviar">Enviar a cocina ('+uds+')</button></div></div>';
+    +'<div class="botbar"><button class="btn123" data-go="orden123" title="Orden de platos">123</button><button class="btn123" data-go="marchar" title="Marchar pase">▶</button><button class="btn123" '+(st.lineas.length?'':'disabled')+' data-go="cuenta">🧾</button><button class="enviar" '+(pend?'':'disabled')+' data-go="enviar">Enviar a cocina ('+pend+')</button></div></div>';
 }
 function addProd(ix){
   var cat=getCARTA()[st.catSel];if(!cat)return;var it=cat.items[ix];if(!it)return;
@@ -346,6 +348,7 @@ function lineaSheet(idx){
   var chips=coms.map(function(c){return '<button class="opt" data-cmadd="'+esc(c.texto)+'" style="font-size:14px;padding:11px 14px">'+esc(c.texto)+'</button>';}).join('')||'<p class="empty">No hay comentarios definidos.</p>';
   var ov=document.createElement('div');ov.className='overlay';
   ov.innerHTML='<div class="sheet"><h3>'+(l.ic||'')+' '+esc(l.nombre)+'</h3>'
+    +(l.enviado?'<div style="color:#5eead4;font-weight:700;margin-bottom:10px">✓ Esta línea ya está en cocina</div>':'<button class="opt" data-lenviar="1" style="justify-content:center;background:var(--green);border-color:var(--green);margin-bottom:10px">👨‍🍳 Enviar solo esta línea a cocina</button>')
     +'<div style="display:flex;gap:10px;align-items:center;margin-bottom:10px"><span style="font-weight:800;color:var(--soft)">Cantidad</span>'
     +'<button class="q" data-lq="-">−</button><span style="min-width:30px;text-align:center;font-weight:900;font-size:18px" id="lqn">'+l.cantidad+'</span><button class="q" data-lq="+">+</button>'
     +'<span style="margin-left:auto;font-weight:800">'+eur(l.precio)+'/u</span></div>'
@@ -360,6 +363,7 @@ function lineaSheet(idx){
   function close(){ov.remove();}
   ov.addEventListener('click',function(e){
     if(e.target===ov)return close();
+    if(e.target.closest('[data-lenviar]')){ enviarLineaCom(idx); close(); showComanda(); return; }
     var qb=e.target.closest('[data-lq]');if(qb){if(qb.dataset.lq==='+')l.cantidad++;else if(l.cantidad>1)l.cantidad--;document.getElementById('lqn').textContent=l.cantidad;return;}
     if(e.target.closest('[data-lprecio]')){var x=prompt('Nuevo precio unitario (€):',l.precio);if(x!==null){var n=parseFloat(String(x).replace(',','.'));if(!isNaN(n))l.precio=round2(n);}close();showComanda();lineaSheet(idx);return;}
     var dd=e.target.closest('[data-ldesc]');if(dd){if(dd.dataset.ldesc==='quitar')l.descLinea=null;else{var pc=parseFloat(document.getElementById('ld_pct').value)||0,eu=parseFloat(document.getElementById('ld_eur').value)||0;if(pc>0)l.descLinea={tipo:'pct',valor:pc};else if(eu>0)l.descLinea={tipo:'eur',valor:eu};else l.descLinea=null;}close();showComanda();lineaSheet(idx);return;}
@@ -369,11 +373,18 @@ function lineaSheet(idx){
   });
   document.body.appendChild(ov);
 }
+function _prepDeC(id){ var p=(Sync.master().productos||[]).filter(function(x){return x.id===id;})[0]; return (p&&p.preparacion)||undefined; }
+function _lineaPayload(l){ return {nombre:l.nombre,ic:l.ic,cantidad:l.cantidad,orden:l.orden,preparacion:_prepDeC(l.productId),precio:l.precio,comentario:l.comentario,descLinea:l.descLinea}; }
+function enviarLineaCom(idx){
+  var l=st.lineas[idx]; if(!l||l.enviado){ toast('Esa línea ya está en cocina'); return; }
+  Sync.enviarComanda({mesa:st.mesa,camarero:me().nombre,lineas:[_lineaPayload(l)]});
+  l.enviado=true; toast('👨‍🍳 Línea enviada a cocina');
+}
 function enviar(){
-  if(!st.lineas.length)return;
-  var _prods=(Sync.master().productos||[]);
-  function _prepDe(id){ var p=_prods.filter(function(x){return x.id===id;})[0]; return (p&&p.preparacion)||undefined; }
-  Sync.enviarComanda({mesa:st.mesa,camarero:me().nombre,lineas:st.lineas.map(function(l){return {nombre:l.nombre,ic:l.ic,cantidad:l.cantidad,orden:l.orden,preparacion:_prepDe(l.productId),precio:l.precio,comentario:l.comentario,descLinea:l.descLinea};})});
+  var pend=st.lineas.filter(function(l){return !l.enviado;});
+  if(!pend.length){ showMesas(); return; }
+  pend.forEach(function(l){ l.enviado=true; });
+  Sync.enviarComanda({mesa:st.mesa,camarero:me().nombre,lineas:pend.map(_lineaPayload)});
   toast('✅ Comanda enviada a cocina');
   showMesas();
 }
