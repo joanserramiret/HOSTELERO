@@ -336,6 +336,15 @@ function viewEstaciones(){
   });
   return html;
 }
+var BOTONES={
+  tpv:[['cobrar','Cobrar'],['acocina','A cocina'],['cuenta','Cuenta'],['marchar','Marchar'],['pases','Pases (123)'],['dividir','Dividir'],['cliente','Cliente'],['dto','Descuento'],['comensales','Comensales'],['cajon','Abrir cajón'],['disponibilidad','86 / Disponibilidad'],['anular','Anular'],['teclado','Teclado numérico']],
+  comandera:[['marchar','Marchar'],['cuenta','Cuenta'],['pases','Pases (123)'],['cajon','Abrir cajón'],['disponibilidad','86 / Disponibilidad']],
+  kds:[['disponibilidad','Disponibilidad (86)'],['todolisto','Todo listo'],['servido','Servido'],['avisar','Avisar camarero']]
+};
+function botSection(tp,s){
+  var checks=(BOTONES[tp]||[]).map(function(b){ var oc=s&&s.botonesOcultos&&s.botonesOcultos.indexOf(b[0])>=0; return '<label class="chk" style="margin:0 12px 6px 0"><input type="checkbox" class="est_bot" value="'+b[0]+'" '+(oc?'':'checked')+'> '+esc(b[1])+'</label>'; }).join('');
+  return '<div style="margin:10px 0 6px;font-weight:800;font-size:12px;color:var(--soft);text-transform:uppercase">Botones visibles</div><div style="display:flex;flex-wrap:wrap">'+checks+'</div><p style="color:var(--soft);font-size:12px;margin:2px 0 0">Desmarca para ocultar el botón en esta estación.</p>';
+}
 function modalEstacion(s){
   modalOpen=true;
   var tipo=s?s.tipo:'kds';
@@ -373,10 +382,13 @@ function modalEstacion(s){
       +'<div style="display:flex;flex-wrap:wrap">'+(cocChecks||'<span class="muted">Crea impresoras de cocina primero.</span>')+'</div>'
       +'<p style="color:var(--soft);font-size:12px;margin:2px 0 0">Cada dispositivo puede usar impresoras distintas; no tienen por qué coincidir.</p>'
     +'</div>'
+    +'<div id="es_bot_kds" style="'+(tipo==='kds'?'':'display:none')+'">'+botSection('kds',s)+'</div>'
+    +'<div id="es_bot_tpv" style="'+(tipo==='tpv'?'':'display:none')+'">'+botSection('tpv',s)+'</div>'
+    +'<div id="es_bot_comandera" style="'+(tipo==='comandera'?'':'display:none')+'">'+botSection('comandera',s)+'</div>'
     +'<label class="chk" style="margin-top:10px"><input type="checkbox" id="es_a" '+(!s||s.activa!==false?'checked':'')+'> Activa</label>'
     +'</div><div class="foot">'+(s?'<button class="btn red" data-del-est="'+esc(s.id)+'" style="margin-right:auto">Eliminar</button>':'')
     +'<button class="btn ghost" data-act="cerrar">Cancelar</button><button class="btn" data-act="saveest" data-id="'+(s?esc(s.id):'')+'">Guardar</button></div>');
-  var selT=document.getElementById('es_t'); if(selT) selT.onchange=function(){ var v=this.value; var k=document.getElementById('es_kds'); if(k)k.style.display=(v==='kds')?'':'none'; var d=document.getElementById('es_disp'); if(d)d.style.display=(v==='tpv'||v==='comandera')?'':'none'; };
+  var selT=document.getElementById('es_t'); if(selT) selT.onchange=function(){ var v=this.value; var k=document.getElementById('es_kds'); if(k)k.style.display=(v==='kds')?'':'none'; var d=document.getElementById('es_disp'); if(d)d.style.display=(v==='tpv'||v==='comandera')?'':'none'; ['kds','tpv','comandera'].forEach(function(tp){ var b=document.getElementById('es_bot_'+tp); if(b)b.style.display=(v===tp)?'':'none'; }); };
 }
 function guardarEstacion(id){
   var n=val('es_n').trim(); if(!n)return toast('Pon el nombre');
@@ -385,6 +397,7 @@ function guardarEstacion(id){
   var nid = (val('es_id').trim() || (tipo+'-'+n.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,''))).slice(0,40);
   if((M.estaciones||[]).some(function(x){return x.id===nid && x.id!==id;})) return toast('Ese ID ya existe, usa otro');
   var data={id:nid,tipo:tipo,nombre:n,activa:chk('es_a')};
+  data.botonesOcultos=Array.prototype.filter.call(document.querySelectorAll('#es_bot_'+tipo+' .est_bot'),function(x){return !x.checked;}).map(function(x){return x.value;});
   if(tipo==='kds'){
     data.ordenes=Array.prototype.map.call(document.querySelectorAll('.est_ord:checked'),function(x){return x.value;});
     data.preparaciones=Array.prototype.map.call(document.querySelectorAll('.est_prep:checked'),function(x){return x.value;});
