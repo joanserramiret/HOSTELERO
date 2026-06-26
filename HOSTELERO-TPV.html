@@ -82,9 +82,13 @@ input:focus,select:focus{border-color:var(--primary)!important;box-shadow:0 0 0 
 .mesa .dot{position:absolute;top:9px;right:9px;width:10px;height:10px;border-radius:50%;background:#cbd5e1}
 .mesa.ocupada .dot{background:var(--green);box-shadow:0 0 0 3px rgba(22,163,74,.15)}
 .mesa .time{position:absolute;bottom:7px;font-size:10px;color:var(--soft);font-weight:700}
-.venta{display:grid;grid-template-columns:360px 1fr;gap:16px;height:calc(100vh - 98px)}
-.venta .ticket{order:-1}
+.venta{display:grid;grid-template-columns:336px 94px 1fr;gap:14px;height:calc(100vh - 98px)}
 .carta{display:flex;flex-direction:column;min-height:0}
+.fncol-v{display:flex;flex-direction:column;gap:6px;overflow:auto}
+.fncol-v .fnb{background:var(--primary);color:#fff;border:none;border-radius:12px;padding:9px 3px;font-weight:800;display:flex;flex-direction:column;align-items:center;gap:3px;line-height:1.1;min-height:56px;justify-content:center}
+.fncol-v .fnb b{font-size:18px;font-weight:400}.fncol-v .fnb span{font-size:10px;font-weight:700}
+.fncol-v .fnb[disabled]{opacity:.4}
+.fncol-v .fnb.green{background:var(--green)}.fncol-v .fnb.red{background:#fff1f3;color:var(--danger)}.fncol-v .fnb.amber{background:var(--gold)}
 .cat-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;flex-shrink:0}
 .cat-chip{padding:9px 15px;border-radius:999px;color:#fff;font-weight:800;font-size:13px;background:var(--cc);opacity:.5;display:flex;align-items:center;gap:6px}
 .cat-chip .ci{font-size:16px}
@@ -175,7 +179,7 @@ table.tbl{width:100%;border-collapse:collapse}
 .toast{background:#0f172a;color:#fff;padding:12px 20px;border-radius:12px;font-weight:700;font-size:14px;box-shadow:var(--shadow-lg);animation:tin .25s ease}
 .toast.ok{background:#15803d}.toast.out{opacity:0;transform:translateY(8px);transition:.3s}
 @keyframes tin{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-@media(max-width:820px){.venta{grid-template-columns:1fr}.ticket{height:auto;max-height:46vh}}
+@media(max-width:820px){.venta{grid-template-columns:1fr}.ticket{height:auto;max-height:46vh}.fncol-v{flex-direction:row;flex-wrap:wrap}.fncol-v .fnb{flex:1 0 84px}}
 .mgroup{margin-bottom:18px}
 .mgl{font-size:12px;font-weight:800;color:var(--soft);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
 .opts{display:flex;flex-wrap:wrap;gap:8px}
@@ -768,17 +772,29 @@ function viewVenta(){
   var cms=t.comensales?('👤 '+t.comensales+' comensales'):'👤 Comensales';
   var _P=PASES[t.pase||0]||PASES[0], _nP=PASES[(t.pase||0)+1], _pP=PASES[(t.pase||0)-1];
   var pasectrl='<span class="pasepill" style="background:'+_P.c+'22;color:'+_P.c+'">🍽️ '+_P.n+'</span>'+(_nP?'<button class="btn ghost" data-act="pasenext">Marchar '+_nP.n+' ▶</button>':(_pP?'<button class="btn ghost" data-act="paseprev">◀ '+_pP.n+'</button>':''));
+  var _cli=(t.clienteId?esc((getCliente(t.clienteId)||{}).nombre||'Cliente'):'Cliente');
   return '<div class="topbar"><button class="btn ghost" data-act="volver">← Sala</button>'
     +'<div class="ttl"><h1>'+esc(t.mesaNombre||'Ticket')+'</h1><span class="sub">Ticket #'+t.numero+'</span></div>'
-    +'<div class="right">'+pasectrl+'<button class="btn ghost" data-act="cliente">👤 '+(t.clienteId?esc((getCliente(t.clienteId)||{}).nombre||'Cliente'):'Cliente')+'</button><button class="btn ghost" data-act="descuento">🏷️ '+(t.descuento?('-'+eur(descuentoImporte(t))):'Dto')+'</button><button class="btn ghost" data-act="comensales">'+cms+'</button><button class="btn ghost" '+(t.lineas.length?'':'disabled')+' data-act="dividir">➗ Dividir</button><button class="btn danger-ghost" data-act="anular">Anular</button></div></div>'
+    +'<div class="right">'+pasectrl+'</div></div>'
     +'<div class="content venta-content"><div class="venta">'
-    +'<div class="carta">'+ordenBar+(function(){var ta=tarifaActiva(t.salaId);return (ta&&(ta.pct||(ta.precios&&Object.keys(ta.precios).length)))?'<div class="orden-activo" style="background:#0891b2">💲 Tarifa aplicada: <b>'+esc(ta.nombre)+'</b></div>':'';})()+'<div class="cat-bar"><button class="btn123" data-act="orden123" title="Orden de platos">123</button><button class="btn123" data-act="disponibilidad" title="Disponibilidad" style="background:#fee2e2;color:#b91c1c">🚫</button>'+chips+'</div>'+(function(){var A=DB.accionesRapidas||[];return A.length?'<div style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 2px">'+A.map(function(a){return '<button class="btn" style="background:'+(a.color||'#334155')+';color:#fff;border:none;font-weight:800" data-act="accrap" data-id="'+a.id+'">'+(a.ic||'⚡')+' '+esc(a.label)+'</button>';}).join('')+'</div>':'';})()+'<div class="prod-grid">'+pg+'</div></div>'
     +'<div class="card ticket"><div class="thead"><b>Comanda</b><span class="uds">'+uds+' uds</span></div><div class="lineas">'+lineas+'</div>'
     +'<div class="tfoot">'
-    +'<button class="btn outline block'+(pend?'':' off')+'" '+(pend?'':'disabled')+' data-act="enviarCocina">👨‍🍳 Enviar a cocina'+(pend?' ('+pend+')':'')+'</button>'
     +'<div class="iva-row"><span>Base '+eur(iva.base)+'</span><span>IVA '+ivaPct()+'% '+eur(iva.cuota)+'</span></div>'
     +''+(clienteDescuento(t)>0?'<div class="iva-row"><span>Dto. cliente</span><span>-'+eur(clienteDescuento(t))+'</span></div>':'')+(promo.total>0?'<div class="iva-row"><span>Promociones</span><span>-'+eur(promo.total)+'</span></div>':'')+(desc>0?'<div class="iva-row"><span>Descuento'+(t.descuento&&t.descuento.tipo==='invit'?' (invitación)':'')+'</span><span>-'+eur(desc)+'</span></div>':'')+'<div class="total-row"><span>TOTAL</span><span class="big">'+eur(total)+'</span></div>'
     +'<button class="btn green lg block" '+(t.lineas.length?'':'disabled')+' data-act="cobrar">💶 Cobrar '+eur(total)+'</button></div></div>'
+    +'<div class="fncol-v">'
+      +'<button class="fnb green" '+(pend?'':'disabled')+' data-act="enviarCocina"><b>👨‍🍳</b><span>Enviar'+(pend?' ('+pend+')':'')+'</span></button>'
+      +'<button class="fnb" data-act="marcharTPV"><b>▶</b><span>Marchar</span></button>'
+      +'<button class="fnb" data-act="orden123"><b>1·2·3</b><span>Pases</span></button>'
+      +'<button class="fnb" '+(t.lineas.length?'':'disabled')+' data-act="dividir"><b>➗</b><span>Dividir</span></button>'
+      +'<button class="fnb" data-act="cliente"><b>👤</b><span>'+_cli+'</span></button>'
+      +'<button class="fnb" data-act="descuento"><b>🏷️</b><span>'+(t.descuento?('-'+eur(descuentoImporte(t))):'Dto')+'</span></button>'
+      +'<button class="fnb" data-act="comensales"><b>👥</b><span>'+(t.comensales||'Pax')+'</span></button>'
+      +'<button class="fnb" data-act="abrirCajonTPV"><b>💰</b><span>Cajón</span></button>'
+      +'<button class="fnb" data-act="disponibilidad"><b>🚫</b><span>86</span></button>'
+      +'<button class="fnb red" data-act="anular"><b>🗑</b><span>Anular</span></button>'
+    +'</div>'
+    +'<div class="carta">'+ordenBar+(function(){var ta=tarifaActiva(t.salaId);return (ta&&(ta.pct||(ta.precios&&Object.keys(ta.precios).length)))?'<div class="orden-activo" style="background:#0891b2">💲 Tarifa aplicada: <b>'+esc(ta.nombre)+'</b></div>':'';})()+'<div class="cat-bar">'+chips+'</div>'+(function(){var A=DB.accionesRapidas||[];return A.length?'<div style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 2px">'+A.map(function(a){return '<button class="btn" style="background:'+(a.color||'#334155')+';color:#fff;border:none;font-weight:800" data-act="accrap" data-id="'+a.id+'">'+(a.ic||'⚡')+' '+esc(a.label)+'</button>';}).join('')+'</div>':'';})()+'<div class="prod-grid">'+pg+'</div></div>'
     +'</div></div>';
 }
 
@@ -939,6 +955,11 @@ function modalComensales(){
     +'<div class="foot"><button class="btn ghost" data-act="closeModal">Omitir</button><button class="btn primary" data-act="savecms">Guardar</button></div></div>');
 }
 
+function modalMarcharTPV(){
+  var t=getTicket(state.ticketActivo); if(!t)return;
+  var ops=ORDENES.map(function(o){return '<button class="btn block" style="margin-bottom:8px;background:'+o.c+';color:#fff" data-act="marchaTPVsel" data-pase="'+esc(o.n)+'">▶ Marchar '+esc(o.n)+'</button>';}).join('');
+  openModal('<div class="modal sm" data-stop><h2>▶ Marchar pase · '+esc(t.mesaNombre||'')+'</h2><div class="mbody"><p class="muted" style="margin:0 0 10px">Avisa a cocina (alerta en el KDS) e imprime la marcha en las impresoras de cocina.</p>'+ops+'</div><div class="foot"><button class="btn ghost" data-act="closeModal">Cerrar</button></div></div>');
+}
 function modalDividir(){
   var t=getTicket(state.ticketActivo); if(!t)return; state.split=state.split||{};
   var totP=0,totR=0;
@@ -1092,6 +1113,9 @@ function onClick(e){
     case 'enviarCocina': { var n=enviarCocina(state.ticketActivo); if(n>0) toast('👨‍🍳 '+n+' plato(s) enviados a cocina'); render(); break; }
     case 'anular': autorizar('anular',function(){ if(confirm('¿Anular este ticket?')){ anularTicket(state.ticketActivo); state.ticketActivo=null; render(); } }); break;
     case 'cobrar': state.cobro={pagos:[],ent:'',metodo:'efectivo',propina:''}; modalCobro(); break;
+    case 'marcharTPV': modalMarcharTPV(); break;
+    case 'marchaTPVsel': { var mt=getTicket(state.ticketActivo); if(mt&&window.HOSTELERO_SYNC&&window.HOSTELERO_SYNC.marchar){ window.HOSTELERO_SYNC.marchar(mt.mesaNombre||('#'+mt.numero), el.dataset.pase, (state.operador&&state.operador.nombre)||'TPV'); toast('▶ Marchado '+el.dataset.pase); } closeModal(); break; }
+    case 'abrirCajonTPV': { var ec=estTPV(); if(ec&&ec.impresoraTickets&&window.HOSTELERO_SYNC&&window.HOSTELERO_SYNC.abrirCajon){ window.HOSTELERO_SYNC.abrirCajon(ec.impresoraTickets); toast('💰 Abriendo cajón'); } else toast('Sin impresora de tickets configurada'); break; }
     case 'dividir': state.split={}; modalDividir(); break;
     case 'splitmas': { var si=+el.dataset.idx, sl=getTicket(state.ticketActivo).lineas[si], sc=state.split[si]||0; state.split[si]=Math.min(sl.cantidad,round2(sc+1)); modalDividir(); break; }
     case 'splitmenos': { var si2=+el.dataset.idx, sc2=state.split[si2]||0; state.split[si2]=Math.max(0,round2(sc2-1)); modalDividir(); break; }
