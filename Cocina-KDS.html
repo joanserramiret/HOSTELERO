@@ -8,14 +8,14 @@
 <script src="maitre.js" defer></script>
 <style>
 :root{--bg:#0a0e16;--card:#141b28;--card2:#1c2536;--line:#2a3446;--text:#eef2f8;--soft:#8c97ab;
---primary:#5b6cff;--green:#19b562;--amber:#e0a020;--red:#e0436a;--shadow:0 18px 50px rgba(0,0,0,.5)}
+--primary:#14b8a6;--gold:#f59e0b;--green:#19b562;--amber:#e0a020;--red:#e0436a;--shadow:0 18px 50px rgba(0,0,0,.5)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;margin:0}
 body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);overflow:hidden;-webkit-font-smoothing:antialiased}
 button{font-family:inherit;cursor:pointer;border:none;transition:transform .08s,background .15s}
 button:active{transform:scale(.97)}
 .app{height:100vh;display:flex;flex-direction:column}
-.top{height:62px;display:flex;align-items:center;gap:14px;padding:0 20px;background:#0f1622;border-bottom:1px solid var(--line);flex-shrink:0}
+.top{height:62px;display:flex;align-items:center;gap:14px;padding:0 20px;background:#0f1622;border-bottom:3px solid transparent;border-image:linear-gradient(90deg,#0f766e,#14b8a6,#f59e0b) 1;flex-shrink:0}
 .top h1{font-size:20px;font-weight:800;margin:0;letter-spacing:.5px}
 .top .sub{color:var(--soft);font-size:12px;font-weight:700}
 .dotmodo{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:5px}

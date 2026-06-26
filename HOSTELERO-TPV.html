@@ -17,17 +17,17 @@ button{font-family:inherit;cursor:pointer;border:none;transition:transform .08s,
 button:active{transform:scale(.97)}
 input,select{font-family:inherit;font-size:16px;outline:none}
 input:focus,select:focus{border-color:var(--primary)!important;box-shadow:0 0 0 3px rgba(15,118,110,.18)}
-.app{display:flex;height:100vh}
-.sidebar{width:96px;background:linear-gradient(180deg,#161d2b,#0e131c);color:#cbd5e1;display:flex;flex-direction:column;align-items:center;padding:16px 0;gap:5px;flex-shrink:0}
-.brand{font-weight:800;font-size:13px;letter-spacing:.5px;color:#fff;text-align:center;line-height:1.1;margin-bottom:12px}
-.brand .logo{font-size:25px;display:block;margin-bottom:3px}
-.brand small{display:block;font-weight:700;font-size:9px;color:#5b6678;letter-spacing:3px;margin-top:2px}
-.nav-item{position:relative;width:80px;padding:12px 4px;border-radius:14px;background:transparent;color:#8b97ad;display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11px;font-weight:600}
-.nav-item .ico{font-size:22px}
+.app{display:flex;flex-direction:column;height:100vh}
+.sidebar{width:auto;height:54px;background:linear-gradient(90deg,#161d2b,#0e131c);color:#cbd5e1;display:flex;flex-direction:row;align-items:center;padding:0 12px;gap:6px;flex-shrink:0}
+.brand{display:flex;align-items:center;gap:7px;font-weight:800;font-size:15px;letter-spacing:.4px;color:#fff;margin:0 6px 0 0;white-space:nowrap}
+.brand .logo{font-size:22px;display:inline;margin:0}
+.brand small{display:none}
+.nav-item{position:relative;padding:9px 13px;border-radius:11px;background:transparent;color:#9aa6bd;display:flex;flex-direction:row;align-items:center;gap:7px;font-size:13px;font-weight:700;white-space:nowrap}
+.nav-item .ico{font-size:18px}
 .nav-item:hover{background:rgba(255,255,255,.06);color:#e2e8f0}
 .nav-item.active{background:var(--primary);color:#fff;box-shadow:0 8px 18px rgba(15,118,110,.45)}
 .nav-badge{position:absolute;top:6px;right:14px;min-width:18px;height:18px;border-radius:9px;background:var(--danger);color:#fff;font-size:10px;font-weight:800;display:none;align-items:center;justify-content:center;padding:0 4px;line-height:18px;text-align:center}
-.nav-user{display:none;align-items:center;gap:9px;width:100%;margin:2px 0 10px;padding:9px 10px;border-radius:13px;background:rgba(255,255,255,.07);color:#e2e8f0;border:none;cursor:pointer;text-align:left}
+.nav-user{display:none;align-items:center;gap:8px;width:auto;margin:0 4px;padding:7px 10px;border-radius:11px;background:rgba(255,255,255,.07);color:#e2e8f0;border:none;cursor:pointer;text-align:left}
 .nav-user:hover{background:rgba(255,255,255,.14)}
 .nav-user .av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:14px;flex:0 0 auto}
 .nav-user .meta{display:flex;flex-direction:column;line-height:1.15;overflow:hidden}
@@ -37,7 +37,7 @@ input:focus,select:focus{border-color:var(--primary)!important;box-shadow:0 0 0 
 #tpv-login{position:fixed;inset:0;z-index:3000;background:radial-gradient(120% 120% at 70% 10%,#10202e,#0B1220 60%,#0F172A);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
 #tpv-login [data-luser]:active,#tpv-login [data-lk]:active{transform:scale(.96)}
 .sidebar .spacer{flex:1}
-.caja-pill{font-size:10px;text-align:center;padding:7px 4px;border-radius:10px;width:80px;font-weight:800;letter-spacing:.3px}
+.caja-pill{font-size:10px;text-align:center;padding:7px 12px;border-radius:10px;width:auto;font-weight:800;letter-spacing:.3px;white-space:nowrap}
 .caja-pill.on{background:rgba(22,163,74,.18);color:#4ade80}
 .caja-pill.off{background:rgba(225,29,72,.18);color:#fb7185}
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden}
@@ -82,7 +82,7 @@ input:focus,select:focus{border-color:var(--primary)!important;box-shadow:0 0 0 
 .mesa .dot{position:absolute;top:9px;right:9px;width:10px;height:10px;border-radius:50%;background:#cbd5e1}
 .mesa.ocupada .dot{background:var(--green);box-shadow:0 0 0 3px rgba(22,163,74,.15)}
 .mesa .time{position:absolute;bottom:7px;font-size:10px;color:var(--soft);font-weight:700}
-.venta{display:grid;grid-template-columns:336px 94px 1fr;gap:14px;height:calc(100vh - 98px)}
+.venta{display:grid;grid-template-columns:336px 94px 1fr;gap:14px;height:calc(100vh - 154px)}
 .carta{display:flex;flex-direction:column;min-height:0}
 .fncol-v{display:flex;flex-direction:column;gap:6px;overflow:auto}
 .fncol-v .fnb{background:var(--primary);color:#fff;border:none;border-radius:12px;padding:9px 3px;font-weight:800;display:flex;flex-direction:column;align-items:center;gap:3px;line-height:1.1;min-height:56px;justify-content:center}
@@ -105,15 +105,29 @@ input:focus,select:focus{border-color:var(--primary)!important;box-shadow:0 0 0 
 .ticket .thead{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-size:15px}
 .ticket .thead .uds{color:var(--soft);font-size:13px;font-weight:700}
 .ticket .lineas{flex:1;overflow:auto;padding:4px 0}
-.linea{display:flex;align-items:center;gap:9px;padding:9px 14px;border-bottom:1px solid var(--panel2)}
+.linea{padding:8px 12px;border-bottom:1px solid var(--panel2);cursor:pointer}
+.linea.sel{background:#e7f6f3;box-shadow:inset 3px 0 0 var(--primary)}
 .linea.enviado{background:#fbfdff}
-.linea .lic{font-size:20px;width:24px;text-align:center}
-.linea .ln{flex:1}.linea .ln b{display:block;font-size:14px}.linea .ln span{font-size:11px;color:var(--soft);font-weight:600}
+.linea .lhead{display:flex;align-items:flex-start;gap:8px}
+.linea .lic{font-size:18px;flex:0 0 auto;line-height:1.3}
+.linea .lnm{flex:1;font-weight:700;font-size:14px;line-height:1.25}
+.linea .limp{font-weight:900;font-size:14px;white-space:nowrap;margin-left:6px}
+.linea .ldetwrap{margin:2px 0 5px 26px}
+.linea .lctrl{display:flex;align-items:center;gap:7px;margin:3px 0 0 26px}
+.linea .lctrl .lunit{margin-left:auto;font-size:11px;color:var(--soft);font-weight:700}
 .kbadge{font-size:12px}
 .qtybtn{width:30px;height:30px;border-radius:9px;background:var(--panel2);border:1px solid var(--line);font-size:18px;font-weight:800;color:var(--text);display:flex;align-items:center;justify-content:center}
-.qtybtn.coment{font-size:15px}.qtybtn.coment.on{background:#0891b2;border-color:#0891b2}
-.linea .qty{width:24px;text-align:center;font-weight:800}
-.linea .imp{width:62px;text-align:right;font-weight:800}
+.qtybtn.coment{font-size:15px}.qtybtn.coment.on{background:#0891b2;border-color:#0891b2;color:#fff}
+.linea .qty{min-width:22px;text-align:center;font-weight:800}
+/* teclado numérico del ticket */
+.tkpad{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:10px}
+.tkpad .pk{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:11px 0;font-size:17px;font-weight:800;color:var(--text)}
+.tkpad .pk.act{background:#eef6f4;color:var(--primary);font-size:11px;font-weight:800}
+.tkpad .pk.c{background:#fff1f3;color:var(--danger)}
+.tkpad .disp{grid-column:1/4;background:#fff;border:1px solid var(--line);border-radius:9px;text-align:right;padding:9px 12px;font-size:18px;font-weight:800;color:var(--soft);min-height:40px}
+.tkpad .disp b{color:var(--primary)}
+.padtoggle{width:100%;margin-top:8px;background:transparent;border:none;color:var(--soft);font-weight:700;font-size:12px;padding:5px;cursor:pointer}
+.padtoggle:hover{color:var(--primary)}
 .ticket .tfoot{border-top:2px solid var(--line);padding:14px 18px}
 .iva-row{font-size:12px;color:var(--soft);display:flex;justify-content:space-between;font-weight:600;margin:10px 0 8px}
 .total-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
@@ -613,6 +627,14 @@ function enviarCocina(ticketId){
   }
   save(); return n;
 }
+function enviarLineaUnica(ticketId,idx){
+  var t=getTicket(ticketId); if(!t)return false; var l=t.lineas[idx]; if(!l) return false; if(l.enviado){ toast('Esa línea ya está en cocina'); return false; }
+  l.enviado=true; l.kestado='pendiente'; l.kid=uid(); var pr=getProducto(l.productoId);
+  var linea={nombre:l.nombre,ic:l.ic,cantidad:l.cantidad,orden:l.orden||'Primeros',preparacion:(pr&&pr.preparacion)||undefined,subs:l.subs,mods:l.mods,comentario:l.comentario};
+  t.enviadoCocina=true; t.cocinaAt=Date.now(); t.avisado=false;
+  try{ if(typeof window!=='undefined'&&window.HOSTELERO_SYNC){ window.HOSTELERO_SYNC.enviarComanda({mesa:(t.mesaNombre||('#'+t.numero)),camarero:(state.operador&&state.operador.nombre)||'TPV',pase:t.pase,lineas:[linea]}); } }catch(e){}
+  save(); return true;
+}
 function lineasPendientesEnvio(t){ return t.lineas.filter(function(l){return !l.enviado;}).length; }
 function comandasCocina(){
   return DB.tickets.filter(function(t){return t.estado==='abierto'&&t.enviadoCocina;})
@@ -650,7 +672,7 @@ if(typeof module!=='undefined'&&module.exports){
 }
 
 /* ================= INTERFAZ ================= */
-var state={view:'sala',salaSel:null,editPlano:false,ordenActivo:null,infPeriodo:'hoy',operador:null,ticketActivo:null,catSel:null,reservaFecha:null,
+var state={view:'sala',salaSel:null,editPlano:false,ordenActivo:null,infPeriodo:'hoy',operador:null,ticketActivo:null,catSel:null,reservaFecha:null,padNum:'',selLinea:null,padHidden:false,
   cobro:{pagos:[],ent:'',metodo:'efectivo',propina:''}};
 
 function hoyISO(){ return new Date().toISOString().slice(0,10); }
@@ -752,10 +774,12 @@ function viewVenta(){
     if(l.descLinea) extra+='<div class="ldet" style="color:#e11d48">Dto. '+(l.descLinea.tipo==='pct'?(l.descLinea.valor+'%'):eur(l.descLinea.valor))+'</div>';
     if(l.extras) l.extras.forEach(function(e){ extra+='<div class="ldet" style="color:#0f766e">'+esc(e.t)+' '+(e.p>0?'+':'')+eur(e.p)+'</div>'; });
     if(l.comentario) extra+='<div class="ldet" style="color:#0891b2">📝 '+esc(l.comentario)+'</div>';
-    return '<div class="linea'+lock+'"><span class="lic">'+(l.ic||'•')+'</span><div class="ln" data-act="linea" data-idx="'+i+'" style="cursor:pointer"><b>'+esc(l.nombre)+' '+k+'</b><span>'+eur(l.precio)+(l.enviado?' · en cocina':'')+'</span>'+det+extra+'</div>'
-      +'<button class="qtybtn coment'+(l.comentario?' on':'')+'" data-act="linea" data-idx="'+i+'" title="Comentario y opciones de la línea">💬</button>'
-      +'<button class="qtybtn" data-act="menos" data-idx="'+i+'">−</button><span class="qty">'+l.cantidad+'</span>'
-      +'<button class="qtybtn" data-act="mas" data-idx="'+i+'">+</button><span class="imp">'+eur(lineaImporte(l))+'</span></div>';
+    return '<div class="linea'+lock+(state.selLinea===i?' sel':'')+'" data-act="selline" data-idx="'+i+'">'
+      +'<div class="lhead"><span class="lic">'+(l.ic||'•')+'</span><b class="lnm">'+esc(l.nombre)+' '+k+'</b><span class="limp">'+eur(lineaImporte(l))+'</span></div>'
+      +((det||extra)?('<div class="ldetwrap">'+det+extra+'</div>'):'')
+      +'<div class="lctrl"><button class="qtybtn" data-act="menos" data-idx="'+i+'">−</button><span class="qty">'+l.cantidad+'</span><button class="qtybtn" data-act="mas" data-idx="'+i+'">+</button>'
+      +'<button class="qtybtn coment'+(l.comentario?' on':'')+'" data-act="linea" data-idx="'+i+'" title="Comentario / extras">💬</button>'
+      +'<span class="lunit">'+eur(l.precio)+(l.enviado?' · cocina':'')+'</span></div></div>';
   }
   var lineas;
   if(t.lineas.length){
@@ -781,9 +805,18 @@ function viewVenta(){
     +'<div class="tfoot">'
     +'<div class="iva-row"><span>Base '+eur(iva.base)+'</span><span>IVA '+ivaPct()+'% '+eur(iva.cuota)+'</span></div>'
     +''+(clienteDescuento(t)>0?'<div class="iva-row"><span>Dto. cliente</span><span>-'+eur(clienteDescuento(t))+'</span></div>':'')+(promo.total>0?'<div class="iva-row"><span>Promociones</span><span>-'+eur(promo.total)+'</span></div>':'')+(desc>0?'<div class="iva-row"><span>Descuento'+(t.descuento&&t.descuento.tipo==='invit'?' (invitación)':'')+'</span><span>-'+eur(desc)+'</span></div>':'')+'<div class="total-row"><span>TOTAL</span><span class="big">'+eur(total)+'</span></div>'
-    +'<button class="btn green lg block" '+(t.lineas.length?'':'disabled')+' data-act="cobrar">💶 Cobrar '+eur(total)+'</button></div></div>'
+    +'<button class="btn green lg block" '+(t.lineas.length?'':'disabled')+' data-act="cobrar">💶 Cobrar '+eur(total)+'</button>'
+    +'<button class="padtoggle" data-act="togglepad">'+(state.padHidden?'▸ Mostrar teclado':'▾ Ocultar teclado')+'</button>'
+    +(state.padHidden?'':('<div class="tkpad">'
+      +'<div class="disp">'+(state.padNum?('<b>'+esc(state.padNum)+'</b>'):'<span style="opacity:.5">teclea cantidad…</span>')+'</div><button class="pk c" data-act="padkey" data-k="C">C</button>'
+      +'<button class="pk" data-act="padkey" data-k="7">7</button><button class="pk" data-act="padkey" data-k="8">8</button><button class="pk" data-act="padkey" data-k="9">9</button><button class="pk act" data-act="padcant">× Cant.</button>'
+      +'<button class="pk" data-act="padkey" data-k="4">4</button><button class="pk" data-act="padkey" data-k="5">5</button><button class="pk" data-act="padkey" data-k="6">6</button><button class="pk act" data-act="paddto" data-t="pct">% Dto</button>'
+      +'<button class="pk" data-act="padkey" data-k="1">1</button><button class="pk" data-act="padkey" data-k="2">2</button><button class="pk" data-act="padkey" data-k="3">3</button><button class="pk act" data-act="paddto" data-t="eur">€ Dto</button>'
+      +'<button class="pk" data-act="padkey" data-k="0">0</button><button class="pk" data-act="padkey" data-k=",">,</button><button class="pk" data-act="padkey" data-k="back">⌫</button><button class="pk act" data-act="padprecio">€ Precio</button>'
+    +'</div>'))+'</div></div>'
     +'<div class="fncol-v">'
-      +'<button class="fnb green" '+(pend?'':'disabled')+' data-act="enviarCocina"><b>👨‍🍳</b><span>Enviar'+(pend?' ('+pend+')':'')+'</span></button>'
+      +'<button class="fnb green" '+(pend?'':'disabled')+' data-act="enviarCocina"><b>👨‍🍳</b><span>A cocina'+(pend?' ('+pend+')':'')+'</span></button>'
+      +'<button class="fnb" data-act="proforma"><b>🧾</b><span>Cuenta</span></button>'
       +'<button class="fnb" data-act="marcharTPV"><b>▶</b><span>Marchar</span></button>'
       +'<button class="fnb" data-act="orden123"><b>1·2·3</b><span>Pases</span></button>'
       +'<button class="fnb" '+(t.lineas.length?'':'disabled')+' data-act="dividir"><b>➗</b><span>Dividir</span></button>'
@@ -1092,7 +1125,13 @@ function onClick(e){
     case 'orden123': modal123(); break;
     case 'setorden': state.ordenActivo=el.dataset.o; closeModal(); render(); break;
     case 'ordendef': state.ordenActivo=null; closeModal(); render(); break;
-    case 'add': { var p=getProducto(id); if((p.controlStock&&p.stock<=0)||agotadoProd(p)){ toast('🚫 '+(p.nombreBoton||p.nombre)+' no disponible'); break; } if(p.esMenu){openMenu(p);} else if(p.mods&&p.mods.length){openConfig(p);} else {addProducto(state.ticketActivo,p);render();} break; }
+    case 'add': { var p=getProducto(id); if((p.controlStock&&p.stock<=0)||agotadoProd(p)){ toast('🚫 '+(p.nombreBoton||p.nombre)+' no disponible'); break; } var _qc=state.padNum?(parseInt(state.padNum,10)||1):1; state.padNum=''; if(p.esMenu){openMenu(p);} else if(p.mods&&p.mods.length){openConfig(p);} else {addProducto(state.ticketActivo,p,_qc);render();} break; }
+    case 'selline': state.selLinea=(state.selLinea===+el.dataset.idx?null:+el.dataset.idx); render(); break;
+    case 'togglepad': state.padHidden=!state.padHidden; render(); break;
+    case 'padkey': { var pk=el.dataset.k; if(pk==='C')state.padNum=''; else if(pk==='back')state.padNum=state.padNum.slice(0,-1); else if(state.padNum.length<7)state.padNum+=pk; render(); break; }
+    case 'padcant': { var tt=getTicket(state.ticketActivo); if(tt&&state.selLinea!=null&&tt.lineas[state.selLinea]&&state.padNum){ var nq=parseInt(state.padNum,10); if(nq>0){ tt.lineas[state.selLinea].cantidad=nq; save(); } state.padNum=''; } else toast('Selecciona una línea y teclea la cantidad'); render(); break; }
+    case 'paddto': { var td=getTicket(state.ticketActivo); if(td&&state.selLinea!=null&&td.lineas[state.selLinea]&&state.padNum){ var v=parseFloat(state.padNum.replace(',','.'))||0; td.lineas[state.selLinea].descLinea={tipo:el.dataset.t,valor:v}; save(); state.padNum=''; } else toast('Selecciona una línea y teclea el descuento'); render(); break; }
+    case 'padprecio': { var tp=getTicket(state.ticketActivo); if(tp&&state.selLinea!=null&&tp.lineas[state.selLinea]&&state.padNum){ var pr=parseFloat(state.padNum.replace(',','.')); if(!isNaN(pr)){ tp.lineas[state.selLinea].precio=round2(pr); save(); } state.padNum=''; } else toast('Selecciona una línea y teclea el precio'); render(); break; }
     case 'disponibilidad': modalDisponibilidad(); break;
     case 'accrap': { var ac=(DB.accionesRapidas||[]).filter(function(x){return x.id===id;})[0]; if(ac) ejecutarAccion(ac); break; }
     case 'togdisp': { var pid=el.dataset.id; window.HOSTELERO_SYNC.setAgotado(pid, !agotadoProd({id:pid})); setTimeout(function(){ if(document.getElementById('dispPanel'))modalDisponibilidad(); },150); break; }
@@ -1109,8 +1148,10 @@ function onClick(e){
     case 'lin_com': { var t=getTicket(state.ticketActivo),l=t&&t.lineas[state.linIdx]; if(l){ var cur=document.getElementById('lin_txt'); var add=el.dataset.txt||''; if(cur){ cur.value=(cur.value?cur.value+', ':'')+add; } } break; }
     case 'lin_com': { var _lt=getTicket(state.ticketActivo),_ll=_lt&&_lt.lineas[state.linIdx]; var _pc=el.dataset.precio; if(_pc!==''&&_pc!=null&&parseFloat(_pc)!==0){ if(_ll){ if(!_ll.extras)_ll.extras=[]; _ll.extras.push({t:el.dataset.txt,p:parseFloat(_pc)}); save(); modalLinea(state.linIdx); } } else { var _ta=document.getElementById('lin_txt'); if(_ta) _ta.value=(_ta.value?_ta.value+', ':'')+el.dataset.txt; } break; }
     case 'lin_extradel': { var _et=getTicket(state.ticketActivo),_el2=_et&&_et.lineas[state.linIdx]; if(_el2&&_el2.extras){ _el2.extras.splice(+el.dataset.i,1); if(!_el2.extras.length)delete _el2.extras; save(); modalLinea(state.linIdx); } break; }
+    case 'lin_enviar': { if(enviarLineaUnica(state.ticketActivo,state.linIdx)) toast('👨‍🍳 Línea enviada a cocina'); closeModal(); render(); break; }
     case 'lin_comsave': { var t=getTicket(state.ticketActivo),l=t&&t.lineas[state.linIdx]; if(l){ var cur=document.getElementById('lin_txt'); l.comentario=(cur&&cur.value.trim())||''; if(!l.comentario)delete l.comentario; save(); } closeModal(); render(); break; }
-    case 'enviarCocina': { var n=enviarCocina(state.ticketActivo); if(n>0) toast('👨‍🍳 '+n+' plato(s) enviados a cocina'); render(); break; }
+    case 'enviarCocina': { var n=enviarCocina(state.ticketActivo); if(n>0){ toast('👨‍🍳 '+n+' plato(s) a cocina · volviendo a mesas'); state.ticketActivo=null; state.selLinea=null; state.padNum=''; } render(); break; }
+    case 'proforma': { var tpf=getTicket(state.ticketActivo); if(tpf){ imprimirProforma(tpf); toast('🧾 Cuenta impresa · volviendo a mesas'); state.ticketActivo=null; state.selLinea=null; } render(); break; }
     case 'anular': autorizar('anular',function(){ if(confirm('¿Anular este ticket?')){ anularTicket(state.ticketActivo); state.ticketActivo=null; render(); } }); break;
     case 'cobrar': state.cobro={pagos:[],ent:'',metodo:'efectivo',propina:''}; modalCobro(); break;
     case 'marcharTPV': modalMarcharTPV(); break;
@@ -1345,6 +1386,16 @@ function imprimirDoc(doc){
     fetch('/api/imprimir-doc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({printerId:pid,doc:doc})});
   }catch(e){}
 }
+function imprimirProforma(t){
+  if(!t)return;
+  var bruto=totalLineas(t.lineas), desc=descuentoImporte(t), promo=promocionesTicket(t), total=round2(bruto-desc-promo.total);
+  var emp=(DB.config&&DB.config.empresa)||{};
+  var lineas=t.lineas.map(function(l){ var det=[]; if(l.mods&&l.mods.length)det.push(l.mods.map(function(m){return m.n;}).join(', ')); if(l.subs&&l.subs.length)det.push(l.subs.join(' · ')); if(l.extras)l.extras.forEach(function(e){det.push(e.t+' '+(e.p>0?'+':'')+eur(e.p*l.cantidad));}); return {cantidad:l.cantidad,nombre:(l.nombreDoc||l.nombre),importe:eur(lineaImporte(l)),detalle:det}; });
+  var filas=[]; if(promo.total>0||desc>0){ filas.push({l:'Subtotal',r:eur(bruto)}); if(desc>0)filas.push({l:'Descuento',r:'-'+eur(desc)}); promo.detalle.forEach(function(d){filas.push({l:d.nombre,r:'-'+eur(d.importe)});}); }
+  var subs=['*** PROFORMA / CUENTA ***',(t.mesaNombre||'Ticket #'+t.numero),new Date().toLocaleString('es-ES')];
+  if(t.comensales)subs.push(t.comensales+' comensales');
+  imprimirDoc({cabecera:(emp.nombre||DB.restaurante||'HOSTELERO'),subs:subs,lineas:lineas,filas:filas,total:eur(total),pies:['Documento no fiscal','Pídala en caja para el cobro']});
+}
 function imprimirTicketCobro(t){
   if(!t)return; var reg=registroFiscal(t);
   var bruto=totalLineas(t.lineas), desc=descuentoImporte(t), promo=promocionesTicket(t), total=round2(bruto-desc-promo.total);
@@ -1532,6 +1583,7 @@ function modalLinea(idx){
   var chips=coms.map(function(c){ var pp=(c.precio!=null&&c.precio!==0); return '<button class="btn '+(pp?'':'ghost')+' sm" data-act="lin_com" data-txt="'+esc(c.texto)+'" data-precio="'+(c.precio!=null?c.precio:'')+'" style="margin:2px'+(pp?';background:#0f766e;color:#fff':'')+'">'+esc(c.texto)+(pp?(' '+(c.precio>0?'+':'')+c.precio.toFixed(2)+'€'):'')+'</button>'; }).join('') || '<span class="muted" style="font-size:12px">No hay comentarios definidos (se crean en Administración).</span>';
   var extrasH=(l.extras&&l.extras.length)?('<div style="font-weight:800;font-size:12px;color:#64748b;margin:14px 0 6px;text-transform:uppercase">Extras con precio (van al ticket)</div>'+l.extras.map(function(e,ei){return '<div style="display:flex;justify-content:space-between;align-items:center;border:1px solid var(--line);border-radius:8px;padding:6px 10px;margin-bottom:5px"><span>'+esc(e.t)+' <b style="color:#0f766e">'+(e.p>0?'+':'')+eur(e.p)+'</b></span><button class="btn ghost sm" data-act="lin_extradel" data-i="'+ei+'">✕</button></div>';}).join('')):'';
   openModal('<div class="modal" data-stop><h2>'+(l.ic||'•')+' '+esc(l.nombre)+'</h2><div class="mbody" style="max-height:72vh;overflow:auto">'
+    +(l.enviado?'<div class="muted" style="margin:0 0 10px;color:#16a34a;font-weight:700">✓ Esta línea ya está en cocina</div>':'<button class="btn primary block" data-act="lin_enviar" style="margin-bottom:12px">👨‍🍳 Enviar solo esta línea a cocina</button>')
     +'<div class="field"><label>Cantidad</label><div class="inline"><input id="lin_c" type="number" min="0" value="'+l.cantidad+'" style="flex:1"><button class="btn" data-act="lin_cant">Aplicar</button></div></div>'
     +'<div class="inline" style="margin-top:6px"><div class="field" style="flex:1"><label>Precio unitario</label><div class="inline"><input value="'+eur(l.precio)+'" disabled style="flex:1"><button class="btn ghost" data-act="lin_precio">Cambiar 🔒</button></div></div></div>'
     +'<div style="font-weight:800;font-size:12px;color:var(--muted,#64748b);margin:14px 0 6px;text-transform:uppercase">Descuento de línea</div>'
