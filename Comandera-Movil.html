@@ -14,7 +14,7 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;margin:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);overflow:hidden;-webkit-font-smoothing:antialiased}
-button{font-family:inherit;cursor:pointer;border:none;transition:transform .08s,background .15s}
+button{font-family:inherit;cursor:pointer;border:none;transition:transform .08s,background .15s;touch-action:manipulation;-webkit-user-select:none;user-select:none}
 button:active{transform:scale(.96)}
 .app{height:100vh;height:100dvh;display:flex;flex-direction:column}
 .top{display:flex;align-items:center;gap:12px;padding:max(14px,env(safe-area-inset-top)) 16px 14px;background:#0f1622;border-bottom:3px solid transparent;border-image:linear-gradient(90deg,#0f766e,#14b8a6,#f59e0b) 1;flex-shrink:0}
@@ -83,13 +83,20 @@ button:active{transform:scale(.96)}
 .cl{display:flex;align-items:center;gap:10px;padding:9px 16px}
 .cl .n{flex:1;font-weight:700;font-size:15px}
 .cl .lsub{font-size:12px;color:var(--soft);font-weight:600;margin-top:2px}
-.cl .lpr{color:#a9b4ff}
+.cl .lpr{color:#5eead4}
 .cl .limp{font-weight:800;font-size:14px;min-width:62px;text-align:right}
 .cmdtot{display:flex;justify-content:space-between;padding:8px 16px 2px;color:var(--soft);font-weight:700;font-size:13px}
 .cmdtot b{color:#fff;font-size:16px}
 .q{width:34px;height:34px;border-radius:9px;background:var(--card2);border:1px solid var(--line);color:#fff;font-size:19px;font-weight:800;display:flex;align-items:center;justify-content:center}
 .cl .qn{width:24px;text-align:center;font-weight:800}
 .cmd .foot{padding:12px 16px;border-top:1px solid var(--line);display:flex;gap:10px;align-items:center}
+.cmd-top{background:var(--card);border-bottom:2px solid var(--line);flex-shrink:0;max-height:32vh;display:flex;flex-direction:column}
+.cmd-top .cmdtot{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line);color:var(--text);font-weight:800;font-size:15px}
+.cmd-top .cmdtot b{color:#fff;font-size:20px}
+.cmd-top .lst{overflow:auto;padding:4px 0;flex:1}
+.botbar{flex-shrink:0;display:flex;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:#0f1622;border-top:1px solid var(--line)}
+.botbar .btn123{flex:0 0 auto;padding:0 16px;display:flex;align-items:center;border-radius:14px}
+.botbar .enviar{flex:1}
 .enviar{flex:1;padding:16px;border-radius:14px;background:var(--green);color:#fff;font-weight:900;font-size:17px}
 .enviar:disabled{opacity:.4}
 .empty{color:var(--soft);text-align:center;padding:20px;font-weight:600;font-size:14px}
@@ -287,9 +294,10 @@ function showComanda(){st.view='comanda';
   } else cmd='<div class="empty">Toca productos para añadir a la comanda</div>';
   var uds=st.lineas.reduce(function(s,l){return s+l.cantidad;},0);
   var total=st.lineas.reduce(function(s,l){return s+lineImp(l);},0);
-  app.innerHTML='<div class="app"><div class="top"><button class="back" data-go="mesas">←</button><h1>Mesa '+esc(st.mesa)+'</h1><div class="right"><button class="btn123" data-go="cajon" title="Abrir cajón">💰</button><button class="btn123" data-go="marchar" title="Marchar pase">▶</button><button class="btn123" data-go="disp" style="background:#3a1620;color:#ff9db4">🚫</button><button class="btn123" data-go="orden123">123</button></div></div>'
+  app.innerHTML='<div class="app"><div class="top"><button class="back" data-go="mesas">←</button><h1>Mesa '+esc(st.mesa)+'</h1><div class="right"><button class="btn123" data-go="cajon" title="Abrir cajón">💰</button><button class="btn123" data-go="disp" style="background:#3a1620;color:#ff9db4">🚫</button></div></div>'
+    +'<div class="cmd-top"><div class="cmdtot"><span>Comanda · '+uds+' uds</span><b>'+eur(total)+'</b></div><div class="lst">'+cmd+'</div></div>'
     +'<div class="body">'+ordbar+'<div class="cattabs">'+tabs+'</div><div class="prods">'+prods+'</div></div>'
-    +'<div class="cmd"><div class="cmdtot">Total <b>'+eur(total)+'</b></div><div class="lst">'+cmd+'</div><div class="foot" style="display:flex;gap:8px"><button class="btn123" style="flex:0 0 auto;padding:0 16px" '+(st.lineas.length?'':'disabled')+' data-go="cuenta">🧾 Cuenta</button><button class="enviar" style="flex:1" '+(uds?'':'disabled')+' data-go="enviar">Enviar a cocina ('+uds+')</button></div></div></div>';
+    +'<div class="botbar"><button class="btn123" data-go="orden123" title="Orden de platos">123</button><button class="btn123" data-go="marchar" title="Marchar pase">▶</button><button class="btn123" '+(st.lineas.length?'':'disabled')+' data-go="cuenta">🧾</button><button class="enviar" '+(uds?'':'disabled')+' data-go="enviar">Enviar a cocina ('+uds+')</button></div></div>';
 }
 function addProd(ix){
   var cat=getCARTA()[st.catSel];if(!cat)return;var it=cat.items[ix];if(!it)return;
