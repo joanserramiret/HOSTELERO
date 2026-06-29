@@ -17,7 +17,10 @@ button{font-family:inherit;cursor:pointer;border:none;transition:.12s;touch-acti
 input,select{font-family:inherit;font-size:15px;outline:none}
 input:focus,select:focus{border-color:var(--primary)!important;box-shadow:0 0 0 3px rgba(79,70,229,.15)}
 .app{display:flex;height:100vh}
-.side{width:230px;background:#11161f;color:#cbd5e1;flex-shrink:0;display:flex;flex-direction:column;padding:18px 14px}
+.side{width:230px;background:#11161f;color:#cbd5e1;flex-shrink:0;display:flex;flex-direction:column;padding:18px 14px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#2a3650 transparent}
+.side::-webkit-scrollbar{width:7px}
+.side::-webkit-scrollbar-thumb{background:#2a3650;border-radius:4px}
+.side .nav{flex:0 0 auto}
 .brand{font-weight:800;font-size:16px;color:#fff;margin:4px 8px 22px;letter-spacing:.5px}
 .brand small{display:block;font-size:10px;color:#5b6678;letter-spacing:2px;font-weight:700}
 .nav{display:flex;flex-direction:column;gap:4px}
