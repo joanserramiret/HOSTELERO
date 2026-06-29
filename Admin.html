@@ -1226,8 +1226,8 @@ function viewCopiloto(){
     +'<div style="font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:#0f766e;margin:16px 0 8px">IA de entorno (afluencia y clima)</div>'
     +'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:9px">'
     +maiSw('meteo','⛈️','Clima y terraza','Avisa de lluvia/viento/tormenta y de reubicar reservas de terraza.')
-    +maiSw('cruceros','🛳️','Cruceros en puerto','Avisa de escalas que aumentan el paso (walk-in).')
-    +maiSw('vuelos','✈️','Llegadas de vuelos','Avisa de picos de pasaje llegando a la isla/ciudad.')
+    +maiSw('cruceros','🛳️','Cruceros en puerto','Automático en puertos de Baleares (datos públicos APB) + agenda manual. Avisa de escalas que aumentan el paso.')
+    +maiSw('vuelos','✈️','Llegadas de vuelos','Picos de pasaje. De momento por agenda manual (no hay API pública estable y gratuita de vuelos).')
     +maiSw('eventos','🎉','Fiestas y eventos','Tiene en cuenta fiestas locales, conciertos, partidos…')
     +'</div>'
     +'<div style="margin-top:14px;padding-top:12px;border-top:1px solid #eef2f7;display:flex;align-items:center;gap:10px">'
@@ -1239,9 +1239,15 @@ function viewCopiloto(){
   function num(id,v,suf){ return '<input id="'+id+'" type="number" step="any" value="'+(v==null?'':v)+'" style="width:110px">'+(suf?(' <span class="muted" style="font-size:12px">'+suf+'</span>'):''); }
   var salas=(M.salas||[]);
   h+='<div class="card pad" style="margin-top:14px"><h2 style="font-size:16px;margin:0 0 4px">📍 Ubicación y terraza</h2>'
-    +'<p class="muted" style="font-size:12.5px;margin:0 0 12px">El clima se consulta automáticamente (Open-Meteo, gratis). Marca qué salas son terraza/exterior para los avisos de reubicación.</p>'
+    +'<p class="muted" style="font-size:12.5px;margin:0 0 12px">El clima se consulta automáticamente (Open-Meteo, gratis). Escribe tu ciudad o dirección y se rellenan las coordenadas solas. Marca qué salas son terraza/exterior para los avisos de reubicación.</p>'
+    +'<div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:6px">'
+    +'<div class="field" style="flex:1;min-width:220px"><label>Buscar ciudad o dirección</label><input id="ent_buscar" placeholder="Ej. Maó, Menorca · o Calle Mayor 1, Palma" onkeydown="if(event.key===\'Enter\'){event.preventDefault();maiGeo();}"></div>'
+    +'<div><button class="btn" onclick="maiGeo()">🔎 Buscar</button></div>'
+    +'</div>'
+    +'<div id="ent_geo_res" style="margin:0 0 12px"></div>'
     +'<div class="row" style="gap:14px;flex-wrap:wrap;align-items:flex-end">'
     +'<div class="field"><label>Ciudad</label><input id="ent_ciudad" value="'+esc(ent.ciudad||'')+'"></div>'
+    +'<div class="field"><label>Puerto (cruceros)</label><input id="ent_puerto" value="'+esc(ent.puertoNombre||'')+'" placeholder="Maó, Palma, Eivissa, Alcúdia…" title="Puertos de Baleares con datos automáticos. Déjalo vacío si no aplica."></div>'
     +'<div class="field"><label>Latitud</label>'+num('ent_lat',ent.lat)+'</div>'
     +'<div class="field"><label>Longitud</label>'+num('ent_lon',ent.lon)+'</div>'
     +'<div class="field"><label>Aviso lluvia (%)</label>'+num('ent_lluvia',(ent.lluviaAviso==null?45:ent.lluviaAviso))+'</div>'
@@ -1278,7 +1284,7 @@ function viewCopiloto(){
 }
 function maiToggle(key){ if(!M.config)M.config={}; if(!M.config.maitre)M.config.maitre={}; var cur=M.config.maitre[key]!==false; M.config.maitre[key]=!cur; saveMaster(); render(); if(window.HOSTELERO_ENTORNO)window.HOSTELERO_ENTORNO.recargar(); }
 function maiEntGuardar(){ if(!M.config)M.config={}; if(!M.config.entorno)M.config.entorno={}; var e=M.config.entorno;
-  e.ciudad=val('ent_ciudad'); var la=parseFloat(val('ent_lat')), lo=parseFloat(val('ent_lon'));
+  e.ciudad=val('ent_ciudad'); e.puertoNombre=(val('ent_puerto')||'').trim(); var la=parseFloat(val('ent_lat')), lo=parseFloat(val('ent_lon'));
   if(!isNaN(la))e.lat=la; if(!isNaN(lo))e.lon=lo;
   var ll=parseInt(val('ent_lluvia'),10); e.lluviaAviso=isNaN(ll)?45:ll;
   var vi=parseInt(val('ent_viento'),10); e.vientoAviso=isNaN(vi)?38:vi;
@@ -1288,6 +1294,20 @@ function maiAddAgenda(){ var f=val('ag_fecha'), t=(val('ag_titulo')||'').trim();
   Sync.guardarAgendaEntorno({fecha:f,tipo:val('ag_tipo'),titulo:t,hora:val('ag_hora'),pax:parseInt(val('ag_pax'),10)||0,impacto:val('ag_impacto'),nota:(val('ag_nota')||'').trim()});
   toast('Añadido a la agenda',true); setTimeout(function(){render(); if(window.HOSTELERO_ENTORNO)window.HOSTELERO_ENTORNO.recargar();},200); }
 function maiDelAgenda(id){ Sync.borrarAgendaEntorno(id); toast('Eliminado'); setTimeout(function(){render(); if(window.HOSTELERO_ENTORNO)window.HOSTELERO_ENTORNO.recargar();},200); }
+function maiGeo(){ var q=(val('ent_buscar')||'').trim(); if(!q){toast('Escribe una ciudad o dirección');return;}
+  var box=document.getElementById('ent_geo_res'); if(box)box.innerHTML='<span class="muted" style="font-size:12px">Buscando…</span>';
+  fetch('/api/geocode?q='+encodeURIComponent(q)).then(function(r){return r.json();}).then(function(d){
+    var rs=(d&&d.results)||[]; window._geoRes=rs;
+    if(!rs.length){ if(box)box.innerHTML='<span class="muted" style="font-size:12px">Sin resultados. Prueba con la ciudad sola.</span>'; return; }
+    if(box) box.innerHTML='<div class="muted" style="font-size:12px;margin-bottom:4px">Elige la correcta:</div>'+rs.map(function(r,i){ return '<button class="btn ghost" style="margin:0 6px 6px 0" onclick="maiGeoPick('+i+')">📍 '+esc(r.name+(r.region?(', '+r.region):'')+(r.pais?(' · '+r.pais):''))+'</button>'; }).join('');
+  }).catch(function(){ if(box)box.innerHTML='<span class="muted" style="font-size:12px">No se pudo buscar (¿el servidor tiene internet?).</span>'; });
+}
+function maiGeoPick(i){ var r=(window._geoRes||[])[i]; if(!r)return;
+  var c=document.getElementById('ent_ciudad'); if(c)c.value=r.name;
+  var la=document.getElementById('ent_lat'); if(la)la.value=r.lat;
+  var lo=document.getElementById('ent_lon'); if(lo)lo.value=r.lon;
+  var box=document.getElementById('ent_geo_res'); if(box)box.innerHTML='<span class="muted" style="font-size:12px">✓ '+esc(r.name)+' ('+r.lat+', '+r.lon+'). Pulsa «Guardar ubicación y terraza».</span>';
+}
 function maiDemo(){
   if(!confirm('Cargar un escenario de demostración: añade crucero+evento de hoy, varias reservas y ajusta ventas/escandallos de ejemplo para que el Maître genere propuestas. ¿Continuar?')) return;
   var hoy=hoyStr();

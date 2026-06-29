@@ -221,7 +221,7 @@ function masterSeed() {
     entorno: {
       activo: true,
       ciudad: 'Maó', lat: 39.8885, lon: 4.2658,
-      puerto: true, aeropuerto: true,
+      puerto: true, puertoNombre: 'Maó', aeropuerto: true,
       zonasTerraza: [],            // ids de salas consideradas terraza/exterior
       lluviaAviso: 45,             // % prob. precipitación que dispara aviso de terraza
       vientoAviso: 38              // km/h de ráfaga que molesta en terraza
@@ -511,6 +511,31 @@ function httpsGetJSON(url, cb) {
     r.setTimeout(8000, function () { try { r.destroy(); } catch (e) {} fin(new Error('timeout')); });
   } catch (e) { fin(e); }
 }
+function httpsPostJSON(url, body, cb) {
+  var done = false; function fin(e, d) { if (done) return; done = true; cb(e, d); }
+  try {
+    var u = new URL(url);
+    var data = body || '';
+    var req2 = https.request({ hostname: u.hostname, path: u.pathname + u.search, method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(data), 'User-Agent': 'HOSTELERO-POS' } },
+      function (res) { var t = ''; res.on('data', function (c) { t += c; }); res.on('end', function () { try { fin(null, JSON.parse(t)); } catch (e) { fin(e); } }); });
+    req2.on('error', function (e) { fin(e); });
+    req2.setTimeout(9000, function () { try { req2.destroy(); } catch (e) {} fin(new Error('timeout')); });
+    req2.write(data); req2.end();
+  } catch (e) { fin(e); }
+}
+// Cruceros/ferris de los puertos APB (Baleares) — feed público del visor del puerto de Maó
+var _cruCache = { ts: 0, data: null };
+function obtenerCruceros(cb) {
+  if (_cruCache.data && (Date.now() - _cruCache.ts) < 60 * 60 * 1000) return cb(null, _cruCache.data);
+  httpsPostJSON('https://posidoniaweb.portsdebalears.com/gisweb_server/atraqueop.do?metodo=list', '', function (e, d) {
+    if (e || !d || !d.rows) return cb(e || new Error('sin datos'));
+    var out = d.rows.map(function (r) { var c = r.cell || []; return { tipo: c[7], buque: c[9], proc: c[12], eta: c[14], etd: c[15], pax: parseInt(c[32], 10) || 0, eslora: c[22], puerto: c[c.length - 2], estado: c[c.length - 1] }; });
+    _cruCache = { ts: Date.now(), data: out };
+    cb(null, out);
+  });
+}
+function ddmmyyyyToISO(s) { var m = String(s || '').match(/(\d{2})\/(\d{2})\/(\d{4})/); return m ? (m[3] + '-' + m[2] + '-' + m[1]) : ''; }
 var _climaCache = { ts: 0, data: null, key: '' };
 function obtenerClima(cb) {
   var cfg = (state.master && state.master.config && state.master.config.entorno) || {};
@@ -546,7 +571,7 @@ function computeEntorno(cb) {
   var lluviaUmbral = (typeof cfg.lluviaAviso === 'number') ? cfg.lluviaAviso : 45;
   var vientoUmbral = (typeof cfg.vientoAviso === 'number') ? cfg.vientoAviso : 38;
   var hayTerraza = !!(cfg.zonasTerraza && cfg.zonasTerraza.length);
-  function seguir(clima) {
+  function seguir(clima, autoCru) {
     if (clima && clima.hourly) {
       var H = clima.hourly, t = H.time || [];
       var nowH = new Date().getHours();
@@ -578,8 +603,9 @@ function computeEntorno(cb) {
           franja: franja, desde: ini, hasta: fin });
       }
     }
-    // Agenda manual (cruceros / vuelos / eventos) de hoy
+    // Agenda: cruceros automáticos (feed público APB) + manual (cruceros/vuelos/eventos) de hoy
     var agenda = (state.agendaEntorno || []).filter(function (a) { return a.fecha === hoy; });
+    agenda = (autoCru || []).concat(agenda);
     agenda.sort(function (a, b) { return (a.hora || '') < (b.hora || '') ? -1 : 1; });
     agenda.forEach(function (a) {
       var ico = a.tipo === 'crucero' ? '🛳️' : a.tipo === 'vuelo' ? '✈️' : '🎉';
@@ -609,8 +635,29 @@ function computeEntorno(cb) {
       clima: { dia: resumenDia, horas: horas }, alertas: alertas, agenda: agenda, briefing: briefing,
       nivelMax: altas.length ? 'alto' : (alertas.some(function (x) { return x.nivel === 'medio'; }) ? 'medio' : (alertas.length ? 'info' : 'ok')) });
   }
-  if (cfg.activo === false) return seguir(null);
-  obtenerClima(function (e, clima) { seguir(e ? null : clima); });
+  function conClima(clima) {
+    if (cfg.puerto === false) return seguir(clima, []);
+    obtenerCruceros(function (e2, lista) {
+      var auto = [];
+      if (!e2 && lista) {
+        var pn = String(cfg.puertoNombre || 'Maó').toLowerCase();
+        lista.forEach(function (x) {
+          if (String(x.tipo || '').toLowerCase().indexOf('cruc') < 0) return;
+          if (String(x.puerto || '').toLowerCase().indexOf(pn) < 0) return;
+          var di = ddmmyyyyToISO(x.eta), df = ddmmyyyyToISO(x.etd) || di;
+          if (!(di && di <= hoy && hoy <= df)) return;     // en puerto hoy
+          var hora = (String(x.eta).match(/(\d{2}:\d{2})/) || [])[1] || '';
+          var salida = (String(x.etd).match(/(\d{2}:\d{2})/) || [])[1] || '';
+          auto.push({ fecha: hoy, tipo: 'crucero', titulo: x.buque, hora: hora, pax: x.pax || 0,
+            impacto: (x.pax >= 1500 ? 'alto' : 'medio'),
+            nota: 'En el puerto de ' + x.puerto + (salida ? (' hasta las ' + salida) : '') + '. Posible aumento de paso (walk-in).', auto: true });
+        });
+      }
+      seguir(clima, auto);
+    });
+  }
+  if (cfg.activo === false) return seguir(null, []);
+  obtenerClima(function (e, clima) { conClima(e ? null : clima); });
 }
 
 function handler(porDefecto) {
@@ -626,6 +673,19 @@ function handler(porDefecto) {
     if (pathname === '/api/state') { res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }); return res.end(JSON.stringify(state)); }
     if (pathname === '/api/printers') { listarImpresorasWin(function (list) { res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }); res.end(JSON.stringify({ windows: ESWIN, printers: list || [] })); }); return; }
     if (pathname === '/api/entorno') { computeEntorno(function (out) { res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }); res.end(JSON.stringify(out)); }); return; }
+    if (pathname === '/api/geocode') {
+      var qs = (req.url.split('?')[1] || ''), params = {};
+      qs.split('&').forEach(function (kv) { var p = kv.split('='); if (p[0]) { try { params[decodeURIComponent(p[0])] = decodeURIComponent((p[1] || '').replace(/\+/g, ' ')); } catch (e) {} } });
+      var q = (params.q || '').trim();
+      function envia(arr) { res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }); res.end(JSON.stringify({ results: arr || [] })); }
+      if (!q) return envia([]);
+      var gurl = 'https://geocoding-api.open-meteo.com/v1/search?count=6&language=es&format=json&name=' + encodeURIComponent(q);
+      httpsGetJSON(gurl, function (e, d) {
+        if (e || !d || !d.results) return envia([]);
+        envia(d.results.map(function (r) { return { name: r.name, lat: r.latitude, lon: r.longitude, pais: r.country, region: r.admin1, tz: r.timezone }; }));
+      });
+      return;
+    }
     if (req.method === 'POST' && pathname.indexOf('/api/') === 0) {
       var body = ''; req.on('data', function (d) { body += d; if (body.length > 4e6) req.destroy(); });
       req.on('end', function () {
