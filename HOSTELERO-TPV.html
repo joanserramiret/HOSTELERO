@@ -635,6 +635,29 @@ function enviarLineaUnica(ticketId,idx){
   try{ if(typeof window!=='undefined'&&window.HOSTELERO_SYNC){ window.HOSTELERO_SYNC.enviarComanda({mesa:(t.mesaNombre||('#'+t.numero)),camarero:(state.operador&&state.operador.nombre)||'TPV',pase:t.pase,lineas:[linea]}); } }catch(e){}
   save(); return true;
 }
+function reenviarTodo(ticketId){
+  var t=getTicket(ticketId); if(!t||!t.lineas.length){ toast('Comanda vacía'); return; }
+  var lns=t.lineas.map(function(l){ var pr=getProducto(l.productoId); l.enviado=true; l.kestado='pendiente'; l.kid=l.kid||uid(); return {nombre:l.nombre,ic:l.ic,cantidad:l.cantidad,orden:l.orden||'Primeros',preparacion:(pr&&pr.preparacion)||undefined,subs:l.subs,mods:l.mods,comentario:l.comentario}; });
+  t.enviadoCocina=true; t.cocinaAt=Date.now();
+  try{ if(window.HOSTELERO_SYNC) window.HOSTELERO_SYNC.enviarComanda({mesa:(t.mesaNombre||('#'+t.numero)),camarero:(state.operador&&state.operador.nombre)||'TPV',pase:t.pase,lineas:lns}); }catch(e){}
+  save(); toast('🔁 Comanda reenviada a cocina');
+}
+function modalMerma(){
+  var prods=(DB.productos||[]).filter(function(p){return !p.esMenu;});
+  var opts=prods.map(function(p){return '<option value="'+p.id+'">'+esc(p.nombre)+'</option>';}).join('');
+  openModal('<div class="modal sm" data-stop><h2>🗑 Registrar merma</h2><div class="mbody">'
+    +'<div class="field"><label>Producto</label><select id="mm_p">'+opts+'</select></div>'
+    +'<div class="field"><label>Cantidad</label><input id="mm_c" type="number" value="1"></div>'
+    +'<div class="field"><label>Motivo</label><input id="mm_m" placeholder="Rotura, caducado, mal estado…"></div>'
+    +'</div><div class="foot"><button class="btn ghost" data-act="closeModal">Cancelar</button><button class="btn primary" data-act="savemerma">Registrar</button></div></div>');
+}
+function guardarMerma(){
+  var pid=(document.getElementById('mm_p')||{}).value; var c=parseFloat((document.getElementById('mm_c')||{}).value)||0;
+  if(!pid||c<=0){ toast('Revisa los datos'); return; }
+  if(!DB.mermas)DB.mermas=[]; var p=getProducto(pid)||{};
+  DB.mermas.push({productoId:pid,nombre:p.nombre,cantidad:c,motivo:((document.getElementById('mm_m')||{}).value||'').trim(),ts:Date.now(),usuario:(state.operador&&state.operador.nombre)||''});
+  save(); closeModal(); toast('🗑 Merma registrada');
+}
 function lineasPendientesEnvio(t){ return t.lineas.filter(function(l){return !l.enviado;}).length; }
 function comandasCocina(){
   return DB.tickets.filter(function(t){return t.estado==='abierto'&&t.enviadoCocina;})
@@ -805,27 +828,29 @@ function viewVenta(){
     +'<div class="tfoot">'
     +'<div class="iva-row"><span>Base '+eur(iva.base)+'</span><span>IVA '+ivaPct()+'% '+eur(iva.cuota)+'</span></div>'
     +''+(clienteDescuento(t)>0?'<div class="iva-row"><span>Dto. cliente</span><span>-'+eur(clienteDescuento(t))+'</span></div>':'')+(promo.total>0?'<div class="iva-row"><span>Promociones</span><span>-'+eur(promo.total)+'</span></div>':'')+(desc>0?'<div class="iva-row"><span>Descuento'+(t.descuento&&t.descuento.tipo==='invit'?' (invitación)':'')+'</span><span>-'+eur(desc)+'</span></div>':'')+'<div class="total-row"><span>TOTAL</span><span class="big">'+eur(total)+'</span></div>'
-    +'<button class="btn green lg block" '+(t.lineas.length?'':'disabled')+' data-act="cobrar">💶 Cobrar '+eur(total)+'</button>'
-    +'<button class="padtoggle" data-act="togglepad">'+(state.padHidden?'▸ Mostrar teclado':'▾ Ocultar teclado')+'</button>'
+    +(botOcultoTPV('cobrar')?'':'<button class="btn green lg block" '+(t.lineas.length?'':'disabled')+' data-act="cobrar">💶 Cobrar '+eur(total)+'</button>')
+    +(botOcultoTPV('teclado')?'':('<button class="padtoggle" data-act="togglepad">'+(state.padHidden?'▸ Mostrar teclado':'▾ Ocultar teclado')+'</button>'
     +(state.padHidden?'':('<div class="tkpad">'
       +'<div class="disp">'+(state.padNum?('<b>'+esc(state.padNum)+'</b>'):'<span style="opacity:.5">teclea cantidad…</span>')+'</div><button class="pk c" data-act="padkey" data-k="C">C</button>'
       +'<button class="pk" data-act="padkey" data-k="7">7</button><button class="pk" data-act="padkey" data-k="8">8</button><button class="pk" data-act="padkey" data-k="9">9</button><button class="pk act" data-act="padcant">× Cant.</button>'
       +'<button class="pk" data-act="padkey" data-k="4">4</button><button class="pk" data-act="padkey" data-k="5">5</button><button class="pk" data-act="padkey" data-k="6">6</button><button class="pk act" data-act="paddto" data-t="pct">% Dto</button>'
       +'<button class="pk" data-act="padkey" data-k="1">1</button><button class="pk" data-act="padkey" data-k="2">2</button><button class="pk" data-act="padkey" data-k="3">3</button><button class="pk act" data-act="paddto" data-t="eur">€ Dto</button>'
       +'<button class="pk" data-act="padkey" data-k="0">0</button><button class="pk" data-act="padkey" data-k=",">,</button><button class="pk" data-act="padkey" data-k="back">⌫</button><button class="pk act" data-act="padprecio">€ Precio</button>'
-    +'</div>'))+'</div></div>'
+    +'</div>'))))+'</div></div>'
     +'<div class="fncol-v">'
-      +'<button class="fnb green" '+(pend?'':'disabled')+' data-act="enviarCocina"><b>👨‍🍳</b><span>A cocina'+(pend?' ('+pend+')':'')+'</span></button>'
-      +'<button class="fnb" data-act="proforma"><b>🧾</b><span>Cuenta</span></button>'
-      +'<button class="fnb" data-act="marcharTPV"><b>▶</b><span>Marchar</span></button>'
-      +'<button class="fnb" data-act="orden123"><b>1·2·3</b><span>Pases</span></button>'
-      +'<button class="fnb" '+(t.lineas.length?'':'disabled')+' data-act="dividir"><b>➗</b><span>Dividir</span></button>'
-      +'<button class="fnb" data-act="cliente"><b>👤</b><span>'+_cli+'</span></button>'
-      +'<button class="fnb" data-act="descuento"><b>🏷️</b><span>'+(t.descuento?('-'+eur(descuentoImporte(t))):'Dto')+'</span></button>'
-      +'<button class="fnb" data-act="comensales"><b>👥</b><span>'+(t.comensales||'Pax')+'</span></button>'
-      +'<button class="fnb" data-act="abrirCajonTPV"><b>💰</b><span>Cajón</span></button>'
-      +'<button class="fnb" data-act="disponibilidad"><b>🚫</b><span>86</span></button>'
-      +'<button class="fnb red" data-act="anular"><b>🗑</b><span>Anular</span></button>'
+      +(botOcultoTPV('acocina')?'':'<button class="fnb green" '+(pend?'':'disabled')+' data-act="enviarCocina"><b>👨‍🍳</b><span>A cocina'+(pend?' ('+pend+')':'')+'</span></button>')
+      +(botOcultoTPV('cuenta')?'':'<button class="fnb" data-act="proforma"><b>🧾</b><span>Cuenta</span></button>')
+      +(botOcultoTPV('marchar')?'':'<button class="fnb" data-act="marcharTPV"><b>▶</b><span>Marchar</span></button>')
+      +(botOcultoTPV('pases')?'':'<button class="fnb" data-act="orden123"><b>1·2·3</b><span>Pases</span></button>')
+      +(botOcultoTPV('dividir')?'':'<button class="fnb" '+(t.lineas.length?'':'disabled')+' data-act="dividir"><b>➗</b><span>Dividir</span></button>')
+      +(botOcultoTPV('cliente')?'':'<button class="fnb" data-act="cliente"><b>👤</b><span>'+_cli+'</span></button>')
+      +(botOcultoTPV('dto')?'':'<button class="fnb" data-act="descuento"><b>🏷️</b><span>'+(t.descuento?('-'+eur(descuentoImporte(t))):'Dto')+'</span></button>')
+      +(botOcultoTPV('comensales')?'':'<button class="fnb" data-act="comensales"><b>👥</b><span>'+(t.comensales||'Pax')+'</span></button>')
+      +(botOcultoTPV('cajon')?'':'<button class="fnb" data-act="abrirCajonTPV"><b>💰</b><span>Cajón</span></button>')
+      +(botOcultoTPV('disponibilidad')?'':'<button class="fnb" data-act="disponibilidad"><b>🚫</b><span>86</span></button>')
+      +(botOcultoTPV('volverprep')?'':'<button class="fnb" data-act="volverprep"><b>🔁</b><span>Reenviar</span></button>')
+      +(botOcultoTPV('consumo')?'':'<button class="fnb" data-act="consumo"><b>🧑‍🍳</b><span>Consumo int.</span></button>')
+      +(botOcultoTPV('anular')?'':'<button class="fnb red" data-act="anular"><b>🗑</b><span>Anular</span></button>')
     +'</div>'
     +'<div class="carta">'+ordenBar+(function(){var ta=tarifaActiva(t.salaId);return (ta&&(ta.pct||(ta.precios&&Object.keys(ta.precios).length)))?'<div class="orden-activo" style="background:#0891b2">💲 Tarifa aplicada: <b>'+esc(ta.nombre)+'</b></div>':'';})()+'<div class="cat-bar">'+chips+'</div>'+(function(){var A=DB.accionesRapidas||[];return A.length?'<div style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 2px">'+A.map(function(a){return '<button class="btn" style="background:'+(a.color||'#334155')+';color:#fff;border:none;font-weight:800" data-act="accrap" data-id="'+a.id+'">'+(a.ic||'⚡')+' '+esc(a.label)+'</button>';}).join('')+'</div>':'';})()+'<div class="prod-grid">'+pg+'</div></div>'
     +'</div></div>';
@@ -911,17 +936,35 @@ function viewCaja(){
   var efe=tk.reduce(function(s,t){return s+(t.cobradoEfectivo||0);},0);
   var tar=tk.reduce(function(s,t){return s+(t.cobradoTarjeta||0);},0);
   var prop=tk.reduce(function(s,t){return s+(t.propina||0);},0);
-  var enCaja=round2(caja.saldoInicial+efe);
-  return '<div class="topbar"><div class="ttl"><h1>Caja</h1><span class="sub">Jornada del '+fmtFecha(caja.fecha||fechaFiscal())+' · abierta</span></div><div class="right"><button class="btn ghost" data-act="buscarDocs">🔎 Documentos del día</button></div></div><div class="content">'
+  var movs=caja.movimientos||[]; var ingr=round2(movs.filter(function(m){return m.tipo==='ingreso';}).reduce(function(a,m){return a+(m.importe||0);},0)); var gast=round2(movs.filter(function(m){return m.tipo==='gasto';}).reduce(function(a,m){return a+(m.importe||0);},0));
+  var enCaja=round2(caja.saldoInicial+efe+ingr-gast);
+  var movRows=movs.length?('<div class="card pad" style="max-width:460px;margin-top:14px"><div class="section-title">Movimientos de caja</div>'+movs.slice().reverse().map(function(m){return '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--line);font-size:14px"><span>'+(m.tipo==='ingreso'?'➕ ':'➖ ')+esc(m.concepto||(m.tipo==='ingreso'?'Ingreso':'Gasto'))+'</span><span style="font-weight:800;color:'+(m.tipo==='ingreso'?'var(--green)':'var(--danger)')+'">'+(m.tipo==='ingreso'?'+':'-')+eur(m.importe||0)+'</span></div>';}).join('')+'</div>'):'';
+  return '<div class="topbar"><div class="ttl"><h1>Caja</h1><span class="sub">Jornada del '+fmtFecha(caja.fecha||fechaFiscal())+' · abierta</span></div><div class="right"><button class="btn ghost" data-act="movimiento" data-t="ingreso">➕ Ingreso</button><button class="btn ghost" data-act="movimiento" data-t="gasto">➖ Gasto</button><button class="btn ghost" data-act="imprimirX">🖨️ Imprimir X</button><button class="btn ghost" data-act="merma">🗑 Merma</button><button class="btn ghost" data-act="buscarDocs">🔎 Documentos</button></div></div><div class="content">'
     +'<div class="stat-grid">'
     +stat('Ventas turno',eur(efe+tar),'#4f46e5')+stat('💵 Efectivo',eur(efe),'#16a34a')+stat('💳 Tarjeta',eur(tar),'#7c3aed')
-    +stat('🪙 Propinas',eur(prop),'#d97706')+stat('Tickets',tk.length,'#0891b2')+stat('Esperado en cajón',eur(enCaja),'#0ea5e9')+'</div>'
+    +stat('🪙 Propinas',eur(prop),'#d97706')+stat('➕ Ingresos',eur(ingr),'#16a34a')+stat('➖ Gastos',eur(gast),'#e11d48')
+    +stat('Tickets',tk.length,'#0891b2')+stat('Esperado en cajón',eur(enCaja),'#0ea5e9')+'</div>'
     +'<div class="card pad" style="max-width:460px;margin-top:18px"><div class="section-title">Cierre / arqueo</div>'
-    +'<p class="muted">Inicial '+eur(caja.saldoInicial)+' + efectivo '+eur(efe)+' = <b>'+eur(enCaja)+'</b> esperado.</p>'
+    +'<p class="muted">Inicial '+eur(caja.saldoInicial)+' + efectivo '+eur(efe)+(ingr?' + ingresos '+eur(ingr):'')+(gast?' − gastos '+eur(gast):'')+' = <b>'+eur(enCaja)+'</b> esperado.</p>'
     +'<div class="field"><label>Efectivo contado (€)</label><input id="contado" type="number"></div>'
-    +'<button class="btn danger lg block" data-act="cerrarCaja">Cerrar caja</button></div></div>';
+    +'<button class="btn danger lg block" data-act="cerrarCaja">Cerrar caja</button></div>'+movRows+'</div>';
 }
 function stat(l,v,c){ return '<div class="card stat"><div class="l">'+l+'</div><div class="v" style="color:'+c+'">'+v+'</div></div>'; }
+function modalMovimiento(tipo){
+  state._movTipo=tipo;
+  openModal('<div class="modal sm" data-stop><h2>'+(tipo==='ingreso'?'➕ Entrada de efectivo':'➖ Salida de efectivo')+'</h2><div class="mbody">'
+    +'<div class="field"><label>Importe (€)</label><input id="mv_imp" type="number" step="0.01"></div>'
+    +'<div class="field"><label>Concepto</label><input id="mv_con" placeholder="'+(tipo==='ingreso'?'Aporte de cambio, etc.':'Proveedor, compra, propina retirada…')+'"></div>'
+    +'</div><div class="foot"><button class="btn ghost" data-act="closeModal">Cancelar</button><button class="btn primary" data-act="savemov">Registrar</button></div></div>');
+}
+function guardarMovimiento(){
+  var c=cajaAbierta(); if(!c){ toast('No hay jornada abierta'); return; }
+  var imp=round2(parseFloat((document.getElementById('mv_imp')||{}).value)||0); if(imp<=0){ toast('Pon un importe'); return; }
+  if(!c.movimientos)c.movimientos=[];
+  c.movimientos.push({tipo:state._movTipo,importe:imp,concepto:((document.getElementById('mv_con')||{}).value||'').trim(),ts:Date.now(),usuario:(state.operador&&state.operador.nombre)||''});
+  save(); closeModal(); render(); toast((state._movTipo==='ingreso'?'➕ Ingreso':'➖ Gasto')+' registrado');
+}
+function imprimirX(){ var z=calcularZ(0); if(!z){toast('No hay jornada abierta');return;} imprimirZ(z,true); toast('🖨️ Informe X enviado'); }
 /* ---- Control de jornada al empezar a trabajar ---- */
 function checkJornada(){
   if(state.ticketActivo) return;
@@ -1197,6 +1240,14 @@ function onClick(e){
     case 'cerrarZok': { var z=cerrarCajaZ(state.zContado||0); pubJornada(); closeModal(); if(z) imprimirZ(z); render(); checkJornada(); break; }
     case 'cerrarZsolo': { var z2=cerrarCajaZ(state.zContado||0); pubJornada(); closeModal(); render(); checkJornada(); break; }
     case 'buscarDocs': modalDocs(); break;
+    case 'movimiento': modalMovimiento(el.dataset.t); break;
+    case 'savemov': guardarMovimiento(); break;
+    case 'imprimirX': autorizar('caja',function(){ imprimirX(); }); break;
+    case 'merma': modalMerma(); break;
+    case 'savemerma': guardarMerma(); break;
+    case 'volverprep': reenviarTodo(state.ticketActivo); render(); break;
+    case 'consumo': { var tcc=getTicket(state.ticketActivo); if(tcc){ if(confirm('¿Marcar como consumo interno (invitación 100%)?')){ tcc.descuento={tipo:'invit',motivo:'Consumo interno'}; save(); render(); toast('Marcado consumo interno'); } } break; }
+    case 'lin_marchar': { var lmt=getTicket(state.ticketActivo),lml=lmt&&lmt.lineas[state.linIdx]; if(lml&&window.HOSTELERO_SYNC&&window.HOSTELERO_SYNC.marchar){ window.HOSTELERO_SYNC.marchar(lmt.mesaNombre||('#'+lmt.numero), lml.orden||'Primeros', (state.operador&&state.operador.nombre)||'TPV'); toast('▶ Marchado '+(lml.orden||'Primeros')); } closeModal(); break; }
     case 'editpago': modalPagoEdit(el.dataset.id); break;
     case 'pgfull': { var pgi=document.getElementById('pg_efe'),pgt=document.getElementById('pg_tar'); if(pgi&&pgt){ pgi.value=(el.dataset.m==='efe')?(state._pgTotal||0):0; pgt.value=(el.dataset.m==='tar')?(state._pgTotal||0):0; } break; }
     case 'savepago': guardarPagoEdit(el.dataset.id); break;
@@ -1431,10 +1482,11 @@ function calcularZ(contado){
   var c=cajaAbierta(); if(!c)return null;
   var tk=DB.tickets.filter(function(t){return t.estado==='cobrado'&&t.cajaId===c.id;});
   var efe=tk.reduce(function(a,t){return a+(t.cobradoEfectivo||0);},0), tar=tk.reduce(function(a,t){return a+(t.cobradoTarjeta||0);},0), otr=tk.reduce(function(a,t){return a+(t.cobradoOtros||0);},0), prop=tk.reduce(function(a,t){return a+(t.propina||0);},0);
-  var ventas=round2(efe+tar+otr), enCaja=round2(c.saldoInicial+efe);
+  var movs=c.movimientos||[]; var ingr=round2(movs.filter(function(m){return m.tipo==='ingreso';}).reduce(function(a,m){return a+(m.importe||0);},0)); var gast=round2(movs.filter(function(m){return m.tipo==='gasto';}).reduce(function(a,m){return a+(m.importe||0);},0));
+  var ventas=round2(efe+tar+otr), enCaja=round2(c.saldoInicial+efe+ingr-gast);
   var todas=[]; tk.forEach(function(t){ todas=todas.concat(t.lineas||[]); });
   var co=round2(contado||0);
-  return {abiertaAt:c.abiertaAt,cerradaAt:Date.now(),saldoInicial:c.saldoInicial,efectivo:efe,tarjeta:tar,otros:otr,propinas:prop,ventas:ventas,tickets:tk.length,esperado:enCaja,contado:co,descuadre:round2(co-enCaja),ivas:desgloseIVAmulti(todas)};
+  return {abiertaAt:c.abiertaAt,cerradaAt:Date.now(),saldoInicial:c.saldoInicial,efectivo:efe,tarjeta:tar,otros:otr,propinas:prop,ingresos:ingr,gastos:gast,ventas:ventas,tickets:tk.length,esperado:enCaja,contado:co,descuadre:round2(co-enCaja),ivas:desgloseIVAmulti(todas)};
 }
 function cerrarCajaZ(contado){
   var c=cajaAbierta(); if(!c)return null;
@@ -1523,25 +1575,27 @@ function modalZ(z){
     +'<p class="muted" style="margin:0 0 8px">Revisa el cuadre antes de cerrar. Si hay un cobro mal asignado, corrígelo en «🔎 Documentos del día» y vuelve.</p>'
     +'<div style="background:var(--panel2,#f6f8fb);border-radius:12px;padding:12px">'
     +row('Tickets',z.tickets)+row('VENTAS',eur(z.ventas),true)+hr
-    +row('💵 Efectivo',eur(z.efectivo))+row('💳 Tarjeta',eur(z.tarjeta))+(z.otros?row('Otros',eur(z.otros)):'')+row('🪙 Propinas',eur(z.propinas))+hr
+    +row('💵 Efectivo',eur(z.efectivo))+row('💳 Tarjeta',eur(z.tarjeta))+(z.otros?row('Otros',eur(z.otros)):'')+row('🪙 Propinas',eur(z.propinas))+(z.ingresos?row('➕ Ingresos',eur(z.ingresos)):'')+(z.gastos?row('➖ Gastos',eur(z.gastos)):'')+hr
     +ivas+hr
     +row('Saldo inicial',eur(z.saldoInicial))+row('Esperado en cajón',eur(z.esperado))+row('Contado',eur(z.contado))
     +'<div style="display:flex;justify-content:space-between;padding:6px 0;font-weight:800;font-size:16px;color:'+dcol+'"><span>DESCUADRE</span><span>'+eur(desc)+'</span></div>'
     +'</div></div><div class="foot"><button class="btn ghost" data-act="closeModal">Cancelar</button><button class="btn ghost" data-act="cerrarZsolo">Cerrar sin imprimir</button><button class="btn green" data-act="cerrarZok">🖨️ Imprimir y cerrar</button></div></div>');
 }
-function imprimirZ(z){
+function imprimirZ(z,esX){
   if(!z)return;
   var nom=(DB.config&&DB.config.empresa&&DB.config.empresa.nombre)||DB.restaurante||'HOSTELERO';
   var filas=[{l:'Tickets',r:String(z.tickets)},{l:'VENTAS',r:eur(z.ventas),bold:true},
     {l:'Efectivo',r:eur(z.efectivo)},{l:'Tarjeta',r:eur(z.tarjeta)}];
   if(z.otros)filas.push({l:'Otros',r:eur(z.otros)});
   filas.push({l:'Propinas',r:eur(z.propinas)});
+  if(z.ingresos)filas.push({l:'Ingresos',r:eur(z.ingresos)});
+  if(z.gastos)filas.push({l:'Gastos',r:eur(z.gastos)});
   (z.ivas||[]).forEach(function(d){ filas.push({l:'Base '+d.tipo+'%',r:eur(d.base)}); filas.push({l:'IVA '+d.tipo+'%',r:eur(d.cuota)}); });
   filas.push({l:'Saldo inicial',r:eur(z.saldoInicial)});
   filas.push({l:'Esperado en cajón',r:eur(z.esperado)});
   filas.push({l:'Contado',r:eur(z.contado)});
   filas.push({l:'DESCUADRE',r:eur(z.descuadre),bold:true});
-  imprimirDoc({cabecera:'CIERRE Z Nº '+z.numero,subs:[nom,new Date(z.cerradaAt).toLocaleString('es-ES')],filas:filas});
+  imprimirDoc({cabecera:esX?'INFORME X (parcial)':('CIERRE Z Nº '+z.numero),subs:[nom,new Date(z.cerradaAt).toLocaleString('es-ES')],filas:filas});
 }
 function imprimirInforme(){
   var p=state.infPeriodo||'hoy'; var r=rangoPeriodo(p);
@@ -1583,7 +1637,8 @@ function modalLinea(idx){
   var chips=coms.map(function(c){ var pp=(c.precio!=null&&c.precio!==0); return '<button class="btn '+(pp?'':'ghost')+' sm" data-act="lin_com" data-txt="'+esc(c.texto)+'" data-precio="'+(c.precio!=null?c.precio:'')+'" style="margin:2px'+(pp?';background:#0f766e;color:#fff':'')+'">'+esc(c.texto)+(pp?(' '+(c.precio>0?'+':'')+c.precio.toFixed(2)+'€'):'')+'</button>'; }).join('') || '<span class="muted" style="font-size:12px">No hay comentarios definidos (se crean en Administración).</span>';
   var extrasH=(l.extras&&l.extras.length)?('<div style="font-weight:800;font-size:12px;color:#64748b;margin:14px 0 6px;text-transform:uppercase">Extras con precio (van al ticket)</div>'+l.extras.map(function(e,ei){return '<div style="display:flex;justify-content:space-between;align-items:center;border:1px solid var(--line);border-radius:8px;padding:6px 10px;margin-bottom:5px"><span>'+esc(e.t)+' <b style="color:#0f766e">'+(e.p>0?'+':'')+eur(e.p)+'</b></span><button class="btn ghost sm" data-act="lin_extradel" data-i="'+ei+'">✕</button></div>';}).join('')):'';
   openModal('<div class="modal" data-stop><h2>'+(l.ic||'•')+' '+esc(l.nombre)+'</h2><div class="mbody" style="max-height:72vh;overflow:auto">'
-    +(l.enviado?'<div class="muted" style="margin:0 0 10px;color:#16a34a;font-weight:700">✓ Esta línea ya está en cocina</div>':'<button class="btn primary block" data-act="lin_enviar" style="margin-bottom:12px">👨‍🍳 Enviar solo esta línea a cocina</button>')
+    +(l.enviado?'<div class="muted" style="margin:0 0 10px;color:#16a34a;font-weight:700">✓ Esta línea ya está en cocina</div>':'<button class="btn primary block" data-act="lin_enviar" style="margin-bottom:8px">👨‍🍳 Enviar solo esta línea a cocina</button>')
+    +'<button class="btn ghost block" data-act="lin_marchar" style="margin-bottom:12px">▶ Marchar este pase ('+esc(l.orden||'Primeros')+')</button>'
     +'<div class="field"><label>Cantidad</label><div class="inline"><input id="lin_c" type="number" min="0" value="'+l.cantidad+'" style="flex:1"><button class="btn" data-act="lin_cant">Aplicar</button></div></div>'
     +'<div class="inline" style="margin-top:6px"><div class="field" style="flex:1"><label>Precio unitario</label><div class="inline"><input value="'+eur(l.precio)+'" disabled style="flex:1"><button class="btn ghost" data-act="lin_precio">Cambiar 🔒</button></div></div></div>'
     +'<div style="font-weight:800;font-size:12px;color:var(--muted,#64748b);margin:14px 0 6px;text-transform:uppercase">Descuento de línea</div>'
@@ -1662,6 +1717,7 @@ function loginKey(k){
 function cambiarUsuario(){ if(!confirm('¿Cerrar sesión y cambiar de usuario?')) return; var A=(typeof window!=='undefined')&&window.HOSTELERO_AUTH; if(A&&A.logout)A.logout(); state.operador=null; loginPin=''; showLoginTPV(); }
 /* ----- Estación / terminal ----- */
 function estTPV(){ var E=(typeof window!=='undefined')&&window.HOSTELERO_ESTACIONES; return E?E.actual('tpv'):null; }
+function botOcultoTPV(id){ var e=estTPV(); return !!(e&&e.botonesOcultos&&e.botonesOcultos.indexOf(id)>=0); }
 function estacionTPVok(){
   var E=(typeof window!=='undefined')&&window.HOSTELERO_ESTACIONES; if(!E) return true;
   var url=E.fromUrl(); if(url) E.set('tpv',url);

@@ -179,6 +179,7 @@ function fechaFiscalC(){var d=new Date();if(d.getHours()<6)d.setDate(d.getDate()
 function fmtFechaC(s){if(!s)return'';var p=String(s).split('-');return p.length===3?(p[2]+'/'+p[1]+'/'+p[0]):String(s);}
 var EST=window.HOSTELERO_ESTACIONES;
 function estCom(){ return EST?EST.actual('comandera'):null; }
+function botOcultoCom(id){ var e=estCom(); return !!(e&&e.botonesOcultos&&e.botonesOcultos.indexOf(id)>=0); }
 function estacionComOk(){
   if(!EST) return true;
   var url=EST.fromUrl(); if(url) EST.set('comandera',url);
@@ -296,10 +297,10 @@ function showComanda(){st.view='comanda';
   var uds=st.lineas.reduce(function(s,l){return s+l.cantidad;},0);
   var pend=st.lineas.filter(function(l){return !l.enviado;}).reduce(function(s,l){return s+l.cantidad;},0);
   var total=st.lineas.reduce(function(s,l){return s+lineImp(l);},0);
-  app.innerHTML='<div class="app"><div class="top"><button class="back" data-go="mesas">←</button><h1>Mesa '+esc(st.mesa)+'</h1><div class="right"><button class="btn123" data-go="cajon" title="Abrir cajón">💰</button><button class="btn123" data-go="disp" style="background:#3a1620;color:#ff9db4">🚫</button></div></div>'
+  app.innerHTML='<div class="app"><div class="top"><button class="back" data-go="mesas">←</button><h1>Mesa '+esc(st.mesa)+'</h1><div class="right">'+(botOcultoCom('cajon')?'':'<button class="btn123" data-go="cajon" title="Abrir cajón">💰</button>')+(botOcultoCom('disponibilidad')?'':'<button class="btn123" data-go="disp" style="background:#3a1620;color:#ff9db4">🚫</button>')+'</div></div>'
     +'<div class="cmd-top"><div class="cmdtot"><span>Comanda · '+uds+' uds</span><b>'+eur(total)+'</b></div><div class="lst">'+cmd+'</div></div>'
     +'<div class="body">'+ordbar+'<div class="cattabs">'+tabs+'</div><div class="prods">'+prods+'</div></div>'
-    +'<div class="botbar"><button class="btn123" data-go="orden123" title="Orden de platos">123</button><button class="btn123" data-go="marchar" title="Marchar pase">▶</button><button class="btn123" '+(st.lineas.length?'':'disabled')+' data-go="cuenta">🧾</button><button class="enviar" '+(pend?'':'disabled')+' data-go="enviar">Enviar a cocina ('+pend+')</button></div></div>';
+    +'<div class="botbar">'+(botOcultoCom('pases')?'':'<button class="btn123" data-go="orden123" title="Orden de platos">123</button>')+(botOcultoCom('marchar')?'':'<button class="btn123" data-go="marchar" title="Marchar pase">▶</button>')+(botOcultoCom('cuenta')?'':'<button class="btn123" '+(st.lineas.length?'':'disabled')+' data-go="cuenta">🧾</button>')+'<button class="enviar" '+(pend?'':'disabled')+' data-go="enviar">Enviar a cocina ('+pend+')</button></div></div>';
 }
 function addProd(ix){
   var cat=getCARTA()[st.catSel];if(!cat)return;var it=cat.items[ix];if(!it)return;

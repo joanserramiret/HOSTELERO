@@ -106,6 +106,7 @@ function tryPin(){var u=Auth.loginPin(sel.id,pin);if(u){if(Auth.puedeAbrir(u.rol
 
 /* ---- Estación / monitor ---- */
 function resolveEst(){ var saved=EST?EST.get('kds'):''; estKDS=(saved&&saved!=='__all'&&EST)?EST.actual('kds'):null; }
+function botOcultoKDS(id){ return !!(estKDS&&estKDS.botonesOcultos&&estKDS.botonesOcultos.indexOf(id)>=0); }
 function showEstacionKDS(){
   var lista=EST?EST.lista('kds'):[];
   var cards=lista.map(function(s){ var o=(s.ordenes&&s.ordenes.length)?s.ordenes.join(', '):'Todas las órdenes';
@@ -129,7 +130,7 @@ function render(){
   if(!Auth.sesion())return;
   var ordSet=(estKDS&&estKDS.ordenes&&estKDS.ordenes.length)?estKDS.ordenes:null;
   var prepSet=(estKDS&&estKDS.preparaciones&&estKDS.preparaciones.length)?estKDS.preparaciones:null;
-  var avisarOn=!estKDS||estKDS.avisarCamareros!==false;
+  var avisarOn=(!estKDS||estKDS.avisarCamareros!==false)&&!botOcultoKDS('avisar');
   var acc=(estKDS&&estKDS.acciones)?estKDS.acciones:['disponibilidad','todolisto'];
   function pasaLin(l){ if(l.estado==='servido'||l.servido)return false; if(ordSet&&ordSet.indexOf(l.orden||'Primeros')<0)return false; if(prepSet&&prepSet.indexOf(l.preparacion)<0)return false; return true; }
   var allComs=Sync.comandas();
@@ -143,7 +144,7 @@ function render(){
     var lis=ls.map(function(l){
       var btn=l.estado==='pendiente'?'<button class="kbtn prep" data-act="prep" data-id="'+c.id+'" data-kid="'+l.kid+'">Empezar</button>'
         :l.estado==='preparando'?'<button class="kbtn listo" data-act="listo" data-id="'+c.id+'" data-kid="'+l.kid+'">Listo ✓</button>'
-        :'<button class="kbtn" style="background:#475569;color:#fff" data-act="servido" data-id="'+c.id+'" data-kid="'+l.kid+'" title="Marcar servida (se quita de la pantalla)">Servido ✓</button>';
+        :(botOcultoKDS('servido')?'<span class="tag">✓ Listo</span>':'<button class="kbtn" style="background:#475569;color:#fff" data-act="servido" data-id="'+c.id+'" data-kid="'+l.kid+'" title="Marcar servida (se quita de la pantalla)">Servido ✓</button>');
       var det='';
       if(l.subs&&l.subs.length)det='<div class="kdet">'+l.subs.map(esc).join('<br>')+'</div>';
       else if(l.mods&&l.mods.length)det='<div class="kdet">'+l.mods.map(function(m){return esc(m.n);}).join(' · ')+'</div>';
@@ -154,13 +155,13 @@ function render(){
     var todoListo=c.lineas.length&&c.lineas.every(function(l){return l.estado==='listo';});
     var foot='';
     if(todoListo){ foot=(avisarOn&&!c.avisado)?'<button class="btn avisar" data-act="avisar" data-id="'+c.id+'">🔔 Avisar camarero</button>':'<button class="btn recoger" data-act="recoger" data-id="'+c.id+'">📤 '+(c.avisado?'Recogido':'Hecho')+'</button>'; }
-    else if(acc.indexOf('todolisto')>=0){ foot='<button class="btn recoger" data-act="todolisto" data-id="'+c.id+'">✓ Todo listo</button>'; }
+    else if(acc.indexOf('todolisto')>=0 && !botOcultoKDS('todolisto')){ foot='<button class="btn recoger" data-act="todolisto" data-id="'+c.id+'">✓ Todo listo</button>'; }
     return '<div class="card'+urg+(c.avisado?' aviso':'')+'"><div class="chead"><span class="m">'+esc(c.mesa||'—')+'</span><span class="cam">'+esc(c.camarero||'')+'</span><span class="t">⏱ '+mins+'′</span></div>'+lis+(foot?'<div class="cfoot">'+foot+'</div>':'')+'</div>';
   }).join(''):'<div class="empty"><div class="e">👨‍🍳</div>Sin comandas. Esperando pedidos…</div>';
   var modo=Sync.modo();var mc=modo==='servidor'?'#19b562':'#e0a020';
   var nombreMon=estKDS?estKDS.nombre:((EST&&EST.get('kds')==='__all')?'Todas las comandas':'Cocina');
   var hayMon=EST?EST.lista('kds').length>0:false;
-  var dispBtn=(acc.indexOf('disponibilidad')>=0)?'<button class="btn ghost" data-act="disp">🚫 Disponibilidad</button>':'';
+  var dispBtn=(acc.indexOf('disponibilidad')>=0 && !botOcultoKDS('disponibilidad'))?'<button class="btn ghost" data-act="disp">🚫 Disponibilidad</button>':'';
   var cambiarBtn=hayMon?'<button class="btn ghost" data-act="cambiarMonitor" title="Cambiar de monitor">🖥️ Cambiar</button>':'';
   var colStyle=(estKDS&&estKDS.columnas)?' style="grid-template-columns:repeat('+estKDS.columnas+',minmax(0,1fr))"':'';
   app.innerHTML='<div class="app"><div class="top"><h1>👨‍🍳 '+esc(nombreMon)+'</h1><span class="sub">'+coms.length+' comandas'+(ordSet?' · '+esc(ordSet.join(', ')):'')+'</span>'
