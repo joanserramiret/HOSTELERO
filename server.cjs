@@ -6,7 +6,7 @@
 */
 'use strict';
 var http = require('http'), fs = require('fs'), path = require('path'), net = require('net');
-var cp = require('child_process'), os = require('os');
+var cp = require('child_process'), os = require('os'), https = require('https');
 var DIR = __dirname;
 var DATAFILE = path.join(DIR, 'servicio.json');
 
@@ -217,6 +217,24 @@ function masterSeed() {
       encargado: { anular: true,  caja: true,  informes: true,  descuento: true,  editarCarta: true,  usuarios: false },
       camarero:  { anular: false, caja: false, informes: false, descuento: false, editarCarta: false, usuarios: false },
       cocina:    { anular: false, caja: false, informes: false, descuento: false, editarCarta: false, usuarios: false }
+    },
+    entorno: {
+      activo: true,
+      ciudad: 'Maó', lat: 39.8885, lon: 4.2658,
+      puerto: true, aeropuerto: true,
+      zonasTerraza: [],            // ids de salas consideradas terraza/exterior
+      lluviaAviso: 45,             // % prob. precipitación que dispara aviso de terraza
+      vientoAviso: 38              // km/h de ráfaga que molesta en terraza
+    },
+    maitre: {
+      activo: true,                // El Maître IA en general
+      precios: true,               // sugerencias de precio por escandallo/food cost
+      lentos: true,                // productos que rotan poco
+      agotados: true,              // recordatorio de 86/agotados
+      meteo: true,                 // clima y aviso de terraza
+      cruceros: true,              // cruceros en puerto (walk-in)
+      vuelos: true,                // llegadas de vuelos
+      eventos: true                // fiestas/eventos locales
     }
   };
   var promociones = [
@@ -273,6 +291,16 @@ function masterSeed() {
   return { version: 22, categorias: cats, productos: prods, salas: salas, mesas: mesas, decor: decor, promociones: promociones, clientes: clientes, datafonos: datafonos, comentarios: comentarios, tarifas: tarifas, accionesRapidas: accionesRapidas, ventas7d: ventas7d, usuarios: usuarios, impresoras: impresoras, preparaciones: preparaciones, estaciones: estaciones, config: config };
 }
 
+function fechaHoy(){ var d=new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+// Agenda de entorno de demostración (hoy): crucero + evento, para que el Maître luzca
+function sembrarAgenda() {
+  var hoy = fechaHoy();
+  return [
+    { id:'ent-demo1', fecha:hoy, tipo:'crucero', titulo:'MSC Armonia', hora:'08:00', pax:2500, impacto:'alto', nota:'Atraca en el puerto hasta las 18:00. Refuerza barra y género para el mediodía.' },
+    { id:'ent-demo2', fecha:hoy, tipo:'evento', titulo:'Fiestas patronales', hora:'19:00', pax:0, impacto:'medio', nota:'Pasacalles por el centro. Más paso al atardecer.' }
+  ];
+}
+
 // Reservas de demostración (hoy)
 function sembrarReservas() {
   function fhoy(){ var d=new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
@@ -291,6 +319,8 @@ function cargar() {
   if (!s.master.usuarios || !s.master.usuarios.length) s.master.usuarios = masterSeed().usuarios;
   if (!s.master.impresoras) s.master.impresoras = [];
   if (!s.master.config) s.master.config = masterSeed().config;
+  if (!s.master.config.entorno) s.master.config.entorno = masterSeed().config.entorno;
+  if (!s.master.config.maitre) s.master.config.maitre = masterSeed().config.maitre;
   if (!s.master.promociones) s.master.promociones = [];
   if (!s.master.clientes) s.master.clientes = [];
   if (!s.master.datafonos) s.master.datafonos = [];
@@ -300,6 +330,7 @@ function cargar() {
   if (!s.master.ventas7d) s.master.ventas7d = {};
   if (!s.fichajes) s.fichajes = [];
   if (!s.agotados) s.agotados = [];
+  if (!s.agendaEntorno) s.agendaEntorno = sembrarAgenda();
   if (!s.reservas) s.reservas = sembrarReservas();
   if (typeof s.v !== 'number') s.v = 0;
   return s;
@@ -410,6 +441,13 @@ function aplicar(accion, d) {
       else { r.id = 'rsv' + uid(); r.creada = Date.now(); state.reservas.push(r); }
     }
   } else if (accion === '/api/reserva-borrar') { if (d.id) state.reservas = (state.reservas || []).filter(function (x) { return x.id !== d.id; });
+  } else if (accion === '/api/entorno-agenda') {
+    if (!state.agendaEntorno) state.agendaEntorno = [];
+    var a = d.item || d; if (a && a.fecha) {
+      if (a.id) { var ai = -1; state.agendaEntorno.forEach(function (x, i) { if (x.id === a.id) ai = i; }); if (ai >= 0) state.agendaEntorno[ai] = Object.assign({}, state.agendaEntorno[ai], a); else state.agendaEntorno.push(a); }
+      else { a.id = 'ent' + uid(); state.agendaEntorno.push(a); }
+    }
+  } else if (accion === '/api/entorno-agenda-borrar') { if (d.id) state.agendaEntorno = (state.agendaEntorno || []).filter(function (x) { return x.id !== d.id; });
   } else if (accion === '/api/jornada') { state.jornada = d.jornada || null;
   } else if (accion === '/api/print-test') { try { imprimirEn(d.ip, d.puerto, escposComanda({ mesa: 'PRUEBA', camarero: 'HOSTELERO', lineas: [{ cantidad: 1, nombre: 'Impresora OK' }] }, d.ancho || 42)); } catch (e) {}
   } else if (accion === '/api/datafono') {
@@ -461,6 +499,120 @@ function servirEstatico(req, res, porDefecto) {
   });
 }
 
+/* ===== IA de Entorno: clima (Open-Meteo) + cruceros/vuelos/eventos ===== */
+function httpsGetJSON(url, cb) {
+  var done = false; function fin(e, d) { if (done) return; done = true; cb(e, d); }
+  try {
+    var r = https.get(url, { headers: { 'User-Agent': 'HOSTELERO-POS' } }, function (res) {
+      var data = ''; res.on('data', function (c) { data += c; });
+      res.on('end', function () { try { fin(null, JSON.parse(data)); } catch (e) { fin(e); } });
+    });
+    r.on('error', function (e) { fin(e); });
+    r.setTimeout(8000, function () { try { r.destroy(); } catch (e) {} fin(new Error('timeout')); });
+  } catch (e) { fin(e); }
+}
+var _climaCache = { ts: 0, data: null, key: '' };
+function obtenerClima(cb) {
+  var cfg = (state.master && state.master.config && state.master.config.entorno) || {};
+  var lat = (typeof cfg.lat === 'number') ? cfg.lat : 39.8885;
+  var lon = (typeof cfg.lon === 'number') ? cfg.lon : 4.2658;
+  var key = lat + ',' + lon;
+  if (_climaCache.data && _climaCache.key === key && (Date.now() - _climaCache.ts) < 20 * 60 * 1000) return cb(null, _climaCache.data);
+  var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon +
+    '&hourly=temperature_2m,precipitation_probability,precipitation,wind_speed_10m,wind_gusts_10m,weather_code' +
+    '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_gusts_10m_max' +
+    '&timezone=auto&forecast_days=2';
+  httpsGetJSON(url, function (e, d) {
+    if (e || !d || !d.hourly) return cb(e || new Error('sin datos'));
+    _climaCache = { ts: Date.now(), data: d, key: key };
+    cb(null, d);
+  });
+}
+function wmoTexto(c) {
+  if (c >= 95) return { t: 'Tormenta', ico: '⛈️', tormenta: true };
+  if (c >= 80) return { t: 'Chubascos', ico: '🌦️', tormenta: false };
+  if (c >= 71 && c <= 77) return { t: 'Nieve', ico: '🌨️', tormenta: false };
+  if (c >= 61) return { t: 'Lluvia', ico: '🌧️', tormenta: false };
+  if (c >= 51) return { t: 'Llovizna', ico: '🌦️', tormenta: false };
+  if (c >= 45) return { t: 'Niebla', ico: '🌫️', tormenta: false };
+  if (c >= 1 && c <= 3) return { t: 'Nubes', ico: '⛅', tormenta: false };
+  return { t: 'Despejado', ico: '☀️', tormenta: false };
+}
+function hoyStr() { var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+function computeEntorno(cb) {
+  var cfg = (state.master && state.master.config && state.master.config.entorno) || {};
+  var hoy = hoyStr();
+  var alertas = [], horas = [], resumenDia = null;
+  var lluviaUmbral = (typeof cfg.lluviaAviso === 'number') ? cfg.lluviaAviso : 45;
+  var vientoUmbral = (typeof cfg.vientoAviso === 'number') ? cfg.vientoAviso : 38;
+  var hayTerraza = !!(cfg.zonasTerraza && cfg.zonasTerraza.length);
+  function seguir(clima) {
+    if (clima && clima.hourly) {
+      var H = clima.hourly, t = H.time || [];
+      var nowH = new Date().getHours();
+      for (var i = 0; i < t.length; i++) {
+        if (t[i].indexOf(hoy) !== 0) continue;
+        var hh = parseInt(t[i].slice(11, 13), 10);
+        var w = wmoTexto(H.weather_code[i]);
+        horas.push({ h: hh, code: H.weather_code[i], desc: w.t, ico: w.ico, temp: Math.round(H.temperature_2m[i]),
+          probLluvia: H.precipitation_probability[i], mm: H.precipitation[i], viento: Math.round(H.wind_speed_10m[i]), racha: Math.round(H.wind_gusts_10m[i]) });
+      }
+      if (clima.daily && clima.daily.time) {
+        var di = clima.daily.time.indexOf(hoy); if (di < 0) di = 0;
+        var dw = wmoTexto(clima.daily.weather_code[di]);
+        resumenDia = { desc: dw.t, ico: dw.ico, tmax: Math.round(clima.daily.temperature_2m_max[di]), tmin: Math.round(clima.daily.temperature_2m_min[di]),
+          probLluvia: clima.daily.precipitation_probability_max[di], racha: Math.round(clima.daily.wind_gusts_10m_max[di]) };
+      }
+      // Ventana de riesgo en horario de servicio (12-24h y posterior a la hora actual)
+      var riesgo = horas.filter(function (x) { return x.h >= Math.max(11, nowH) && (wmoTexto(x.code).tormenta || x.probLluvia >= lluviaUmbral || x.racha >= vientoUmbral); });
+      if (riesgo.length) {
+        var ini = riesgo[0].h, fin = riesgo[riesgo.length - 1].h;
+        var tormenta = riesgo.some(function (x) { return wmoTexto(x.code).tormenta; });
+        var maxP = Math.max.apply(null, riesgo.map(function (x) { return x.probLluvia || 0; }));
+        var maxR = Math.max.apply(null, riesgo.map(function (x) { return x.racha || 0; }));
+        var franja = (ini === fin) ? (ini + 'h') : (ini + 'h–' + (fin + 1) + 'h');
+        var motivo = tormenta ? 'Tormenta' : (maxP >= lluviaUmbral ? 'Lluvia (' + maxP + '%)' : 'Viento (' + maxR + ' km/h)');
+        alertas.push({ nivel: tormenta ? 'alto' : 'medio', tipo: 'clima', ico: tormenta ? '⛈️' : (maxP >= lluviaUmbral ? '🌧️' : '💨'),
+          titulo: motivo + ' prevista ' + franja,
+          texto: hayTerraza ? ('Riesgo en terraza ' + franja + '. Conviene reubicar reservas de exterior a interior.') : ('Mal tiempo previsto ' + franja + '. Revisa el montaje de exterior.'),
+          franja: franja, desde: ini, hasta: fin });
+      }
+    }
+    // Agenda manual (cruceros / vuelos / eventos) de hoy
+    var agenda = (state.agendaEntorno || []).filter(function (a) { return a.fecha === hoy; });
+    agenda.sort(function (a, b) { return (a.hora || '') < (b.hora || '') ? -1 : 1; });
+    agenda.forEach(function (a) {
+      var ico = a.tipo === 'crucero' ? '🛳️' : a.tipo === 'vuelo' ? '✈️' : '🎉';
+      var nivel = a.impacto === 'alto' ? 'alto' : a.impacto === 'bajo' ? 'info' : 'medio';
+      var extra = a.pax ? (' · ~' + a.pax + ' pax') : '';
+      alertas.push({ nivel: nivel, tipo: a.tipo, ico: ico,
+        titulo: a.titulo + extra + (a.hora ? (' · ' + a.hora) : ''),
+        texto: a.nota || (a.tipo === 'crucero' ? 'Posible aumento de paso (walk-in). Refuerza barra y género.' : a.tipo === 'vuelo' ? 'Llegada relevante de pasaje a la isla.' : 'Evento local previsto.') });
+    });
+    // Briefing en lenguaje natural
+    var reservasHoy = (state.reservas || []).filter(function (r) { return r.fecha === hoy; });
+    var partes = [];
+    if (resumenDia) partes.push(resumenDia.ico + ' ' + resumenDia.desc + ', ' + resumenDia.tmin + '–' + resumenDia.tmax + '°C' + (resumenDia.probLluvia != null ? (' · lluvia ' + resumenDia.probLluvia + '%' ) : ''));
+    var altas = alertas.filter(function (x) { return x.nivel === 'alto'; });
+    var cru = agenda.filter(function (a) { return a.tipo === 'crucero'; });
+    var paxCru = cru.reduce(function (s, a) { return s + (a.pax || 0); }, 0);
+    if (cru.length) partes.push('🛳️ ' + cru.length + ' crucero' + (cru.length > 1 ? 's' : '') + (paxCru ? (' (~' + paxCru + ' pax)') : '') + ' en puerto → más walk-in.');
+    var vue = agenda.filter(function (a) { return a.tipo === 'vuelo'; });
+    if (vue.length) partes.push('✈️ ' + vue.length + ' llegada' + (vue.length > 1 ? 's' : '') + ' destacada' + (vue.length > 1 ? 's' : '') + ' de vuelos.');
+    var eve = agenda.filter(function (a) { return a.tipo === 'evento'; });
+    if (eve.length) partes.push('🎉 ' + eve.map(function (a) { return a.titulo; }).join(', ') + '.');
+    var climaAlta = alertas.filter(function (x) { return x.tipo === 'clima'; })[0];
+    if (climaAlta) partes.push('⚠️ ' + climaAlta.titulo + (hayTerraza ? ' → reubica terraza.' : '.'));
+    partes.push('📅 ' + reservasHoy.length + ' reserva' + (reservasHoy.length === 1 ? '' : 's') + ' hoy.');
+    var briefing = partes.join('  ');
+    cb({ ts: Date.now(), ciudad: cfg.ciudad || '', activo: cfg.activo !== false, hayTerraza: hayTerraza,
+      clima: { dia: resumenDia, horas: horas }, alertas: alertas, agenda: agenda, briefing: briefing,
+      nivelMax: altas.length ? 'alto' : (alertas.some(function (x) { return x.nivel === 'medio'; }) ? 'medio' : (alertas.length ? 'info' : 'ok')) });
+  }
+  if (cfg.activo === false) return seguir(null);
+  obtenerClima(function (e, clima) { seguir(e ? null : clima); });
+}
+
 function handler(porDefecto) {
   return function (req, res) {
     var pathname = req.url.split('?')[0];
@@ -473,6 +625,7 @@ function handler(porDefecto) {
     }
     if (pathname === '/api/state') { res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }); return res.end(JSON.stringify(state)); }
     if (pathname === '/api/printers') { listarImpresorasWin(function (list) { res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }); res.end(JSON.stringify({ windows: ESWIN, printers: list || [] })); }); return; }
+    if (pathname === '/api/entorno') { computeEntorno(function (out) { res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }); res.end(JSON.stringify(out)); }); return; }
     if (req.method === 'POST' && pathname.indexOf('/api/') === 0) {
       var body = ''; req.on('data', function (d) { body += d; if (body.length > 4e6) req.destroy(); });
       req.on('end', function () {

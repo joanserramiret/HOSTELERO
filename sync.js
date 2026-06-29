@@ -62,6 +62,9 @@
     reservas: function () { return state.reservas || []; },
     guardarReserva: function (r) { if (modo === 'servidor') return post('/api/reserva', { reserva: r }); if (!state.reservas) state.reservas = []; if (r.id) { var k = -1; state.reservas.forEach(function (x, i) { if (x.id === r.id) k = i; }); if (k >= 0) state.reservas[k] = r; else state.reservas.push(r); } else { r.id = 'rsv' + uid(); r.creada = Date.now(); state.reservas.push(r); } commitLocal(); },
     borrarReserva: function (id) { if (modo === 'servidor') return post('/api/reserva-borrar', { id: id }); state.reservas = (state.reservas || []).filter(function (x) { return x.id !== id; }); commitLocal(); },
+    agendaEntorno: function () { return state.agendaEntorno || []; },
+    guardarAgendaEntorno: function (it) { if (modo === 'servidor') return post('/api/entorno-agenda', { item: it }); if (!state.agendaEntorno) state.agendaEntorno = []; if (it.id) { var k = -1; state.agendaEntorno.forEach(function (x, i) { if (x.id === it.id) k = i; }); if (k >= 0) state.agendaEntorno[k] = it; else state.agendaEntorno.push(it); } else { it.id = 'ent' + uid(); state.agendaEntorno.push(it); } commitLocal(); },
+    borrarAgendaEntorno: function (id) { if (modo === 'servidor') return post('/api/entorno-agenda-borrar', { id: id }); state.agendaEntorno = (state.agendaEntorno || []).filter(function (x) { return x.id !== id; }); commitLocal(); },
     jornada: function () { return state.jornada || null; },
     setJornada: function (j) { if (modo === 'servidor') return post('/api/jornada', { jornada: j }); state.jornada = j; commitLocal(); },
     marchar: function (mesa, pase, camarero) {

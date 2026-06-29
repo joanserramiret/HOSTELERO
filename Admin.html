@@ -1190,6 +1190,7 @@ function viewCopiloto(){
   var h='<div class="card pad" style="background:linear-gradient(160deg,#0f766e,#0f172a);color:#fff;margin-bottom:16px">'
     +'<div style="display:flex;align-items:center;gap:12px"><img src="brand/mark.svg" style="width:44px;height:44px"><div><div style="font-weight:900;font-size:19px">El Maître · IA de HOSTELERO</div>'
     +'<div style="color:#5eead4;font-size:13px">Analiza tu negocio y te propone mejoras concretas, aplicables con un clic.</div></div></div></div>';
+  h+='<div style="margin-bottom:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><button class="btn" onclick="maiDemo()">🎬 Cargar escenario de demostración</button><span class="muted" style="font-size:12px">Inyecta crucero, evento, reservas y ventas de ejemplo para que el Maître luzca en presentaciones.</span></div>';
   h+='<div class="row" style="gap:12px;margin-bottom:16px">'+kpi(prods.length,'Productos','#0f172a')+kpi(pctEsc+'%','Con escandallo','#7c3aed')+kpi(margMedio==null?'—':margMedio+'%','Margen medio','#16a34a')+kpi(cub,'Cubiertos hoy','#0891b2')+kpi(agot,'Agotados (86)','#e11d48')+'</div>';
   h+='<h2 style="font-size:16px;margin:6px 0 12px">Propuestas del Maître ('+props.length+')</h2>';
   if(!props.length){
@@ -1206,7 +1207,110 @@ function viewCopiloto(){
     }).join('');
   }
   h+='<p class="muted" style="font-size:12px;margin-top:14px">En esta demo el Maître calcula las propuestas localmente con las mismas reglas. En producción, el <b>Maître</b> (IA) vive dentro de HOSTELERO: lee tus ventas en tiempo real, redacta los informes en lenguaje natural y propone adaptaciones del sistema de forma continua — tú apruebas, él ejecuta.</p>';
+
+  /* ---- ¿Qué hace el Maître? + personalización ---- */
+  if(!M.config) M.config={}; if(!M.config.maitre) M.config.maitre={}; if(!M.config.entorno) M.config.entorno={};
+  var mai=M.config.maitre, ent=M.config.entorno;
+  function maiSw(key,ic,label,desc){ var on=mai[key]!==false;
+    return '<label style="display:flex;align-items:flex-start;gap:10px;padding:11px;border:1px solid #e2e8f0;border-radius:11px;cursor:pointer;background:'+(on?'#f0fdfa':'#fff')+'">'
+      +'<input type="checkbox" '+(on?'checked':'')+' onchange="maiToggle(\''+key+'\')" style="margin-top:2px;width:18px;height:18px;accent-color:#0f766e">'
+      +'<span><b style="font-size:13.5px">'+ic+' '+label+'</b><br><span class="muted" style="font-size:12px">'+desc+'</span></span></label>'; }
+  h+='<div class="card pad" style="margin-top:20px"><h2 style="font-size:16px;margin:0 0 4px">🧠 ¿Qué hace el Maître y cómo personalizarlo?</h2>'
+    +'<p class="muted" style="font-size:12.5px;margin:0 0 12px">El Maître es tu gerente IA: vigila el negocio en todas las pantallas (TPV, comandera, cocina) y te avisa con un briefing diario. Activa o desactiva cada función según te interese.</p>'
+    +'<div style="font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:#0f766e;margin:6px 0 8px">Análisis de negocio</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:9px">'
+    +maiSw('precios','📈','Sugerencias de precio','Detecta food cost alto y propone subir precio para proteger margen.')
+    +maiSw('lentos','🐌','Productos que rotan poco','Avisa de platos con poca venta para promocionar o retirar.')
+    +maiSw('agotados','🚫','Recordatorio de 86','Recuerda no ofrecer lo que está agotado hoy.')
+    +'</div>'
+    +'<div style="font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:#0f766e;margin:16px 0 8px">IA de entorno (afluencia y clima)</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:9px">'
+    +maiSw('meteo','⛈️','Clima y terraza','Avisa de lluvia/viento/tormenta y de reubicar reservas de terraza.')
+    +maiSw('cruceros','🛳️','Cruceros en puerto','Avisa de escalas que aumentan el paso (walk-in).')
+    +maiSw('vuelos','✈️','Llegadas de vuelos','Avisa de picos de pasaje llegando a la isla/ciudad.')
+    +maiSw('eventos','🎉','Fiestas y eventos','Tiene en cuenta fiestas locales, conciertos, partidos…')
+    +'</div>'
+    +'<div style="margin-top:14px;padding-top:12px;border-top:1px solid #eef2f7;display:flex;align-items:center;gap:10px">'
+    +'<label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" '+(mai.activo!==false?'checked':'')+' onchange="maiToggle(\'activo\')" style="width:18px;height:18px;accent-color:#0f766e"><b style="font-size:13.5px">Maître activo</b></label>'
+    +'<span class="muted" style="font-size:12px">Desactívalo para ocultar por completo el asistente y sus avisos.</span></div>'
+    +'</div>';
+
+  /* ---- Ubicación y terraza ---- */
+  function num(id,v,suf){ return '<input id="'+id+'" type="number" step="any" value="'+(v==null?'':v)+'" style="width:110px">'+(suf?(' <span class="muted" style="font-size:12px">'+suf+'</span>'):''); }
+  var salas=(M.salas||[]);
+  h+='<div class="card pad" style="margin-top:14px"><h2 style="font-size:16px;margin:0 0 4px">📍 Ubicación y terraza</h2>'
+    +'<p class="muted" style="font-size:12.5px;margin:0 0 12px">El clima se consulta automáticamente (Open-Meteo, gratis). Marca qué salas son terraza/exterior para los avisos de reubicación.</p>'
+    +'<div class="row" style="gap:14px;flex-wrap:wrap;align-items:flex-end">'
+    +'<div class="field"><label>Ciudad</label><input id="ent_ciudad" value="'+esc(ent.ciudad||'')+'"></div>'
+    +'<div class="field"><label>Latitud</label>'+num('ent_lat',ent.lat)+'</div>'
+    +'<div class="field"><label>Longitud</label>'+num('ent_lon',ent.lon)+'</div>'
+    +'<div class="field"><label>Aviso lluvia (%)</label>'+num('ent_lluvia',(ent.lluviaAviso==null?45:ent.lluviaAviso))+'</div>'
+    +'<div class="field"><label>Aviso viento (km/h)</label>'+num('ent_viento',(ent.vientoAviso==null?38:ent.vientoAviso))+'</div>'
+    +'</div>'
+    +'<div style="margin-top:10px"><div style="font-weight:700;font-size:13px;margin-bottom:6px">Salas de terraza / exterior</div>'
+    +(salas.length?('<div style="display:flex;flex-wrap:wrap;gap:8px">'+salas.map(function(s){ var on=(ent.zonasTerraza||[]).indexOf(s.id)>=0; return '<label style="display:flex;align-items:center;gap:6px;padding:7px 11px;border:1px solid #e2e8f0;border-radius:9px;cursor:pointer;background:'+(on?'#f0fdfa':'#fff')+'"><input type="checkbox" data-zona="'+s.id+'" '+(on?'checked':'')+' style="accent-color:#0f766e"> '+esc(s.nombre||s.id)+'</label>'; }).join('')+'</div>'):'<span class="muted" style="font-size:12px">No hay salas definidas (créalas en «Mesas y salas»).</span>')
+    +'</div>'
+    +'<div style="margin-top:14px"><button class="btn primary" onclick="maiEntGuardar()">Guardar ubicación y terraza</button></div>'
+    +'</div>';
+
+  /* ---- Agenda manual: cruceros / vuelos / eventos ---- */
+  var ICOAG={crucero:'🛳️',vuelo:'✈️',evento:'🎉'};
+  var ag=(Sync.agendaEntorno?Sync.agendaEntorno():[]).slice().filter(function(a){return a.fecha>=hoy;}).sort(function(a,b){return (a.fecha+a.hora)<(b.fecha+b.hora)?-1:1;});
+  h+='<div class="card pad" style="margin-top:14px"><h2 style="font-size:16px;margin:0 0 4px">🗓️ Agenda de entorno (cruceros · vuelos · eventos)</h2>'
+    +'<p class="muted" style="font-size:12.5px;margin:0 0 12px">Apunta aquí las escalas de crucero, llegadas de vuelos destacadas o fiestas locales. El Maître las cruza con el clima y tus reservas para el briefing del día. Puedes pegar los datos del puerto/aeropuerto.</p>';
+  if(ag.length){ h+='<div style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px">'+ag.map(function(a){
+      return '<div style="display:flex;align-items:center;gap:10px;padding:9px 11px;border:1px solid #e2e8f0;border-radius:10px">'
+        +'<span style="font-size:20px">'+(ICOAG[a.tipo]||'•')+'</span>'
+        +'<div style="flex:1"><b style="font-size:13.5px">'+esc(a.titulo)+'</b> <span class="muted" style="font-size:12px">· '+esc(a.fecha)+(a.hora?(' '+esc(a.hora)):'')+(a.pax?(' · ~'+a.pax+' pax'):'')+' · '+esc(a.impacto||'medio')+'</span>'+(a.nota?('<br><span class="muted" style="font-size:12px">'+esc(a.nota)+'</span>'):'')+'</div>'
+        +'<button class="btn ghost" onclick="maiDelAgenda(\''+a.id+'\')">✕</button></div>'; }).join('')+'</div>'; }
+  else { h+='<div class="muted" style="font-size:12.5px;margin-bottom:14px">Nada en agenda. Añade el primero abajo 👇</div>'; }
+  h+='<div class="row" style="gap:10px;flex-wrap:wrap;align-items:flex-end;border-top:1px solid #eef2f7;padding-top:12px">'
+    +'<div class="field"><label>Fecha</label><input id="ag_fecha" type="date" value="'+hoy+'"></div>'
+    +'<div class="field"><label>Tipo</label><select id="ag_tipo"><option value="crucero">🛳️ Crucero</option><option value="vuelo">✈️ Vuelo</option><option value="evento">🎉 Evento/fiesta</option></select></div>'
+    +'<div class="field" style="flex:1;min-width:160px"><label>Título</label><input id="ag_titulo" placeholder="MSC Armonia, Fiestas de Gràcia…"></div>'
+    +'<div class="field"><label>Hora</label><input id="ag_hora" type="time"></div>'
+    +'<div class="field"><label>Pax aprox.</label><input id="ag_pax" type="number" style="width:100px" placeholder="0"></div>'
+    +'<div class="field"><label>Impacto</label><select id="ag_impacto"><option value="alto">Alto</option><option value="medio" selected>Medio</option><option value="bajo">Bajo</option></select></div>'
+    +'<div class="field" style="flex:1;min-width:160px"><label>Nota</label><input id="ag_nota" placeholder="opcional"></div>'
+    +'<div><button class="btn primary" onclick="maiAddAgenda()">+ Añadir</button></div>'
+    +'</div></div>';
   return h;
+}
+function maiToggle(key){ if(!M.config)M.config={}; if(!M.config.maitre)M.config.maitre={}; var cur=M.config.maitre[key]!==false; M.config.maitre[key]=!cur; saveMaster(); render(); if(window.HOSTELERO_ENTORNO)window.HOSTELERO_ENTORNO.recargar(); }
+function maiEntGuardar(){ if(!M.config)M.config={}; if(!M.config.entorno)M.config.entorno={}; var e=M.config.entorno;
+  e.ciudad=val('ent_ciudad'); var la=parseFloat(val('ent_lat')), lo=parseFloat(val('ent_lon'));
+  if(!isNaN(la))e.lat=la; if(!isNaN(lo))e.lon=lo;
+  var ll=parseInt(val('ent_lluvia'),10); e.lluviaAviso=isNaN(ll)?45:ll;
+  var vi=parseInt(val('ent_viento'),10); e.vientoAviso=isNaN(vi)?38:vi;
+  var z=[]; document.querySelectorAll('[data-zona]').forEach(function(c){ if(c.checked)z.push(c.getAttribute('data-zona')); }); e.zonasTerraza=z;
+  saveMaster(); toast('🛰️ Entorno actualizado',true); render(); if(window.HOSTELERO_ENTORNO)window.HOSTELERO_ENTORNO.recargar(); }
+function maiAddAgenda(){ var f=val('ag_fecha'), t=(val('ag_titulo')||'').trim(); if(!f||!t){toast('Pon fecha y título');return;}
+  Sync.guardarAgendaEntorno({fecha:f,tipo:val('ag_tipo'),titulo:t,hora:val('ag_hora'),pax:parseInt(val('ag_pax'),10)||0,impacto:val('ag_impacto'),nota:(val('ag_nota')||'').trim()});
+  toast('Añadido a la agenda',true); setTimeout(function(){render(); if(window.HOSTELERO_ENTORNO)window.HOSTELERO_ENTORNO.recargar();},200); }
+function maiDelAgenda(id){ Sync.borrarAgendaEntorno(id); toast('Eliminado'); setTimeout(function(){render(); if(window.HOSTELERO_ENTORNO)window.HOSTELERO_ENTORNO.recargar();},200); }
+function maiDemo(){
+  if(!confirm('Cargar un escenario de demostración: añade crucero+evento de hoy, varias reservas y ajusta ventas/escandallos de ejemplo para que el Maître genere propuestas. ¿Continuar?')) return;
+  var hoy=hoyStr();
+  // 1) Agenda de entorno (crucero + evento + vuelo)
+  Sync.guardarAgendaEntorno({fecha:hoy,tipo:'crucero',titulo:'MSC Armonia',hora:'08:00',pax:2500,impacto:'alto',nota:'Atraca hasta las 18:00. Refuerza barra y género al mediodía.'});
+  Sync.guardarAgendaEntorno({fecha:hoy,tipo:'evento',titulo:'Fiestas patronales',hora:'19:00',pax:0,impacto:'medio',nota:'Pasacalles por el centro al atardecer.'});
+  Sync.guardarAgendaEntorno({fecha:hoy,tipo:'vuelo',titulo:'Pico de llegadas (tarde)',hora:'17:30',pax:0,impacto:'medio',nota:'Varios vuelos chárter aterrizan por la tarde.'});
+  // 2) Reservas de ejemplo (incluida una en terraza)
+  [['13:30',6,'Comida empresa','interior'],['14:00',4,'Familia Pons','terraza'],['21:00',2,'Aniversario','terraza'],['21:30',8,'Grupo amigos','interior']].forEach(function(r){
+    Sync.guardarReserva({fecha:hoy,hora:r[0],personas:r[1],nombre:r[2],zona:r[3],origen:'TheFork',estado:'confirmada',notas:''});
+  });
+  // 3) Casuísticas de venta: rotación baja + food cost alto para disparar propuestas
+  try{
+    if(!M.ventas7d) M.ventas7d={};
+    var prods=(M.productos||[]).filter(function(p){return !p.esMenu;});
+    if(prods[0]) M.ventas7d[prods[0].id]=3;                       // producto que rota poco
+    if(prods[1]) M.ventas7d[prods[1].id]=5;
+    var caro=prods.filter(function(p){return p.precio>0;})[0];     // food cost alto → sugerir subir precio
+    if(caro) caro.coste=Math.round(caro.precio*0.46*100)/100;
+    saveMaster();
+  }catch(e){}
+  toast('🎬 Escenario de demo cargado. El Maître ya tiene material 😏',true);
+  setTimeout(function(){render(); if(window.HOSTELERO_ENTORNO)window.HOSTELERO_ENTORNO.recargar();},250);
 }
 /* ---- RESERVAS (con orígenes: TheFork, Google, CoverManager…) ---- */
 var ORIGENES={telefono:{n:'Teléfono',ic:'📞',c:'#475569'},web:{n:'Web propia',ic:'🌐',c:'#0891b2'},walkin:{n:'Sin reserva',ic:'🚶',c:'#64748b'},carta:{n:'Carta digital',ic:'📱',c:'#0d9488'},voz:{n:'Agente de voz',ic:'🎙️',c:'#7c3aed'},thefork:{n:'TheFork',ic:'🍴',c:'#00a699'},google:{n:'Google',ic:'🔎',c:'#4285f4'},covermanager:{n:'CoverManager',ic:'📗',c:'#e0492f'}};

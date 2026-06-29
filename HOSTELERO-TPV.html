@@ -1126,8 +1126,10 @@ function modalReserva(){
   var fecha=state.reservaFecha||hoyISO();
   openModal('<div class="modal" data-stop><h2>Nueva reserva</h2><div class="mbody">'
     +'<div class="field"><label>Cliente</label><input id="r_n"></div>'
-    +'<div class="inline"><div class="field" style="flex:1"><label>Hora</label><input id="r_h" type="time" value="21:00"></div>'
+    +'<div class="inline"><div class="field" style="flex:1"><label>Hora</label><input id="r_h" type="time" value="21:00" oninput="chkTerraza()"></div>'
     +'<div class="field" style="flex:1"><label>Comensales</label><input id="r_p" type="number" value="2"></div></div>'
+    +'<div class="field"><label>Zona</label><select id="r_zona" onchange="chkTerraza()"><option value="interior">Interior</option><option value="terraza">Terraza / exterior</option></select></div>'
+    +'<div id="r_warn" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:10px;padding:9px 11px;font-size:13px;font-weight:600;margin-bottom:10px"></div>'
     +'<div class="field"><label>Teléfono</label><input id="r_t"></div>'
     +'<div class="field"><label>Origen</label><select id="r_o"><option>Local</option><option>Teléfono</option><option>TheFork</option><option>Google</option><option>Web propia</option></select></div>'
     +'<div class="field"><label>Notas</label><input id="r_notas" placeholder="Alergias, trona, cumpleaños…"></div>'
@@ -1289,9 +1291,21 @@ function saveProducto(id){
   if(id){ DB.productos=DB.productos.map(function(p){return p.id===id?data:p;}); } else { DB.productos.push(data); }
   save(); closeModal(); render();
 }
+function chkTerraza(){
+  var w=document.getElementById('r_warn'); if(!w) return;
+  var z=document.getElementById('r_zona'), h=document.getElementById('r_h');
+  var zona=z?z.value:'interior', hora=h?h.value:'';
+  var rg=(zona==='terraza' && window.HOSTELERO_ENTORNO)? window.HOSTELERO_ENTORNO.terrazaRiesgo(hora):null;
+  if(rg){ w.style.display='block'; w.innerHTML='⚠️ '+rg.titulo+'. '+(rg.texto||'')+' Considera sentarles en interior.'; }
+  else { w.style.display='none'; }
+}
 function saveReserva(fecha){
   var n=document.getElementById('r_n').value.trim(); if(!n){alert('Pon el nombre del cliente');return;}
-  crearReserva({fecha:fecha,hora:document.getElementById('r_h').value,nombre:n,
+  var z=document.getElementById('r_zona'), zona=z?z.value:'interior';
+  var hora=document.getElementById('r_h').value;
+  var rg=(zona==='terraza' && window.HOSTELERO_ENTORNO)? window.HOSTELERO_ENTORNO.terrazaRiesgo(hora):null;
+  if(rg && !confirm('🌧️ '+rg.titulo+' a esa hora.\n'+(rg.texto||'')+'\n\n¿Reservar igualmente en TERRAZA?')) return;
+  crearReserva({fecha:fecha,hora:hora,nombre:n,zona:zona,
     personas:parseInt(document.getElementById('r_p').value)||1,telefono:document.getElementById('r_t').value,
     origen:document.getElementById('r_o').value,notas:document.getElementById('r_notas').value});
   closeModal(); render();
