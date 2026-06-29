@@ -42,21 +42,31 @@ function psRawScript() {
     '"@\n' +
     'Add-Type -TypeDefinition $cs -Language CSharp\n' +
     '$bytes = [System.IO.File]::ReadAllBytes($DataFile)\n' +
-    '[RawPrinter]::Send($Printer, $bytes) | Out-Null\n';
+    '$r = [RawPrinter]::Send($Printer, $bytes)\n' +
+    'if($r){ Write-Output "RP_OK" } else { Write-Output ("RP_FAIL " + [System.Runtime.InteropServices.Marshal]::GetLastWin32Error()) }\n';
   try { fs.writeFileSync(f, src, 'utf8'); _psRaw = f; } catch (e) { _psRaw = null; }
   return _psRaw;
 }
 function imprimirWin(printer, buf) {
-  if (!ESWIN || !printer) return;
+  if (!printer) return;
+  if (!ESWIN) { console.log('⚠️  Impresión a "' + printer + '" ignorada: el servidor no corre en Windows.'); return; }
   try {
     var tmp = path.join(os.tmpdir(), 'hostelero_doc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6) + '.bin');
     fs.writeFileSync(tmp, buf);
-    var script = psRawScript(); if (!script) return;
+    var script = psRawScript(); if (!script) { console.log('⚠️  No se pudo preparar el script de impresión.'); return; }
     var args = ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', script, '-Printer', printer, '-DataFile', tmp];
     var ch = cp.spawn('powershell.exe', args, { windowsHide: true });
-    ch.on('close', function () { try { fs.unlinkSync(tmp); } catch (e) {} });
-    ch.on('error', function () {});
-  } catch (e) {}
+    var out = '';
+    if (ch.stdout) ch.stdout.on('data', function (d) { out += d; });
+    if (ch.stderr) ch.stderr.on('data', function (d) { out += d; });
+    ch.on('close', function () {
+      try { fs.unlinkSync(tmp); } catch (e) {}
+      var o = String(out).trim();
+      if (o.indexOf('RP_OK') >= 0) console.log('🖨️  Impreso correctamente en "' + printer + '" (' + buf.length + ' bytes)');
+      else console.log('⚠️  Fallo al imprimir en "' + printer + '": ' + (o || 'sin respuesta de Windows. ¿Nombre exacto de la impresora?'));
+    });
+    ch.on('error', function (e) { console.log('⚠️  No se pudo lanzar PowerShell: ' + e.message); });
+  } catch (e) { console.log('⚠️  imprimirWin error: ' + e.message); }
 }
 function listarImpresorasWin(cb) {
   if (!ESWIN) return cb([]);
@@ -482,3 +492,7 @@ Object.keys(PUERTOS).forEach(function (port) {
   });
 });
 console.log('HOSTELERO servidor local en marcha (WiFi, sin internet). Ctrl+C para parar.\nPuertos:');
+setTimeout(function(){
+  if(ESWIN){ listarImpresorasWin(function(list){ console.log('\n🖨️  Impresión Windows ACTIVA. Impresoras detectadas: '+(list&&list.length?list.join(' · '):'(ninguna; instálalas en Windows)')+'\n   Pon el nombre EXACTO en Admin → Impresoras.'); }); }
+  else { console.log('\n🖨️  Impresión Windows NO disponible (este equipo no es Windows). La configuración y el enrutado funcionan; la impresión real requiere ejecutar este servidor en el PC con las impresoras.'); }
+}, 600);
