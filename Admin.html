@@ -746,8 +746,9 @@ function modalImp(p){
     +'<div class="row"><div class="field"><label>Nombre</label><input id="i_n" value="'+esc(p?p.nombre:'')+'" placeholder="Cocina / Barra / Caja"></div>'
     +'<div class="field"><label>Tipo</label><select id="i_tipo"><option value="cocina"'+(tipo==='cocina'?' selected':'')+'>Cocina (comandas por preparación)</option><option value="documentos"'+(tipo==='documentos'?' selected':'')+'>Documentos (cuenta / factura)</option></select></div></div>'
     +'<div class="field"><label>Impresora de Windows <button type="button" class="btn ghost sm" data-act="detectimp" style="margin-left:6px">🔄 Detectar</button></label>'
-      +'<input id="i_win" list="winlist" value="'+esc(p?(p.windows||''):'')+'" placeholder="Elige de la lista o escribe el nombre exacto"><datalist id="winlist"></datalist>'
-      +'<div id="win_note" class="muted" style="font-size:11px;margin-top:4px">Da de alta la impresora en Windows; aquí saldrá su nombre. Imprime en ESC/POS por ese nombre.</div></div>'
+      +'<select id="i_win"><option value="">— Cargando impresoras… —</option>'+(p&&p.windows?'<option value="'+esc(p.windows)+'" selected>'+esc(p.windows)+'</option>':'')+'<option value="__manual">✏️ Escribir a mano…</option></select>'
+      +'<input id="i_win_man" placeholder="Nombre EXACTO de la impresora en Windows" value="'+esc(p?(p.windows||''):'')+'" style="display:none;margin-top:6px">'
+      +'<div id="win_note" class="muted" style="font-size:11px;margin-top:4px">Elige la impresora dada de alta en Windows. El sistema imprime ESC/POS por ese nombre.</div></div>'
     +'<div class="row"><div class="field" style="max-width:120px"><label>Copias</label><input id="i_cop" type="number" min="1" value="'+(p&&p.copias?p.copias:1)+'"></div>'
     +'<div class="field"><label>Ancho (caracteres)</label><input id="i_anc" type="number" value="'+(p&&p.ancho?p.ancho:42)+'"></div>'
     +'<div class="field" style="display:flex;align-items:flex-end"><label class="chk" style="margin-bottom:8px"><input type="checkbox" id="i_beep" '+(p&&p.beep?'checked':'')+'> 🔔 Pitido al imprimir</label></div></div>'
@@ -762,21 +763,28 @@ function modalImp(p){
     +'</div><div class="foot">'+(p?'<button class="btn red" data-deli="'+p.id+'" style="margin-right:auto">Eliminar</button>':'')
     +'<button class="btn ghost" data-act="cerrar">Cancelar</button><button class="btn" data-act="saveimp" data-id="'+(p?p.id:'')+'">Guardar</button></div>');
   var selT=document.getElementById('i_tipo'); if(selT) selT.onchange=function(){ var k=document.getElementById('i_cocina'); if(k)k.style.display=(this.value==='cocina')?'':'none'; };
+  var selW=document.getElementById('i_win'); if(selW) selW.onchange=function(){ var man=document.getElementById('i_win_man'); if(man) man.style.display=(this.value==='__manual')?'':'none'; };
   cargarImpresorasWin();
 }
 function cargarImpresorasWin(){
+  var sel=document.getElementById('i_win'); var nt=document.getElementById('win_note');
   try{ fetch('/api/printers').then(function(r){return r.json();}).then(function(j){
-    var dl=document.getElementById('winlist'); if(dl) dl.innerHTML=(j.printers||[]).map(function(n){return '<option value="'+esc(n)+'"></option>';}).join('');
-    var nt=document.getElementById('win_note');
-    if(nt){ if(j.windows===false) nt.textContent='El servidor no corre en Windows: escribe el nombre manualmente.'; else nt.textContent=(j.printers&&j.printers.length?('Detectadas '+j.printers.length+' impresoras de Windows. Elige una.'):'No se detectaron impresoras; revísalas en Windows.'); }
-  }).catch(function(){}); }catch(e){}
+    if(!sel)return; var actual=sel.value;
+    var ops='<option value="">— Elige impresora —</option>';
+    (j.printers||[]).forEach(function(n){ ops+='<option value="'+esc(n)+'"'+(n===actual?' selected':'')+'>'+esc(n)+'</option>'; });
+    if(actual && actual!=='__manual' && (j.printers||[]).indexOf(actual)<0) ops+='<option value="'+esc(actual)+'" selected>'+esc(actual)+' (guardada)</option>';
+    ops+='<option value="__manual"'+(actual==='__manual'?' selected':'')+'>✏️ Escribir a mano…</option>';
+    sel.innerHTML=ops;
+    if(nt){ if(j.windows===false) nt.textContent='El servidor no corre en Windows: usa «Escribir a mano».'; else nt.textContent=(j.printers&&j.printers.length?('Detectadas '+j.printers.length+' impresoras de Windows.'):'No se detectaron impresoras; revísalas en Windows o usa «Escribir a mano».'); }
+  }).catch(function(){ if(nt)nt.textContent='No se pudo consultar las impresoras (¿servidor en marcha?). Usa «Escribir a mano».'; }); }catch(e){}
 }
 function guardarImp(id){
   var n=val('i_n').trim(); if(!n)return toast('Pon el nombre');
   if(!M.impresoras)M.impresoras=[];
   var tipo=val('i_tipo');
   var _ip=val('i_ip').trim();
-  var data={id:id||('imp'+uid()),nombre:n,tipo:tipo,windows:val('i_win').trim()||undefined,copias:parseInt(val('i_cop'),10)||1,ancho:parseInt(val('i_anc'),10)||42,beep:chk('i_beep'),ip:_ip||undefined,puerto:_ip?(parseInt(val('i_pt'))||9100):undefined};
+  var _win=val('i_win'); if(_win==='__manual') _win=val('i_win_man').trim(); _win=(_win||'').trim();
+  var data={id:id||('imp'+uid()),nombre:n,tipo:tipo,windows:_win||undefined,copias:parseInt(val('i_cop'),10)||1,ancho:parseInt(val('i_anc'),10)||42,beep:chk('i_beep'),ip:_ip||undefined,puerto:_ip?(parseInt(val('i_pt'))||9100):undefined};
   if(tipo==='cocina'){
     data.preparaciones=Array.prototype.map.call(document.querySelectorAll('.i_prep:checked'),function(x){return x.value;});
     data.ordenes=Array.prototype.map.call(document.querySelectorAll('.i_ord:checked'),function(x){return x.value;});
